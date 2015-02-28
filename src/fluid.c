@@ -446,13 +446,13 @@ void boundary_conditions(fluid_particle_t *fluid_particles, unsigned int i, AABB
 
 // Initialize particles
 void initParticles(fluid_particle_t *fluid_particles,
-                neighbor_t *neighbors, bucket_t *hash, AABB_t* water, AABB_t* boundary_global,
-                int start_x, int number_particles_x, edge_t *edges, param_t* params)
+                neighbor_t *neighbors, bucket_t *hash, AABB_t* water,
+                AABB_t* boundary_global, edge_t *edges, param_t* params)
 {
     int i;
 
     // Create fluid volume
-    constructFluidVolume(fluid_particles, water, start_x, number_particles_x, edges, params);
+    constructFluidVolume(fluid_particles, water, edges, params);
 
     // Initialize particle values
     for(i=0; i<params->number_fluid_particles_local; i++) {

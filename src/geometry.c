@@ -2,32 +2,36 @@
 #include "geometry.h"
 
 void constructFluidVolume(fluid_particle_t *fluid_particles, AABB_t* fluid,
-                          int start_x, int number_particles_x, edge_t *edges, param_t *params)
+                          edge_t *edges, param_t *params)
 {
-    double spacing;
-    int num_y;
-    int num_z;
+    double spacing, x, y, z, min_x, max_x;
+    int num_x, num_y, num_z, nx, ny, nz;
+    int i = 0;
+    fluid_particle_t *p;
 
     spacing = params->smoothing_radius/2.0;
-    // Number of particles in y,z, number in x is passed in
+
+    // Start node particles at integer multiple of spacing
+    if(params->rank == 0)
+      min_x = fluid->min_x;
+    else {
+      double num_to_left = floor((params->node_start_x - fluid->min_x)/spacing);
+      min_x = num_to_left*spacing + fluid->min_x;
+    }
+
+    max_x = min(fluid->max_x, params->node_end_x);
+
+    num_x = floor((max_x - min_x) / spacing);
     num_y = floor((fluid->max_y - fluid->min_y ) / spacing);
     num_z = floor((fluid->max_z - fluid->min_z ) / spacing);
 
-    // zero out number of edge particles
-    edges->number_edge_particles_left = 0;
-    edges->number_edge_particles_right = 0;
-
     // Place particles inside bounding volume
-    double x,y,z;
-    int nx,ny,nz;
-    int i = 0;
-    fluid_particle_t *p;
     for(nz=0; nz<num_z; nz++) {
-        z = fluid->min_z + nz*spacing;
+        z = fluid->min_z + nz*spacing + spacing/2.0;
         for(ny=0; ny<num_y; ny++) {
-            y = fluid->min_y + ny*spacing;
-            for(nx=0; nx<number_particles_x; nx++) {
-                x = fluid->min_x + (start_x + nx)*spacing;
+            y = fluid->min_y + ny*spacing + spacing/2.0;
+            for(nx=0; nx<num_x; nx++) {
+                x = min_x + nx*spacing + spacing/2.0;
                 p = &fluid_particles[i];
                 p->x = x;
                 p->y = y;
@@ -38,91 +42,38 @@ void constructFluidVolume(fluid_particle_t *fluid_particles, AABB_t* fluid,
         }
     }
     params->number_fluid_particles_local = i;
-    printf("rank %d max fluid x: %f\n", params->rank,fluid->min_x + (start_x + nx-1)*spacing);
+    printf("rank %d: min fluid: %f max fluid x: %f\n", params->rank, min_x + spacing/2.0, x);
 }
 
 // Sets upper bound on number of particles, used for memory allocation
 void setParticleNumbers(AABB_t *boundary_global, AABB_t *fluid_global, edge_t *edges,
-                        oob_t *out_of_bounds, int number_particles_x, param_t *params)
+                        oob_t *out_of_bounds, param_t *params)
 {
     int num_x;
     int num_y;
     int num_z;
-
     double spacing = params->smoothing_radius/2.0;
 
     // Set fluid local
-    num_x = number_particles_x;
+    num_x = floor((fluid_global->max_x - fluid_global->min_x ) / spacing);
     num_y = floor((fluid_global->max_y - fluid_global->min_y ) / spacing);
     num_z = floor((fluid_global->max_z - fluid_global->min_z ) / spacing);
 
-    // Maximum edge particles is a set to 4 particle width y,z slab
+    // Maximum edge particles is a set to 4 particle width y-z plane slab
     edges->max_edge_particles = 4 * num_y*num_z;
     out_of_bounds->max_oob_particles = 4 * num_y*num_z;
 
     // Initial fluid particles
     int num_initial = num_x * num_y * num_z;
-    printf("initial number of particles %d\n", num_initial);
     int num_extra = num_initial/5;
 
     // Add initial space, extra space for particle transfers, and left/right out of boudns/halo particles
-    params->max_fluid_particles_local = num_initial + num_extra + 2*out_of_bounds->max_oob_particles + 2*edges->max_edge_particles;
+    params->max_fluid_particles_local = num_initial + num_extra
+                                      + 2*out_of_bounds->max_oob_particles
+                                      + 2*edges->max_edge_particles;
+
+    printf("initial number of particles %d\n", num_initial);
     printf("Max fluid particles local: %d\n", params->max_fluid_particles_local);
-}
-
-// Set local boundary and fluid particle
-void partitionProblem(AABB_t *boundary_global, AABB_t *fluid_global, int *x_start,
-                      int *length_x, param_t *params)
-{
-    int i;
-    int nprocs = params->nprocs;
-    int rank = params->rank;
-    double spacing = params->smoothing_radius/2.0;
-
-    // number of fluid particles in x direction
-    // +1 added for zeroth particle
-    int fluid_particles_x = floor((fluid_global->max_x - fluid_global->min_x ) / spacing) + 1;
-
-    // number of particles x direction
-    int *particle_length_x = malloc(nprocs*sizeof(int));
-
-    // Number of particles in x direction assuming equal spacing
-    int equal_spacing = floor(fluid_particles_x/nprocs);
-
-    // Initialize each node to have equal width
-    for (i=0; i<nprocs; i++)
-        particle_length_x[i] = equal_spacing;
-
-    // Remaining particles from equal division
-    int remaining = fluid_particles_x - (equal_spacing * nprocs);
-
-    // Add any remaining particles sequantially to left most nodes
-    for (i=0; i<nprocs; i++)
-        particle_length_x[i] += (i<remaining?1:0);
-
-    // Number of particles to left of current node
-    int number_to_left = 0;
-    for (i=0; i<rank; i++)
-        number_to_left+=particle_length_x[i];
-
-    // starting position of nodes x particles
-    *x_start = number_to_left;
-    // Number of particles in x direction for node
-    *length_x = particle_length_x[rank];
-
-    // Set node partition values
-    params->node_start_x = fluid_global->min_x + ((number_to_left-1) * spacing);
-    params->node_end_x   = params->node_start_x + (particle_length_x[rank] * spacing);
-
-    if (rank == 0)
-        params->node_start_x  = boundary_global->min_x;
-    if (rank == nprocs-1)
-        params->node_end_x   = boundary_global->max_x;
-
-    free(particle_length_x);
-
-    printf("rank %d, h %f, x_start %d, num_x %d, start_x %f, end_x: %f\n", rank, spacing, *x_start, *length_x, params->node_start_x, params->node_end_x);
-
 }
 
 // Test if boundaries need to be adjusted

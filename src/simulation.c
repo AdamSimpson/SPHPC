@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
     oob_t out_of_bounds;
 
     params.rank = get_rank();
-    params.nprocs = get_num_procs(0);
+    params.nprocs = get_num_procs();
     params.g = 9.8;
     params.number_steps = 2000;
     params.time_step = 1.0/60.0;
@@ -56,15 +56,26 @@ int main(int argc, char *argv[])
 
     printf("smoothing radius: %f\n", params.smoothing_radius);
 
+    // Set initial node boundaries
+    // Equally divide water volume between all ranks
+    double water_length = (water_volume_global.max_x - water_volume_global.min_x);
+    double equal_spacing =  water_length / params.nprocs;
+    params.node_start_x = water_volume_global.min_x
+                        + params.rank * equal_spacing;
+
+    params.node_end_x   = params.node_start_x + equal_spacing;
+
+    // "Stretch" first and last ranks bounds to match boundary
+    if (params.rank == 0)
+        params.node_start_x  = boundary_global.min_x;
+    if (params.rank == params.nprocs-1)
+        params.node_end_x   = boundary_global.max_x;
+
     // Number of steps before frame needs to be written for 30 fps
     int steps_per_frame = (int)(1.0/(params.time_step*30.0));
 
-    int start_x;  // where in x direction this nodes particles start
-    int number_particles_x; // number of particles in x direction for this node
-    // Divide problem set amongst nodes
-    partitionProblem(&boundary_global, &water_volume_global, &start_x, &number_particles_x, &params);
     // Set local/global number of particles to allocate
-    setParticleNumbers(&boundary_global, &water_volume_global, &edges, &out_of_bounds, number_particles_x, &params);
+    setParticleNumbers(&boundary_global, &water_volume_global, &edges, &out_of_bounds, &params);
 
     long long total_bytes = 0;
     size_t bytes;
@@ -103,7 +114,7 @@ int main(int argc, char *argv[])
     printf("gigabytes allocated: %lld\n", total_bytes/1073741824);
 
     // Initialize particles
-    initParticles(fluid_particles, neighbors, hash, &water_volume_global, &boundary_global, start_x, number_particles_x, &edges, &params);
+    initParticles(fluid_particles, neighbors, hash, &water_volume_global, &boundary_global, &edges, &params);
 
     // Print some parameters
     printf("Rank: %d, fluid_particles: %d, smoothing radius: %f \n", params.rank, params.number_fluid_particles_local, params.smoothing_radius);

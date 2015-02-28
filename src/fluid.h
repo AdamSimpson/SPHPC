@@ -61,7 +61,7 @@ void update_velocities(fluid_particle_t *fluid_particles, param_t *params);
 void boundary_conditions(fluid_particle_t *fluid_particles, unsigned int i, AABB_t *boudnary);
 void initParticles(fluid_particle_t *fluid_particles,
                 neighbor_t *neighbors, bucket_t *hash, AABB_t* water, AABB_t* boundary_global,
-                int start_x, int number_particles_x, edge_t *edges, param_t* params);
+                edge_t *edges, param_t* params);
 
 
 #endif

@@ -13,7 +13,7 @@ void writeMPI(fluid_particle_t *particles, int fileNum, param_t *params)
     MPI_Status status;
     int i;
     char name[64];
-    sprintf(name, "/Users/atj/SPH/output/sim-%d.bin", fileNum);
+    sprintf(name, "/Users/atj/SPHPC/output/sim-%d.bin", fileNum);
 
     int num_particles = params->number_fluid_particles_local;
 
