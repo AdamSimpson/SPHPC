@@ -15,7 +15,7 @@ void constructFluidVolume(fluid_particle_t *fluid_particles, AABB_t* fluid,
     if(params->rank == 0)
       min_x = fluid->min_x;
     else {
-      double num_to_left = floor((params->node_start_x - fluid->min_x)/spacing);
+      int num_to_left = floor((params->node_start_x - fluid->min_x)/spacing);
       min_x = num_to_left*spacing + fluid->min_x;
     }
 

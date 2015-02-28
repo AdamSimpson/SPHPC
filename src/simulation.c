@@ -24,6 +24,7 @@ int main(int argc, char *argv[])
     params.time_step = 1.0/60.0;
     params.c = 0.01;
     params.k = 0.1;
+    // Approximate
     params.number_fluid_particles_global = 65536*2;
 
     boundary_global.min_x = 0.0;
