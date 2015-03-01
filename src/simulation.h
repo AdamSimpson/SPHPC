@@ -27,4 +27,6 @@ struct PARAM {
     int nprocs;
 }; // Simulation paramaters
 
+void set_parameters(param_t *params, AABB_t *boundary_global, AABB_t* water_volume_global);
+
 #endif

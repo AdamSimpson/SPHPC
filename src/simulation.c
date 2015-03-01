@@ -14,72 +14,14 @@ int main(int argc, char *argv[])
     param_t params;
     AABB_t water_volume_global;
     AABB_t boundary_global;
-
     edge_t edges;
     oob_t out_of_bounds;
     fluid_particle_t *fluid_particles = NULL;
     neighbor_t *neighbors = NULL;
     bucket_t *hash = NULL;
 
-    params.rank = get_rank();
-    params.nprocs = get_num_procs();
-    params.g = 9.8;
-    params.number_steps = 2000;
-    params.time_step = 1.0/60.0;
-    params.c = 0.01;
-    params.k = 0.1;
-    // Approximate
-    params.number_fluid_particles_global = 65536*2;
+    set_parameters(&params, &boundary_global, &water_volume_global);
 
-    boundary_global.min_x = 0.0;
-    boundary_global.max_x = 100.0;
-    boundary_global.min_y = 0.0;
-    boundary_global.max_y = 80.0;
-    boundary_global.min_z = 0.0;
-    boundary_global.max_z = 30.0;
-
-    water_volume_global.min_x = 0.1;
-    water_volume_global.max_x = boundary_global.max_x - 20.0;
-    water_volume_global.min_y = 0.1;
-    water_volume_global.max_y = boundary_global.max_y - 30.0;
-    water_volume_global.min_z = 0.1;
-    water_volume_global.max_z = boundary_global.max_z - 10.0;
-
-    // Cubed volume
-    double volume = (water_volume_global.max_x - water_volume_global.min_x) * (water_volume_global.max_y - water_volume_global.min_y) * (water_volume_global.max_z - water_volume_global.min_z);
-
-    // Initial spacing between particles
-    float spacing_particle = pow(volume/params.number_fluid_particles_global,1.0/3.0);
-
-    // Let mass of each particle equal 1
-    params.rest_density = params.number_fluid_particles_global/volume;
-    printf("rest density: %f\n", params.rest_density);
-
-    // Smoothing radius, h
-    params.smoothing_radius = 2.0*spacing_particle;
-    params.dq = 0.1*params.smoothing_radius;
-
-    printf("smoothing radius: %f\n", params.smoothing_radius);
-
-    // Set initial node boundaries
-    // Equally divide water volume between all ranks
-    double water_length = (water_volume_global.max_x - water_volume_global.min_x);
-    double equal_spacing =  water_length / params.nprocs;
-    params.node_start_x = water_volume_global.min_x
-                        + params.rank * equal_spacing;
-
-    params.node_end_x   = params.node_start_x + equal_spacing;
-
-    // "Stretch" first and last ranks bounds to match boundary
-    if (params.rank == 0)
-        params.node_start_x  = boundary_global.min_x;
-    if (params.rank == params.nprocs-1)
-        params.node_end_x   = boundary_global.max_x;
-
-    // Number of steps before frame needs to be written for 30 fps
-    int steps_per_frame = (int)(1.0/(params.time_step*30.0));
-
-    // Set local/global number of particles to allocate
     setParticleNumbers(&boundary_global, &water_volume_global, &edges, &out_of_bounds, &params);
 
     allocate_fluid(&fluid_particles, &params);
@@ -101,6 +43,9 @@ int main(int argc, char *argv[])
     // Main loop
     int n;
     double start_time, end_time;
+
+    // Number of steps before frame needs to be written for 30 fps
+    int steps_per_frame = (int)(1.0/(params.time_step*30.0));
 
     MPI_Barrier(MPI_COMM_WORLD);
 
@@ -175,4 +120,64 @@ int main(int argc, char *argv[])
     MPI_Finalize();
 
     return 0;
+}
+
+void set_parameters(param_t *params, AABB_t *boundary_global, AABB_t* water_volume_global)
+{
+  params->rank = get_rank();
+  params->nprocs = get_num_procs();
+  params->g = 9.8;
+  params->number_steps = 2000;
+  params->time_step = 1.0/60.0;
+  params->c = 0.01;
+  params->k = 0.1;
+  // Approximate
+  params->number_fluid_particles_global = 65536*2;
+
+  boundary_global->min_x = 0.0;
+  boundary_global->max_x = 100.0;
+  boundary_global->min_y = 0.0;
+  boundary_global->max_y = 80.0;
+  boundary_global->min_z = 0.0;
+  boundary_global->max_z = 30.0;
+
+  water_volume_global->min_x = 0.1;
+  water_volume_global->max_x = boundary_global->max_x - 20.0;
+  water_volume_global->min_y = 0.1;
+  water_volume_global->max_y = boundary_global->max_y - 30.0;
+  water_volume_global->min_z = 0.1;
+  water_volume_global->max_z = boundary_global->max_z - 10.0;
+
+  // Cubed volume
+  double volume = (water_volume_global->max_x - water_volume_global->min_x)
+                * (water_volume_global->max_y - water_volume_global->min_y)
+                * (water_volume_global->max_z - water_volume_global->min_z);
+
+  // Initial spacing between particles
+  float spacing_particle = pow(volume/params->number_fluid_particles_global,1.0/3.0);
+
+  // Let mass of each particle equal 1
+  params->rest_density = params->number_fluid_particles_global/volume;
+  printf("rest density: %f\n", params->rest_density);
+
+  // Smoothing radius, h
+  params->smoothing_radius = 2.0*spacing_particle;
+  params->dq = 0.1*params->smoothing_radius;
+
+  printf("smoothing radius: %f\n", params->smoothing_radius);
+
+  // Set initial node boundaries
+  // Equally divide water volume between all ranks
+  double water_length = (water_volume_global->max_x - water_volume_global->min_x);
+  double equal_spacing =  water_length / params->nprocs;
+  params->node_start_x = water_volume_global->min_x
+                      + params->rank * equal_spacing;
+
+  params->node_end_x = params->node_start_x + equal_spacing;
+
+  // "Stretch" first and last ranks bounds to match boundary
+  if (params->rank == 0)
+      params->node_start_x  = boundary_global->min_x;
+  if (params->rank == params->nprocs-1)
+      params->node_end_x   = boundary_global->max_x;
 }
