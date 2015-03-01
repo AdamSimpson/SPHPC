@@ -3,6 +3,8 @@
 
 typedef struct PARAM param_t;
 
+#include "geometry.h"
+
 struct PARAM {
     double rest_density;
     double smoothing_radius;
