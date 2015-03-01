@@ -31,6 +31,9 @@ struct FLUID_PARTICLE {
     double dp_x;
     double dp_y;
     double dp_z;
+    double w_x;
+    double w_y;
+    double w_z;
     double density;
     double lambda;
     int id; // Id is 'local' index within the fluid particle pointer array

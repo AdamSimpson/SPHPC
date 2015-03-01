@@ -50,10 +50,14 @@ void vorticity_confinement(fluid_particle_t *fluid_particles, neighbor_t* neighb
     fluid_particle_t *p, *q;
     neighbor_t *n;
     double dt = params->time_step;
-    double x_diff, y_diff, z_diff, vx_diff, vy_diff, vz_diff,
-          r_mag, dw, dw_x, dw_y, dw_z, part_vort_x, part_vort_y, part_vort_z,
-          vort_x, vort_y, vort_z, eta_x, eta_y, eta_z, eta_mag, N_x, N_y, N_z;
+    double x_diff, y_diff, z_diff, vx_diff, vy_diff, vz_diff, r_mag,
+          dw, dw_x, dw_y, dw_z,
+          vort_x, vort_y, vort_z, vort_mag,
+          eta_x, eta_y, eta_z, eta_mag, N_x, N_y, N_z;
 
+    double eps = 10.0;
+
+    // Calculate vorticy at each particle
     for(i=0; i<params->number_fluid_particles_local; i++)
     {
         p = &fluid_particles[i];
@@ -61,9 +65,6 @@ void vorticity_confinement(fluid_particle_t *fluid_particles, neighbor_t* neighb
         vort_x = 0.0;
         vort_y = 0.0;
         vort_z = 0.0;
-        eta_x  = 0.0;
-        eta_y  = 0.0;
-        eta_z  = 0.0;
 
         for(j=0; j<n->number_fluid_neighbors; j++)
         {
@@ -78,41 +79,71 @@ void vorticity_confinement(fluid_particle_t *fluid_particles, neighbor_t* neighb
             vz_diff = q->v_z - p->v_z;
 
             r_mag = sqrt(x_diff*x_diff + y_diff*y_diff + z_diff*z_diff);
+            if(r_mag < 0.0001)
+              r_mag = 0.0001;
 
             dw = del_W(r_mag, params->smoothing_radius);
-            if(r_mag < 0.0001) {
-              printf("p->x_star: %f\n", p->x_star);
-              r_mag = 0.0001;
-            }
+
             dw_x = dw*x_diff/r_mag;
             dw_y = dw*y_diff/r_mag;
             dw_z = dw*z_diff/r_mag;
 
-            part_vort_x =  vy_diff*dw_z - vz_diff*dw_y;
-            part_vort_y =  vz_diff*dw_x - vx_diff*dw_z;
-            part_vort_z =  vx_diff*dw_y - vy_diff*dw_x;
-
-            vort_x += part_vort_x;
-            vort_y += part_vort_y;
-            vort_z += part_vort_z;
-
-            if(x_diff<0.0000001 || y_diff<0.0000001 || z_diff<0.0000001)
-                continue;
-
-            eta_x += fabs(part_vort_x)/x_diff;
-            eta_y += fabs(part_vort_y)/y_diff;
-            eta_z += fabs(part_vort_z)/z_diff;
+            vort_x +=  vy_diff*dw_z - vz_diff*dw_y;
+            vort_y +=  vz_diff*dw_x - vx_diff*dw_z;
+            vort_z +=  vx_diff*dw_y - vy_diff*dw_x;
         }
-        eta_mag = sqrt(eta_x*eta_x + eta_y*eta_y + eta_z*eta_z);
-        if(eta_mag<0.0000001)
-            continue;
 
-        N_x = eta_x / eta_mag;
-        N_y = eta_y / eta_mag;
-        N_z = eta_z / eta_mag;
-        p->v_x += dt * ( N_y*vort_z - N_z*vort_y);
-        p->v_y += dt * ( N_z*vort_x - N_x*vort_z);
-        p->v_z += dt * ( N_x*vort_y - N_y*vort_x);
+        p->w_x = vort_x;
+        p->w_y = vort_y;
+        p->w_z = vort_z;
+    }
+
+    // Apply vorticity confinement
+    for(i=0; i<params->number_fluid_particles_local; i++)
+    {
+        p = &fluid_particles[i];
+        n = &neighbors[i];
+        eta_x  = 0.0;
+        eta_y  = 0.0;
+        eta_z  = 0.0;
+
+        for(j=0; j<n->number_fluid_neighbors; j++)
+        {
+            q = &fluid_particles[n->neighbor_indices[j]];
+
+            x_diff = p->x_star - q->x_star;
+            y_diff = p->y_star - q->y_star;
+            z_diff = p->z_star - q->z_star;
+
+            r_mag = sqrt(x_diff*x_diff + y_diff*y_diff + z_diff*z_diff);
+            if(r_mag < 0.0001)
+              r_mag = 0.0001;
+
+            dw = del_W(r_mag, params->smoothing_radius);
+
+            dw_x = dw*x_diff/r_mag;
+            dw_y = dw*y_diff/r_mag;
+            dw_z = dw*z_diff/r_mag;
+
+            vort_mag = sqrt(q->w_x*q->w_x + q->w_y*q->w_y + q->w_z*q->w_z);
+
+            eta_x += vort_mag*dw_x;
+            eta_y += vort_mag*dw_y;
+            eta_z += vort_mag*dw_z;
+        }
+
+        eta_mag = sqrt(eta_x*eta_x + eta_y*eta_y + eta_z*eta_z);
+        if(eta_mag < 0.0001)
+          r_mag = 0.0001;
+
+        N_x = eta_x/eta_mag;
+        N_y = eta_y/eta_mag;
+        N_z = eta_z/eta_mag;
+
+        p->v_x += dt*eps * (N_y*p->w_z - N_z*p->w_y);
+        p->v_y += dt*eps * (N_z*p->w_x - N_x*p->w_z);
+        p->v_z += dt*eps * (N_x*p->w_y - N_y*p->w_x);
+
     }
 }
 
@@ -325,14 +356,13 @@ void update_dp(fluid_particle_t *fluid_particles, neighbor_t *neighbors, param_t
             z_diff = fluid_particles[i].z_star - fluid_particles[q_index].z_star;
 
             r_mag = sqrt(x_diff*x_diff + y_diff*y_diff + z_diff*z_diff);
+            if(r_mag < 0.0001)
+              r_mag = 0.0001;
+
             WdWdq = W(r_mag, h)/Wdq;
             s_corr = -k*WdWdq*WdWdq*WdWdq*WdWdq;
             dp = (fluid_particles[i].lambda + fluid_particles[q_index].lambda + s_corr)*del_W(r_mag, h);
 
-            if(r_mag < 0.0001) {
-              printf("pstar: %f, %f, %f grad: %f\n", fluid_particles[i].x_star, fluid_particles[i].y_star,fluid_particles[i].z_star, WdWdq);
-              r_mag = 0.0001;
-            }
             dp_x += dp*x_diff/r_mag;
             dp_y += dp*y_diff/r_mag;
             dp_z += dp*z_diff/r_mag;
@@ -465,6 +495,9 @@ void initParticles(fluid_particle_t *fluid_particles,
         fluid_particles[i].dp_x = 0.0;
         fluid_particles[i].dp_y = 0.0;
         fluid_particles[i].dp_z = 0.0;
+        fluid_particles[i].w_x = 0.0;
+        fluid_particles[i].w_y = 0.0;
+        fluid_particles[i].w_z = 0.0;
         fluid_particles[i].lambda = 0.0;
         fluid_particles[i].density = params->rest_density;
     }
