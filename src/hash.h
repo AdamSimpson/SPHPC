@@ -17,5 +17,6 @@ struct BUCKET {
 unsigned int hash_val(double x, double y, double z, param_t *params);
 void hash_fluid(fluid_particle_t *fluid_particles, neighbor_t *neighbors, bucket_t *hash, AABB_t *boundary, param_t *params);
 void hash_halo(fluid_particle_t *fluid_particles, neighbor_t *neighbors, bucket_t *hash, AABB_t *boundary, param_t *params);
+void allocate_hash(neighbor_t **neighbors, bucket_t **hash, AABB_t *boundary_global, param_t *params);
 
 #endif

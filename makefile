@@ -1,5 +1,5 @@
 CC=mpicc
-CFLAGS=-g -O3
+CFLAGS=-g -O3 -Wall
 LDLIBS=-lm
 
 SRC_DIR=../src

@@ -6,6 +6,18 @@
 // HACK
 fluid_particle_t *send_buffer;
 
+void allocate_communication(edge_t *edges, oob_t *out_of_bounds)
+{
+    // Allocate edge index arrays
+    edges->edge_indices_left = malloc(edges->max_edge_particles * sizeof(int));
+    edges->edge_indices_right = malloc(edges->max_edge_particles * sizeof(int));
+
+    // Allocate out of bound index arrays
+    out_of_bounds->oob_indices_left = malloc(out_of_bounds->max_oob_particles * sizeof(int));
+    out_of_bounds->oob_indices_right = malloc(out_of_bounds->max_oob_particles * sizeof(int));
+
+}
+
 void init_communication(int argc, char *argv[])
 {
     MPI_Init(&argc, &argv);
@@ -138,7 +150,6 @@ void startHaloExchange(fluid_particle_t *fluid_particles,  edge_t *edges, param_
 
 void finishHaloExchange(fluid_particle_t *fluid_particles,  edge_t *edges, param_t *params)
 {
-    int i;
     // Wait for transfer to complete
     MPI_Status statuses[4];
     MPI_Waitall(4, edges->reqs, statuses);
@@ -148,7 +159,6 @@ void finishHaloExchange(fluid_particle_t *fluid_particles,  edge_t *edges, param
     MPI_Get_count(&statuses[0], Particletype, &num_received_left);
     MPI_Get_count(&statuses[1], Particletype, &num_received_right);
 
-    int total_received = num_received_left + num_received_right;
     params->number_halo_particles_left  = num_received_left;
     params->number_halo_particles_right = num_received_right;
 
@@ -196,7 +206,6 @@ void transferOOBParticles(fluid_particle_t *fluid_particles, oob_t *out_of_bound
 
     int num_moving_left = i_left;
     int num_moving_right = i_right;
-    int total_send = num_moving_left + num_moving_right;
 
     // Setup nodes to left and right of self
     int proc_to_left =  (rank == 0 ? MPI_PROC_NULL : rank-1);
@@ -213,12 +222,10 @@ void transferOOBParticles(fluid_particle_t *fluid_particles, oob_t *out_of_bound
     MPI_Sendrecv(&num_moving_left, 1, MPI_INT, proc_to_left, tag, &num_from_right,1,MPI_INT,proc_to_right,tag,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
 
     // Allocate recieve buffers
-    int total_recv = num_from_left + num_from_right;
     fluid_particle_t *recvl_buffer = &fluid_particles[params->number_fluid_particles_local];
     fluid_particle_t *recvr_buffer = &fluid_particles[params->number_fluid_particles_local + num_from_left];
 
     MPI_Status status;
-    MPI_Request request;
 
     // Send oob particles to right processor receive oob particles from right processor
     int num_received_left = 0;

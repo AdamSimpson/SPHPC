@@ -30,6 +30,7 @@ struct OOB {
 };
 
 void init_communication(int argc, char *argv[]);
+void allocate_communication(edge_t *edges, oob_t *out_of_bounds);
 int get_rank();
 int get_num_procs();
 void createMpiTypes();

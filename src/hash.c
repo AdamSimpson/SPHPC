@@ -3,6 +3,25 @@
 #include <string.h>
 #include "hash.h"
 
+void allocate_hash(neighbor_t **neighbors, bucket_t **hash, AABB_t *boundary_global, param_t *params)
+{
+    // Allocate neighbors array
+    *neighbors = calloc(params->max_fluid_particles_local, sizeof(neighbor_t));
+    if(neighbors == NULL)
+        printf("Could not allocate neighbors\n");
+
+    // +1 added because range begins at 0
+    params->grid_size_x = ceil((boundary_global->max_x - boundary_global->min_x) / params->smoothing_radius) + 1;
+    params->grid_size_y = ceil((boundary_global->max_y - boundary_global->min_y) / params->smoothing_radius) + 1;
+    params->grid_size_z = ceil((boundary_global->max_z - boundary_global->min_z) / params->smoothing_radius) + 1;
+    unsigned int grid_size = params->grid_size_x * params->grid_size_y * params->grid_size_z;
+    params->length_hash = grid_size;
+
+    *hash = calloc(params->length_hash, sizeof(bucket_t));
+    if(hash == NULL)
+        printf("Could not allocate hash\n");
+}
+
 // Uniform grid hash
 // We don't check if the position is out of bounds so x,y,z must be valid
 unsigned int hash_val(double x, double y, double z, param_t *params)
@@ -99,7 +118,6 @@ void hash_fluid(fluid_particle_t *fluid_particles, neighbor_t *neighbors, bucket
 {
         printf("Hash fluid\n");
         int i,dx,dy,dz,n,c;
-        bool duped;
         double x,y,z, px,py,pz;
         double spacing = params->smoothing_radius;
         double h = params->smoothing_radius;

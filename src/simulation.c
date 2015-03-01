@@ -14,8 +14,12 @@ int main(int argc, char *argv[])
     param_t params;
     AABB_t water_volume_global;
     AABB_t boundary_global;
+
     edge_t edges;
     oob_t out_of_bounds;
+    fluid_particle_t *fluid_particles = NULL;
+    neighbor_t *neighbors = NULL;
+    bucket_t *hash = NULL;
 
     params.rank = get_rank();
     params.nprocs = get_num_procs();
@@ -78,41 +82,11 @@ int main(int argc, char *argv[])
     // Set local/global number of particles to allocate
     setParticleNumbers(&boundary_global, &water_volume_global, &edges, &out_of_bounds, &params);
 
-    long long total_bytes = 0;
-    size_t bytes;
-    // Allocate fluid particles array
-    bytes = params.max_fluid_particles_local * sizeof(fluid_particle_t);
-    total_bytes+=bytes;
-    fluid_particle_t *fluid_particles = calloc(params.max_fluid_particles_local, sizeof(fluid_particle_t));
-    if(fluid_particles == NULL)
-        printf("Could not allocate fluid_particles\n");
+    allocate_fluid(&fluid_particles, &params);
 
-    // Allocate neighbors array
-    neighbor_t *neighbors = calloc(params.max_fluid_particles_local, sizeof(neighbor_t));
-    total_bytes+=params.max_fluid_particles_local*sizeof(neighbor_t);
-    if(neighbors == NULL)
-        printf("Could not allocate neighbors\n");
-    /////////////////////
-    // UNIFORM GRID HASH
-    /////////////////////
-    // +1 added because range begins at 0
-    params.grid_size_x = ceil((boundary_global.max_x - boundary_global.min_x) / params.smoothing_radius) + 1;
-    params.grid_size_y = ceil((boundary_global.max_y - boundary_global.min_y) / params.smoothing_radius) + 1;
-    params.grid_size_z = ceil((boundary_global.max_z - boundary_global.min_z) / params.smoothing_radius) + 1;
-    unsigned int grid_size = params.grid_size_x * params.grid_size_y * params.grid_size_z;
-    params.length_hash = grid_size;
-    bucket_t* hash = calloc(params.length_hash, sizeof(bucket_t));
-    if(hash == NULL)
-        printf("Could not allocate hash\n");
+    allocate_hash(&neighbors, &hash, &boundary_global, &params);
 
-    // Allocate edge index arrays
-    edges.edge_indices_left = malloc(edges.max_edge_particles * sizeof(int));
-    edges.edge_indices_right = malloc(edges.max_edge_particles * sizeof(int));
-    // Allocate out of bound index arrays
-    out_of_bounds.oob_indices_left = malloc(out_of_bounds.max_oob_particles * sizeof(int));
-    out_of_bounds.oob_indices_right = malloc(out_of_bounds.max_oob_particles * sizeof(int));
-
-    printf("gigabytes allocated: %lld\n", total_bytes/1073741824);
+    allocate_communication(&edges, &out_of_bounds);
 
     // Initialize particles
     initParticles(fluid_particles, neighbors, hash, &water_volume_global, &boundary_global, &edges, &params);

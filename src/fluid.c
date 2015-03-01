@@ -469,3 +469,10 @@ void initParticles(fluid_particle_t *fluid_particles,
         fluid_particles[i].density = params->rest_density;
     }
 }
+
+void allocate_fluid(fluid_particle_t **fluid_particles, param_t *params)
+{
+    *fluid_particles = calloc(params->max_fluid_particles_local, sizeof(fluid_particle_t));
+    if(*fluid_particles == NULL)
+        printf("Could not allocate fluid_particles\n");
+}

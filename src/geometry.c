@@ -79,9 +79,6 @@ void setParticleNumbers(AABB_t *boundary_global, AABB_t *fluid_global, edge_t *e
 // Test if boundaries need to be adjusted
 void checkPartition(fluid_particle_t *fluid_particles, oob_t *out_of_bounds, param_t *params)
 {
-
-    int i;
-    fluid_particle_t *p;
     int num_rank = params->number_fluid_particles_local;
     int rank = params->rank;
     int nprocs = params->nprocs;
