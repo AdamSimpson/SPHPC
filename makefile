@@ -4,7 +4,7 @@ LDLIBS=-lm
 
 SRC_DIR=../src
 BIN_DIR=../bin
-SRC_FILES=geometry.c hash.c fileio.c communication.c fluid.c simulation.c
+SRC_FILES=geometry.c neighbors.c fileio.c communication.c fluid.c simulation.c
 OBJ_FILES=$(subst .c,.o, $(SRC_FILES))
 
 all: sph

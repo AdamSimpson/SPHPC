@@ -17,21 +17,20 @@ int main(int argc, char *argv[])
     edge_t edges;
     oob_t out_of_bounds;
     fluid_particle_t *fluid_particles = NULL;
-    neighbor_t *neighbors = NULL;
-    bucket_t *hash = NULL;
+    neighbors_t neighbors;
 
-    set_parameters(&params, &boundary_global, &water_volume_global);
+    set_parameters(&params, &neighbors, &boundary_global, &water_volume_global);
 
     setParticleNumbers(&boundary_global, &water_volume_global, &edges, &out_of_bounds, &params);
 
     allocate_fluid(&fluid_particles, &params);
 
-    allocate_hash(&neighbors, &hash, &boundary_global, &params);
+    allocate_neighbors(&neighbors, &boundary_global, &params);
 
     allocate_communication(&edges, &out_of_bounds);
 
     // Initialize particles
-    initParticles(fluid_particles, neighbors, hash, &water_volume_global, &boundary_global, &edges, &params);
+    initParticles(fluid_particles, &neighbors, &water_volume_global, &boundary_global, &edges, &params);
 
     // Print some parameters
     printf("Rank: %d, fluid_particles: %d, smoothing radius: %f \n", params.rank, params.number_fluid_particles_local, params.smoothing_radius);
@@ -68,23 +67,23 @@ int main(int argc, char *argv[])
 
         startHaloExchange(fluid_particles, &edges, &params);
 
-        hash_fluid(fluid_particles, neighbors, hash, &boundary_global, &params);
+        hash_fluid(fluid_particles, &neighbors, &boundary_global, &params);
 
         finishHaloExchange(fluid_particles, &edges, &params);
 
-        hash_halo(fluid_particles, neighbors, hash, &boundary_global, &params);
+        hash_halo(fluid_particles, &neighbors, &boundary_global, &params);
 
         int solve_iterations = 4;
         int si;
         for(si=0; si<solve_iterations; si++)
         {
-            compute_densities(fluid_particles, neighbors, &params);
+            compute_densities(fluid_particles, &neighbors, &params);
 
-            calculate_lambda(fluid_particles, neighbors, &params);
+            calculate_lambda(fluid_particles, &neighbors, &params);
 
             update_halo_lambdas(fluid_particles, &edges, &params);
 
-            update_dp(fluid_particles, neighbors, &params);
+            update_dp(fluid_particles, &neighbors, &params);
 
             update_dp_positions(fluid_particles, &boundary_global, &params);
 
@@ -93,9 +92,9 @@ int main(int argc, char *argv[])
 
         update_velocities(fluid_particles, &params);
 
-        XSPH_viscosity(fluid_particles, neighbors, &params);
+        XSPH_viscosity(fluid_particles, &neighbors, &params);
 
-        vorticity_confinement(fluid_particles, neighbors, &params);
+        vorticity_confinement(fluid_particles, &neighbors, &params);
 
         update_positions(fluid_particles, &params);
 
@@ -107,9 +106,8 @@ int main(int argc, char *argv[])
     printf("Rank %d Elapsed seconds: %f, num particles: %d\n", params.rank, end_time-start_time, params.number_fluid_particles_local);
 
     // Release memory
+    // Need to fix this to free everything correctly
     free(fluid_particles);
-    free(neighbors);
-    free(hash);
     free(edges.edge_indices_left);
     free(edges.edge_indices_right);
     free(out_of_bounds.oob_indices_left);
@@ -122,7 +120,8 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-void set_parameters(param_t *params, AABB_t *boundary_global, AABB_t* water_volume_global)
+void set_parameters(param_t *params, neighbors_t *neighbors,
+                    AABB_t *boundary_global, AABB_t* water_volume_global)
 {
   params->rank = get_rank();
   params->nprocs = get_num_procs();
@@ -180,4 +179,7 @@ void set_parameters(param_t *params, AABB_t *boundary_global, AABB_t* water_volu
       params->node_start_x  = boundary_global->min_x;
   if (params->rank == params->nprocs-1)
       params->node_end_x   = boundary_global->max_x;
+
+    neighbors->max_neighbors = 60;
+    neighbors->hash_spacing = params->smoothing_radius;
 }

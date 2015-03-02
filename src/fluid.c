@@ -44,7 +44,7 @@ double del_W(double r, double h)
 // Particle attribute computations
 ////////////////////////////////////////////////////////////////////////////
 
-void vorticity_confinement(fluid_particle_t *fluid_particles, neighbor_t* neighbors, param_t *params)
+void vorticity_confinement(fluid_particle_t *fluid_particles, neighbors_t* neighbors, param_t *params)
 {
     int i,j;
     fluid_particle_t *p, *q;
@@ -61,7 +61,7 @@ void vorticity_confinement(fluid_particle_t *fluid_particles, neighbor_t* neighb
     for(i=0; i<params->number_fluid_particles_local; i++)
     {
         p = &fluid_particles[i];
-        n = &neighbors[i];
+        n = &neighbors->particle_neighbors[i];
         vort_x = 0.0;
         vort_y = 0.0;
         vort_z = 0.0;
@@ -102,7 +102,7 @@ void vorticity_confinement(fluid_particle_t *fluid_particles, neighbor_t* neighb
     for(i=0; i<params->number_fluid_particles_local; i++)
     {
         p = &fluid_particles[i];
-        n = &neighbors[i];
+        n = &neighbors->particle_neighbors[i];
         eta_x  = 0.0;
         eta_y  = 0.0;
         eta_z  = 0.0;
@@ -147,7 +147,7 @@ void vorticity_confinement(fluid_particle_t *fluid_particles, neighbor_t* neighb
     }
 }
 
-void XSPH_viscosity(fluid_particle_t *fluid_particles, neighbor_t* neighbors, param_t *params)
+void XSPH_viscosity(fluid_particle_t *fluid_particles, neighbors_t* neighbors, param_t *params)
 {
     int i,j;
     unsigned int q_index;
@@ -159,7 +159,7 @@ void XSPH_viscosity(fluid_particle_t *fluid_particles, neighbor_t* neighbors, pa
 
     for(i=0; i<params->number_fluid_particles_local; i++)
     {
-        n = &neighbors[i];
+        n = &neighbors->particle_neighbors[i];
 
         double partial_sum_x = 0.0;
         double partial_sum_y = 0.0;
@@ -196,7 +196,7 @@ void XSPH_viscosity(fluid_particle_t *fluid_particles, neighbor_t* neighbors, pa
     }
 }
 
-void compute_densities(fluid_particle_t *fluid_particles, neighbor_t *neighbors, param_t *params)
+void compute_densities(fluid_particle_t *fluid_particles, neighbors_t *neighbors, param_t *params)
 {
     int i,j;
     unsigned int q_index;
@@ -205,7 +205,7 @@ void compute_densities(fluid_particle_t *fluid_particles, neighbor_t *neighbors,
 
     for(i=0; i<params->number_fluid_particles_local; i++)
     {
-        n = &neighbors[i];
+        n = &neighbors->particle_neighbors[i];
 
         double x_diff, y_diff, z_diff, r_mag, density;
 
@@ -267,7 +267,7 @@ void update_positions(fluid_particle_t *fluid_particles, param_t *params)
     }
 }
 
-void calculate_lambda(fluid_particle_t *fluid_particles, neighbor_t *neighbors, param_t *params)
+void calculate_lambda(fluid_particle_t *fluid_particles, neighbors_t *neighbors, param_t *params)
 {
     int i,j;
     unsigned int q_index;
@@ -275,7 +275,7 @@ void calculate_lambda(fluid_particle_t *fluid_particles, neighbor_t *neighbors, 
 
     for(i=0; i<params->number_fluid_particles_local; i++)
     {
-        n = &neighbors[i];
+        n = &neighbors->particle_neighbors[i];
 
         double Ci = fluid_particles[i].density/params->rest_density - 1.0;
 
@@ -327,7 +327,7 @@ void calculate_lambda(fluid_particle_t *fluid_particles, neighbor_t *neighbors, 
     }
 }
 
-void update_dp(fluid_particle_t *fluid_particles, neighbor_t *neighbors, param_t *params)
+void update_dp(fluid_particle_t *fluid_particles, neighbors_t *neighbors, param_t *params)
 {
     unsigned int q_index;
     neighbor_t *n;
@@ -340,7 +340,7 @@ void update_dp(fluid_particle_t *fluid_particles, neighbor_t *neighbors, param_t
     int i,j;
     for(i=0; i<params->number_fluid_particles_local; i++)
     {
-        n = &neighbors[i];
+        n = &neighbors->particle_neighbors[i];
 
         double dp_x = 0.0;
         double dp_y = 0.0;
@@ -476,7 +476,7 @@ void boundary_conditions(fluid_particle_t *fluid_particles, unsigned int i, AABB
 
 // Initialize particles
 void initParticles(fluid_particle_t *fluid_particles,
-                neighbor_t *neighbors, bucket_t *hash, AABB_t* water,
+                neighbors_t *neighbors, AABB_t* water,
                 AABB_t* boundary_global, edge_t *edges, param_t* params)
 {
     int i;
