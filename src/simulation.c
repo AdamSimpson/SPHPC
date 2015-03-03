@@ -129,7 +129,7 @@ void set_parameters(param_t *params, neighbors_t *neighbors,
   params->number_steps = 2000;
   params->time_step = 1.0/60.0;
   params->c = 0.01;
-  params->k = 0.1;
+  params->k = 0.05;
   // Approximate
   params->number_fluid_particles_global = 65536*2;
 

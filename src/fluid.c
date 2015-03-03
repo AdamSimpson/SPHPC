@@ -55,7 +55,7 @@ void vorticity_confinement(fluid_particle_t *fluid_particles, neighbors_t* neigh
           vort_x, vort_y, vort_z, vort_mag,
           eta_x, eta_y, eta_z, eta_mag, N_x, N_y, N_z;
 
-    double eps = 10.0;
+    double eps = 5.0;
 
     // Calculate vorticy at each particle
     for(i=0; i<params->number_fluid_particles_local; i++)
