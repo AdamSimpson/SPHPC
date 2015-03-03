@@ -89,7 +89,7 @@ void hash_halo(fluid_particle_t *fluid_particles, neighbors_t *neighbors, AABB_t
                               continue;
 
                           // Get neighbor ne for particle q
-                          ne = &neighbors[q->id];
+                          ne = &neighbors->particle_neighbors[q->id];
                           // Make sure not to add duplicate neighbors
                           duped = false;
                           for (dupes=0; dupes < ne->number_fluid_neighbors; dupes++) {
