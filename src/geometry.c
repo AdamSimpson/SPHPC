@@ -1,8 +1,7 @@
 #include <stdio.h>
 #include "geometry.h"
 
-void constructFluidVolume(fluid_particle_t *fluid_particles, AABB_t* fluid,
-                          edge_t *edges, param_t *params)
+void constructFluidVolume(fluid_particle_t *fluid_particles, AABB_t* fluid, param_t *params)
 {
     double spacing, x, y, z, min_x, max_x;
     int num_x, num_y, num_z, nx, ny, nz;
@@ -46,13 +45,14 @@ void constructFluidVolume(fluid_particle_t *fluid_particles, AABB_t* fluid,
 }
 
 // Sets upper bound on number of particles, used for memory allocation
-void setParticleNumbers(AABB_t *boundary_global, AABB_t *fluid_global, edge_t *edges,
-                        oob_t *out_of_bounds, param_t *params)
+void setParticleNumbers(AABB_t *boundary_global, AABB_t *fluid_global, communication_t *communication, param_t *params)
 {
     int num_x;
     int num_y;
     int num_z;
     double spacing = params->smoothing_radius/2.0;
+    edge_t *edges = &communication->edges;
+    oob_t  *out_of_bounds = &communication->out_of_bounds;
 
     // Set fluid local
     num_x = floor((fluid_global->max_x - fluid_global->min_x ) / spacing);
@@ -77,7 +77,7 @@ void setParticleNumbers(AABB_t *boundary_global, AABB_t *fluid_global, edge_t *e
 }
 
 // Test if boundaries need to be adjusted
-void checkPartition(fluid_particle_t *fluid_particles, oob_t *out_of_bounds, param_t *params)
+void checkPartition(fluid_particle_t *fluid_particles, param_t *params)
 {
     int num_rank = params->number_fluid_particles_local;
     int rank = params->rank;

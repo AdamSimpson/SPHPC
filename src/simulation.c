@@ -14,23 +14,22 @@ int main(int argc, char *argv[])
     param_t params;
     AABB_t water_volume_global;
     AABB_t boundary_global;
-    edge_t edges;
-    oob_t out_of_bounds;
+    communication_t communication;
     fluid_particle_t *fluid_particles = NULL;
     neighbors_t neighbors;
 
     set_parameters(&params, &neighbors, &boundary_global, &water_volume_global);
 
-    setParticleNumbers(&boundary_global, &water_volume_global, &edges, &out_of_bounds, &params);
+    setParticleNumbers(&boundary_global, &water_volume_global, &communication, &params);
 
     allocate_fluid(&fluid_particles, &params);
 
     allocate_neighbors(&neighbors, &boundary_global, &params);
 
-    allocate_communication(&edges, &out_of_bounds);
+    allocate_communication(&communication);
 
     // Initialize particles
-    initParticles(fluid_particles, &neighbors, &water_volume_global, &boundary_global, &edges, &params);
+    initParticles(fluid_particles, &neighbors, &water_volume_global, &boundary_global, &params);
 
     // Print some parameters
     printf("Rank: %d, fluid_particles: %d, smoothing radius: %f \n", params.rank, params.number_fluid_particles_local, params.smoothing_radius);
@@ -60,16 +59,16 @@ int main(int argc, char *argv[])
 
         // Check boundary partitions
         if (n % 10 == 0)
-            checkPartition(fluid_particles, &out_of_bounds, &params);
+            checkPartition(fluid_particles, &params);
 
         // Identify out of bounds particles and send them to appropriate rank
-        identify_oob_particles(fluid_particles, &out_of_bounds, &params);
+        identify_oob_particles(fluid_particles, &communication, &params);
 
-        startHaloExchange(fluid_particles, &edges, &params);
+        startHaloExchange(&communication, fluid_particles, &params);
 
         hash_fluid(fluid_particles, &neighbors, &boundary_global, &params);
 
-        finishHaloExchange(fluid_particles, &edges, &params);
+        finishHaloExchange(&communication, fluid_particles, &params);
 
         hash_halo(fluid_particles, &neighbors, &boundary_global, &params);
 
@@ -81,13 +80,13 @@ int main(int argc, char *argv[])
 
             calculate_lambda(fluid_particles, &neighbors, &params);
 
-            update_halo_lambdas(fluid_particles, &edges, &params);
+            update_halo_lambdas(&communication, fluid_particles, &params);
 
             update_dp(fluid_particles, &neighbors, &params);
 
             update_dp_positions(fluid_particles, &boundary_global, &params);
 
-            update_halo_positions(fluid_particles, &edges, &params);
+            update_halo_positions(&communication, fluid_particles, &params);
         }
 
         update_velocities(fluid_particles, &params);
@@ -108,10 +107,6 @@ int main(int argc, char *argv[])
     // Release memory
     // Need to fix this to free everything correctly
     free(fluid_particles);
-    free(edges.edge_indices_left);
-    free(edges.edge_indices_right);
-    free(out_of_bounds.oob_indices_left);
-    free(out_of_bounds.oob_indices_right);
 
     // Close MPI
     freeMpiTypes();

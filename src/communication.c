@@ -6,16 +6,23 @@
 // HACK
 fluid_particle_t *send_buffer;
 
-void allocate_communication(edge_t *edges, oob_t *out_of_bounds)
+void allocate_communication(communication_t *communication)
 {
     // Allocate edge index arrays
-    edges->edge_indices_left = malloc(edges->max_edge_particles * sizeof(int));
-    edges->edge_indices_right = malloc(edges->max_edge_particles * sizeof(int));
+    communication->edges.edge_indices_left = malloc(communication->edges.max_edge_particles * sizeof(int));
+    communication->edges.edge_indices_right = malloc(communication->edges.max_edge_particles * sizeof(int));
 
     // Allocate out of bound index arrays
-    out_of_bounds->oob_indices_left = malloc(out_of_bounds->max_oob_particles * sizeof(int));
-    out_of_bounds->oob_indices_right = malloc(out_of_bounds->max_oob_particles * sizeof(int));
+    communication->out_of_bounds.oob_indices_left = malloc(communication->out_of_bounds.max_oob_particles * sizeof(int));
+    communication->out_of_bounds.oob_indices_right = malloc(communication->out_of_bounds.max_oob_particles * sizeof(int));
 
+    // Allocate send and receive buffers
+    int num_components=3;
+    unsigned int max_particles = max(communication->out_of_bounds.max_oob_particles,
+                                     communication->edges.max_edge_particles);
+    communication->particle_send_buffer = malloc(max_particles*sizeof(fluid_particle_t));
+    communication->halo_components_send_buffer = malloc(max_particles*num_components*sizeof(double));
+    communication->halo_components_recv_buffer = malloc(max_particles*num_components*sizeof(double));
 }
 
 void init_communication(int argc, char *argv[])
@@ -77,11 +84,12 @@ void freeMpiTypes()
     MPI_Type_free(&Particletype);
 }
 
-void startHaloExchange(fluid_particle_t *fluid_particles,  edge_t *edges, param_t *params)
+void startHaloExchange(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params)
 {
     int i;
     int rank = params->rank;
     int nprocs = params->nprocs;
+    edge_t *edges = &communication->edges;
 
     fluid_particle_t *p;
     double h = params->smoothing_radius;
@@ -115,11 +123,9 @@ void startHaloExchange(fluid_particle_t *fluid_particles,  edge_t *edges, param_
     tag = 8425;
     MPI_Sendrecv(&num_moving_left, 1, MPI_INT, proc_to_left, tag, &num_from_right,1,MPI_INT,proc_to_right,tag,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
 
-    // Allocate send buffers
-    int total_send = num_moving_left + num_moving_right;
-    send_buffer = malloc(total_send*sizeof(fluid_particle_t));
-    fluid_particle_t *sendl_buffer = send_buffer;
-    fluid_particle_t *sendr_buffer = send_buffer + num_moving_left;
+    // Set send buffer points
+    fluid_particle_t *sendl_buffer = communication->particle_send_buffer;
+    fluid_particle_t *sendr_buffer = sendl_buffer + num_moving_left;
 
     // Pack send buffers
     for(i=0; i<edges->number_edge_particles_left; i++)
@@ -142,19 +148,13 @@ void startHaloExchange(fluid_particle_t *fluid_particles,  edge_t *edges, param_
     MPI_Isend(sendr_buffer, num_moving_right, Particletype, proc_to_right, tagl, MPI_COMM_WORLD, &edges->reqs[2]);
     // Send halo to left rank
     MPI_Isend(sendl_buffer, num_moving_left, Particletype, proc_to_left, tagr, MPI_COMM_WORLD, &edges->reqs[3]);
-
-    // Free allocated arays
-    // Can't free send_buffer until finish halo exchange!!!!
-    //!!!!
-    // MEMORY LEAK HERE WITHOUT FREE, NEED TO FIX
-    printf("MEMORY LEAK IN START HALO\n\n");
 }
 
-void finishHaloExchange(fluid_particle_t *fluid_particles,  edge_t *edges, param_t *params)
+void finishHaloExchange(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params)
 {
     // Wait for transfer to complete
     MPI_Status statuses[4];
-    MPI_Waitall(4, edges->reqs, statuses);
+    MPI_Waitall(4, communication->edges.reqs, statuses);
 
     int num_received_right = 0;
     int num_received_left = 0;
@@ -164,13 +164,11 @@ void finishHaloExchange(fluid_particle_t *fluid_particles,  edge_t *edges, param
     params->number_halo_particles_left  = num_received_left;
     params->number_halo_particles_right = num_received_right;
 
-    free(send_buffer);
-
     printf("rank %d, halo: recv %d from left, %d from right\n", params->rank,num_received_left,num_received_right);
 }
 
 // Transfer particles that are out of node bounds
-void transferOOBParticles(fluid_particle_t *fluid_particles, oob_t *out_of_bounds, param_t *params)
+void transferOOBParticles(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params)
 {
     int i;
     fluid_particle_t *p;
@@ -180,12 +178,11 @@ void transferOOBParticles(fluid_particle_t *fluid_particles, oob_t *out_of_bound
     int i_left = 0;
     int i_right = 0;
 
-    // Allocate send buffers
-    printf("HACK MAX SEND NUMBER FOR NOW\n");
-    int max_send = 50000;
-    /*fluid_particle_t **/send_buffer = malloc(max_send*sizeof(fluid_particle_t));
-    fluid_particle_t *sendl_buffer = send_buffer;
-    fluid_particle_t *sendr_buffer = send_buffer + max_send/2;
+    oob_t *oob = &communication->out_of_bounds;
+
+    // Set send buffers
+    fluid_particle_t *sendl_buffer = communication->particle_send_buffer;
+    fluid_particle_t *sendr_buffer = send_buffer + oob->max_oob_particles/2;
 
     for(i=0; i<params->number_fluid_particles_local; i++) {
         p = &fluid_particles[i];
@@ -263,29 +260,29 @@ void transferOOBParticles(fluid_particle_t *fluid_particles, oob_t *out_of_bound
     free(send_buffer);
 }
 
-void update_halo_lambdas(fluid_particle_t *fluid_particles,  edge_t *edges, param_t *params)
+void update_halo_lambdas(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params)
 {
     int i;
     fluid_particle_t *p;
+    edge_t *edges = &communication->edges;
 
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     int nprocs;
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 
-    int num_moving_left = edges->number_edge_particles_left;
+    int num_moving_left  = edges->number_edge_particles_left;
     int num_moving_right = edges->number_edge_particles_right;
 
-    int num_from_left = params->number_halo_particles_left;
+    int num_from_left  = params->number_halo_particles_left;
     int num_from_right = params->number_halo_particles_right;
 
     // Allocate send/recv buffers
-    // Could combine left/right into single malloc...
-    double *send_lambdas_left = malloc(sizeof(double)*num_moving_left);
-    double *send_lambdas_right = malloc(sizeof(double)*num_moving_right);
+    double *send_lambdas_left  = communication->halo_components_send_buffer;
+    double *send_lambdas_right = send_lambdas_left + num_moving_left;
 
-    double *recv_lambdas_left = malloc(sizeof(double)*num_from_left);
-    double *recv_lambdas_right = malloc(sizeof(double)*num_from_right);
+    double *recv_lambdas_left  = communication->halo_components_recv_buffer;
+    double *recv_lambdas_right = recv_lambdas_left + num_from_left;
 
     // Pack local halo lambdas
     for(i=0; i<num_moving_left; i++) {
@@ -323,18 +320,13 @@ void update_halo_lambdas(fluid_particle_t *fluid_particles,  edge_t *edges, para
         p = &fluid_particles[ params->number_fluid_particles_local + num_from_left + i];
         p->lambda = recv_lambdas_right[i];
     }
-
-    // Cleanup memory
-    free(send_lambdas_left);
-    free(send_lambdas_right);
-    free(recv_lambdas_left);
-    free(recv_lambdas_right);
 }
 
-void update_halo_positions(fluid_particle_t *fluid_particles,  edge_t *edges, param_t *params)
+void update_halo_positions(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params)
 {
     int i;
     fluid_particle_t *p;
+    edge_t *edges = &communication->edges;
 
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -351,11 +343,11 @@ void update_halo_positions(fluid_particle_t *fluid_particles,  edge_t *edges, pa
 
     // Allocate send/recv buffers
     // Could combine left/right into single malloc...
-    double *send_positions_left = malloc(sizeof(double)*num_moving_left);
-    double *send_positions_right = malloc(sizeof(double)*num_moving_right);
+    double *send_positions_left = communication->halo_components_send_buffer;
+    double *send_positions_right = send_positions_left + num_moving_left;
 
-    double *recv_positions_left = malloc(sizeof(double)*num_from_left);
-    double *recv_positions_right = malloc(sizeof(double)*num_from_right);
+    double *recv_positions_left = communication->halo_components_recv_buffer;
+    double *recv_positions_right = recv_positions_left + num_from_left;
 
     // Pack local edge positions
     for(i=0; i<num_moving_left; i+=3) {
@@ -401,10 +393,4 @@ void update_halo_positions(fluid_particle_t *fluid_particles,  edge_t *edges, pa
         p->y_star = recv_positions_right[i+1];
         p->z_star = recv_positions_right[i+2];
     }
-
-    // Cleanup memory
-    free(send_positions_left);
-    free(send_positions_right);
-    free(recv_positions_left);
-    free(recv_positions_right);
 }

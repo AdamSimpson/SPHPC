@@ -374,9 +374,10 @@ void update_dp(fluid_particle_t *fluid_particles, neighbors_t *neighbors, param_
 }
 
 // Identify out of bounds particles and send them to appropriate rank
-void identify_oob_particles(fluid_particle_t *fluid_particles, oob_t *out_of_bounds, param_t *params)
+void identify_oob_particles(fluid_particle_t *fluid_particles, communication_t *communication, param_t *params)
 {
     int i;
+    oob_t *out_of_bounds = &communication->out_of_bounds;
 
     // Reset OOB numbers
     out_of_bounds->number_oob_particles_left = 0;
@@ -391,7 +392,7 @@ void identify_oob_particles(fluid_particle_t *fluid_particles, oob_t *out_of_bou
     }
 
    // Transfer particles that have left the processor bounds
-   transferOOBParticles(fluid_particles, out_of_bounds, params);
+   transferOOBParticles(communication, fluid_particles, params);
 }
 
 // Predict position
@@ -477,12 +478,12 @@ void boundary_conditions(fluid_particle_t *fluid_particles, unsigned int i, AABB
 // Initialize particles
 void initParticles(fluid_particle_t *fluid_particles,
                 neighbors_t *neighbors, AABB_t* water,
-                AABB_t* boundary_global, edge_t *edges, param_t* params)
+                AABB_t* boundary_global, param_t* params)
 {
     int i;
 
     // Create fluid volume
-    constructFluidVolume(fluid_particles, water, edges, params);
+    constructFluidVolume(fluid_particles, water, params);
 
     // Initialize particle values
     for(i=0; i<params->number_fluid_particles_local; i++) {

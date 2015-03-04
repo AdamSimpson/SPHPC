@@ -3,6 +3,7 @@
 
 typedef struct EDGES edge_t;
 typedef struct OOB oob_t;
+typedef struct COMMUNICATION communication_t;
 
 #include "fluid.h"
 #include "mpi.h"
@@ -29,17 +30,25 @@ struct OOB {
     int number_oob_particles_right;
 };
 
+struct COMMUNICATION {
+    edge_t edges;
+    oob_t out_of_bounds;
+    fluid_particle_t *particle_send_buffer;
+    double *halo_components_send_buffer;
+    double *halo_components_recv_buffer;
+};
+
 void init_communication(int argc, char *argv[]);
-void allocate_communication(edge_t *edges, oob_t *out_of_bounds);
+void allocate_communication(communication_t *communication);
 int get_rank();
 int get_num_procs();
 void createMpiTypes();
 void freeMpiTypes();
-void transferHalos(fluid_particle_t *fluid_particles, edge_t *edges, param_t *params);
-void transferOOBParticles(fluid_particle_t *fluid_particles, oob_t *out_of_bounds, param_t *params);
-void startHaloExchange(fluid_particle_t *fluid_particles, edge_t *edges, param_t *params);
-void finishHaloExchange(fluid_particle_t *fluid_particles, edge_t *edges, param_t *params);
-void update_halo_lambdas(fluid_particle_t *fluid_particles,  edge_t *edges, param_t *params);
-void update_halo_positions(fluid_particle_t *fluid_particles,  edge_t *edges, param_t *params);
+void transferHalos(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params);
+void transferOOBParticles(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params);
+void startHaloExchange(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params);
+void finishHaloExchange(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params);
+void update_halo_lambdas(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params);
+void update_halo_positions(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params);
 
 #endif

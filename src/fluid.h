@@ -51,7 +51,7 @@ void update_dp_positions(fluid_particle_t *fluid_particles, AABB_t *boundary_glo
 void update_positions(fluid_particle_t *fluid_particles, param_t *params);
 void calculate_lambda(fluid_particle_t *fluid_particles, neighbors_t *neighbors_grid, param_t *params);
 void update_dp(fluid_particle_t *fluid_particles, neighbors_t *neighbors_grid, param_t *params);
-void identify_oob_particles(fluid_particle_t *fluid_particles, oob_t *out_of_bounds, param_t *params);
+void identify_oob_particles(fluid_particle_t *fluid_particles, communication_t *communication, param_t *params);
 void predict_positions(fluid_particle_t *fluid_particles, AABB_t *boundary_global, param_t *params);
 void check_velocity(double *v_x, double *v_y, double *v_z);
 void update_velocities(fluid_particle_t *fluid_particles, param_t *params);
@@ -59,7 +59,7 @@ void boundary_conditions(fluid_particle_t *fluid_particles, unsigned int i, AABB
 void allocate_fluid(fluid_particle_t **fluid_particles, param_t *params);
 void initParticles(fluid_particle_t *fluid_particles,
                 neighbors_t *neighbors, AABB_t* water, AABB_t* boundary_global,
-                edge_t *edges, param_t* params);
+                param_t* params);
 
 
 #endif
