@@ -15,8 +15,11 @@ void allocate_communication(communication_t *communication)
 
     // Allocate send and receive buffers
     int num_components=3;
-    unsigned int max_particles = max(communication->out_of_bounds.max_oob_particles,
-                                     communication->edges.max_edge_particles);
+//    unsigned int max_particles = max(communication->out_of_bounds.max_oob_particles,
+//                                     communication->edges.max_edge_particles);
+    unsigned int max_particles = communication->out_of_bounds.max_oob_particles;
+
+    printf("max_particles: %d\n", max_particles);
     communication->particle_send_buffer = malloc(max_particles*sizeof(fluid_particle_t));
     communication->halo_components_send_buffer = malloc(max_particles*num_components*sizeof(double));
     communication->halo_components_recv_buffer = malloc(max_particles*num_components*sizeof(double));
@@ -120,6 +123,8 @@ void startHaloExchange(communication_t *communication, fluid_particle_t *fluid_p
     tag = 8425;
     MPI_Sendrecv(&num_moving_left, 1, MPI_INT, proc_to_left, tag, &num_from_right,1,MPI_INT,proc_to_right,tag,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
 
+    printf("total moving: %d\n", num_moving_right + num_moving_left);
+
     // Set send buffer points
     fluid_particle_t *sendl_buffer = communication->particle_send_buffer;
     fluid_particle_t *sendr_buffer = sendl_buffer + num_moving_left;
@@ -179,7 +184,7 @@ void transferOOBParticles(communication_t *communication, fluid_particle_t *flui
 
     // Set send buffers
     fluid_particle_t *sendl_buffer = communication->particle_send_buffer;
-    fluid_particle_t *sendr_buffer = sendl_buffer + oob->max_oob_particles/2;
+    fluid_particle_t *sendr_buffer = sendl_buffer + oob->max_oob_particles;
 
     for(i=0; i<params->number_fluid_particles_local; i++) {
         p = &fluid_particles[i];

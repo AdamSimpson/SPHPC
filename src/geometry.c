@@ -54,19 +54,19 @@ void setParticleNumbers(AABB_t *boundary_global, AABB_t *fluid_global, communica
     edge_t *edges = &communication->edges;
     oob_t  *out_of_bounds = &communication->out_of_bounds;
 
-    // Set fluid local
-    num_x = floor((fluid_global->max_x - fluid_global->min_x ) / spacing);
-    num_y = floor((fluid_global->max_y - fluid_global->min_y ) / spacing);
-    num_z = floor((fluid_global->max_z - fluid_global->min_z ) / spacing);
+    // Get some baseline numbers usefull to define maximum particle numbers
+    num_x = floor((boundary_global->max_x - boundary_global->min_x ) / spacing);
+    num_y = floor((boundary_global->max_y - boundary_global->min_y ) / spacing);
+    num_z = floor((boundary_global->max_z - boundary_global->min_z ) / spacing);
 
-    // Maximum edge particles is a set to 4 particle width y-z plane slab
+    // Maximum edge particles is a set to 8 particle width y-z plane slab
     edges->max_edge_particles = 4 * num_y*num_z;
     out_of_bounds->max_oob_particles = 4 * num_y*num_z;
 
     // Initial fluid particles
     int num_initial = num_x * num_y * num_z;
     // Don't think this is needed anymore
-    int num_extra = num_initial/5;
+    int num_extra = 0;//num_initial/5;
 
     // Add initial space, extra space for particle transfers, and left/right out of bounds/halo particles
     params->max_fluid_particles_local = num_initial + num_extra
@@ -75,8 +75,8 @@ void setParticleNumbers(AABB_t *boundary_global, AABB_t *fluid_global, communica
 
     printf("initial number of particles %d\n", num_initial);
     printf("Max fluid particles local: %d\n", params->max_fluid_particles_local);
-    printf("max oob: %d\n", 4*num_y*num_x);
-    printf("max edge: %d\n", 4*num_y*num_x);
+    printf("max oob: %d\n", 4*num_y*num_z);
+    printf("max edge: %d\n", 4*num_y*num_z);
 }
 
 // Test if boundaries need to be adjusted
