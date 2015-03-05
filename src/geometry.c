@@ -65,15 +65,18 @@ void setParticleNumbers(AABB_t *boundary_global, AABB_t *fluid_global, communica
 
     // Initial fluid particles
     int num_initial = num_x * num_y * num_z;
+    // Don't think this is needed anymore
     int num_extra = num_initial/5;
 
-    // Add initial space, extra space for particle transfers, and left/right out of boudns/halo particles
+    // Add initial space, extra space for particle transfers, and left/right out of bounds/halo particles
     params->max_fluid_particles_local = num_initial + num_extra
                                       + 2*out_of_bounds->max_oob_particles
                                       + 2*edges->max_edge_particles;
 
     printf("initial number of particles %d\n", num_initial);
     printf("Max fluid particles local: %d\n", params->max_fluid_particles_local);
+    printf("max oob: %d\n", 4*num_y*num_x);
+    printf("max edge: %d\n", 4*num_y*num_x);
 }
 
 // Test if boundaries need to be adjusted
