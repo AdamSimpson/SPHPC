@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "geometry.h"
+#include "communication.h"
 
 void constructFluidVolume(fluid_particle_t *fluid_particles, AABB_t* fluid, param_t *params)
 {
@@ -45,38 +46,29 @@ void constructFluidVolume(fluid_particle_t *fluid_particles, AABB_t* fluid, para
 }
 
 // Sets upper bound on number of particles, used for memory allocation
-void setParticleNumbers(AABB_t *boundary_global, AABB_t *fluid_global, communication_t *communication, param_t *params)
+void setParticleNumbers(AABB_t *fluid_global, communication_t *communication, param_t *params)
 {
     int num_x;
     int num_y;
     int num_z;
     double spacing = params->smoothing_radius/2.0;
-    edge_t *edges = &communication->edges;
-    oob_t  *out_of_bounds = &communication->out_of_bounds;
 
-    // Get some baseline numbers usefull to define maximum particle numbers
-    num_x = floor((boundary_global->max_x - boundary_global->min_x ) / spacing);
-    num_y = floor((boundary_global->max_y - boundary_global->min_y ) / spacing);
-    num_z = floor((boundary_global->max_z - boundary_global->min_z ) / spacing);
+    // Get some baseline numbers useful to define maximum particle numbers
+    num_x = floor((fluid_global->max_x - fluid_global->min_x ) / spacing);
+    num_y = floor((fluid_global->max_y - fluid_global->min_y ) / spacing);
+    num_z = floor((fluid_global->max_z - fluid_global->min_z ) / spacing);
 
-    // Maximum edge particles is a set to 8 particle width y-z plane slab
-    edges->max_edge_particles = 4 * num_y*num_z;
-    out_of_bounds->max_oob_particles = 4 * num_y*num_z;
+    // Initial fluid particles per rank
+    int num_initial = (num_x * num_y * num_z)/get_num_procs();
 
-    // Initial fluid particles
-    int num_initial = num_x * num_y * num_z;
-    // Don't think this is needed anymore
-    int num_extra = 0;//num_initial/5;
+    // Set max communication particles to a 10th of node start number
+    communication->max_comm_particles = num_initial/10;
 
-    // Add initial space, extra space for particle transfers, and left/right out of bounds/halo particles
-    params->max_fluid_particles_local = num_initial + num_extra
-                                      + 2*out_of_bounds->max_oob_particles
-                                      + 2*edges->max_edge_particles;
+    // Add initial space and left/right out of bounds/halo particles
+    params->max_fluid_particles_local = num_initial + 4*communication->max_comm_particles;
 
     printf("initial number of particles %d\n", num_initial);
     printf("Max fluid particles local: %d\n", params->max_fluid_particles_local);
-    printf("max oob: %d\n", 4*num_y*num_z);
-    printf("max edge: %d\n", 4*num_y*num_z);
 }
 
 // Test if boundaries need to be adjusted

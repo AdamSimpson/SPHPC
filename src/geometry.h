@@ -21,7 +21,7 @@ double max(double a, double b);
 int sgn(double x);
 void constructFluidVolume(fluid_particle_t *fluid_particles, AABB_t* fluid,
                           param_t *params);
-void setParticleNumbers(AABB_t *boundary_global, AABB_t *fluid_global,
+void setParticleNumbers(AABB_t *fluid_global,
                        communication_t *communications, param_t *params);
 void partitionProblem(AABB_t *boundary_global, AABB_t *fluid_global,
                       int *x_start, int *number_particles_x, param_t *params);

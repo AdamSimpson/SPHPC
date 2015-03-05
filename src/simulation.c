@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
 
     set_parameters(&params, &neighbors, &boundary_global, &water_volume_global);
 
-    setParticleNumbers(&boundary_global, &water_volume_global, &communication, &params);
+    setParticleNumbers(&water_volume_global, &communication, &params);
 
     allocate_fluid(&fluid_particles, &params);
 

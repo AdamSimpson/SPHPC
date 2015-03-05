@@ -5,24 +5,24 @@
 
 void allocate_communication(communication_t *communication)
 {
-    // Allocate edge index arrays
-    communication->edges.edge_indices_left  = malloc(communication->edges.max_edge_particles * sizeof(int));
-    communication->edges.edge_indices_right = malloc(communication->edges.max_edge_particles * sizeof(int));
+    // Allocate index arrays
+    size_t index_bytes = communication->max_comm_particles*sizeof(int);
 
-    // Allocate out of bound index arrays
-    communication->out_of_bounds.oob_indices_left = malloc(communication->out_of_bounds.max_oob_particles * sizeof(int));
-    communication->out_of_bounds.oob_indices_right = malloc(communication->out_of_bounds.max_oob_particles * sizeof(int));
+    communication->edges.edge_indices_left  = malloc(index_bytes);
+    communication->edges.edge_indices_right = malloc(index_bytes);
+
+    communication->out_of_bounds.oob_indices_left = malloc(index_bytes);
+    communication->out_of_bounds.oob_indices_right = malloc(index_bytes);
 
     // Allocate send and receive buffers
     int num_components=3;
-//    unsigned int max_particles = max(communication->out_of_bounds.max_oob_particles,
-//                                     communication->edges.max_edge_particles);
-    unsigned int max_particles = communication->out_of_bounds.max_oob_particles;
+    size_t particle_bytes = communication->max_comm_particles*sizeof(fluid_particle_t);
+    size_t component_bytes = num_components*communication->max_comm_particles*sizeof(double);
 
-    printf("max_particles: %d\n", max_particles);
-    communication->particle_send_buffer = malloc(max_particles*sizeof(fluid_particle_t));
-    communication->halo_components_send_buffer = malloc(max_particles*num_components*sizeof(double));
-    communication->halo_components_recv_buffer = malloc(max_particles*num_components*sizeof(double));
+    communication->particle_send_buffer = malloc(particle_bytes);
+
+    communication->halo_components_send_buffer = malloc(component_bytes);
+    communication->halo_components_recv_buffer = malloc(component_bytes);
 }
 
 void init_communication(int argc, char *argv[])
@@ -180,11 +180,9 @@ void transferOOBParticles(communication_t *communication, fluid_particle_t *flui
     int i_left = 0;
     int i_right = 0;
 
-    oob_t *oob = &communication->out_of_bounds;
-
     // Set send buffers
     fluid_particle_t *sendl_buffer = communication->particle_send_buffer;
-    fluid_particle_t *sendr_buffer = sendl_buffer + oob->max_oob_particles;
+    fluid_particle_t *sendr_buffer = sendl_buffer + communication->max_comm_particles;
 
     for(i=0; i<params->number_fluid_particles_local; i++) {
         p = &fluid_particles[i];
