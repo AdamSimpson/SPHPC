@@ -18,6 +18,7 @@ struct EDGES {
     int *edge_indices_right;
     int number_edge_particles_left;
     int number_edge_particles_right;
+
     MPI_Request reqs[4];
 };
 

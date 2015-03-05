@@ -3,13 +3,10 @@
 #include <string.h>
 #include "communication.h"
 
-// HACK
-fluid_particle_t *send_buffer;
-
 void allocate_communication(communication_t *communication)
 {
     // Allocate edge index arrays
-    communication->edges.edge_indices_left = malloc(communication->edges.max_edge_particles * sizeof(int));
+    communication->edges.edge_indices_left  = malloc(communication->edges.max_edge_particles * sizeof(int));
     communication->edges.edge_indices_right = malloc(communication->edges.max_edge_particles * sizeof(int));
 
     // Allocate out of bound index arrays
@@ -182,7 +179,7 @@ void transferOOBParticles(communication_t *communication, fluid_particle_t *flui
 
     // Set send buffers
     fluid_particle_t *sendl_buffer = communication->particle_send_buffer;
-    fluid_particle_t *sendr_buffer = send_buffer + oob->max_oob_particles/2;
+    fluid_particle_t *sendr_buffer = sendl_buffer + oob->max_oob_particles/2;
 
     for(i=0; i<params->number_fluid_particles_local; i++) {
         p = &fluid_particles[i];
@@ -256,8 +253,6 @@ void transferOOBParticles(communication_t *communication, fluid_particle_t *flui
     params->number_fluid_particles_local += total_received;
 
     printf("rank %d OOB: sent left %d, right: %d recv left:%d, right: %d\n", rank, num_moving_left, num_moving_right, num_received_left, num_received_right);
-
-    free(send_buffer);
 }
 
 void update_halo_lambdas(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params)
