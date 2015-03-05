@@ -25,10 +25,27 @@ void allocate_communication(communication_t *communication)
     communication->halo_components_recv_buffer = malloc(component_bytes);
 }
 
+void free_communication(communication_t *communication)
+{
+    free(communication->edges.edge_indices_left);
+    free(communication->edges.edge_indices_right);
+    free(communication->out_of_bounds.oob_indices_left);
+    free(communication->out_of_bounds.oob_indices_right);
+    free(communication->particle_send_buffer);
+    free(communication->halo_components_send_buffer);
+    free(communication->halo_components_recv_buffer);
+}
+
 void init_communication(int argc, char *argv[])
 {
     MPI_Init(&argc, &argv);
     createMpiTypes();
+}
+
+void finalize_communication()
+{
+  freeMpiTypes();
+  MPI_Finalize();
 }
 
 int get_rank()

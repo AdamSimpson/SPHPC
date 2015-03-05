@@ -105,12 +105,12 @@ int main(int argc, char *argv[])
     printf("Rank %d Elapsed seconds: %f, num particles: %d\n", params.rank, end_time-start_time, params.number_fluid_particles_local);
 
     // Release memory
-    // Need to fix this to free everything correctly
     free(fluid_particles);
+    free_communication(&communication);
+    free_neighbors(&neighbors);
 
     // Close MPI
-    freeMpiTypes();
-    MPI_Finalize();
+    finalize_communication();
 
     return 0;
 }

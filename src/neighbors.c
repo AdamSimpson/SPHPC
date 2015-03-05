@@ -14,16 +14,22 @@ void allocate_neighbors(neighbors_t *neighbors, AABB_t *boundary_global, param_t
     neighbors->hash_size_x = ceil((boundary_global->max_x - boundary_global->min_x) / params->smoothing_radius) + 1;
     neighbors->hash_size_y = ceil((boundary_global->max_y - boundary_global->min_y) / params->smoothing_radius) + 1;
     neighbors->hash_size_z = ceil((boundary_global->max_z - boundary_global->min_z) / params->smoothing_radius) + 1;
-    unsigned int hash_size = neighbors->hash_size_x * neighbors->hash_size_y * neighbors->hash_size_z;
+    size_t hash_size = neighbors->hash_size_x * neighbors->hash_size_y * neighbors->hash_size_z;
 
     neighbors->hash = calloc(hash_size, sizeof(bucket_t));
     if(neighbors->hash == NULL)
         printf("Could not allocate hash\n");
 }
 
+void free_neighbors(neighbors_t *neighbors)
+{
+  free(neighbors->particle_neighbors);
+  free(neighbors->hash);
+}
+
 // Uniform grid hash
 // We don't check if the position is out of bounds so x,y,z must be valid
-inline unsigned int hash_val(neighbors_t *neighbors, double x, double y, double z)
+unsigned int hash_val(neighbors_t *neighbors, double x, double y, double z)
 {
     double spacing = neighbors->hash_spacing;
 

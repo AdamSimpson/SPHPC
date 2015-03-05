@@ -38,7 +38,9 @@ struct COMMUNICATION {
 };
 
 void init_communication(int argc, char *argv[]);
+void finalize_communication();
 void allocate_communication(communication_t *communication);
+void free_communication(communication_t *communication);
 int get_rank();
 int get_num_procs();
 void createMpiTypes();

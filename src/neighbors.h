@@ -36,5 +36,6 @@ unsigned int hash_val(neighbors_t *neighbors, double x, double y, double z);
 void hash_fluid(fluid_particle_t *fluid_particles, neighbors_t *neighbors, AABB_t *boundary, param_t *params);
 void hash_halo(fluid_particle_t *fluid_particles, neighbors_t *neighbors, AABB_t *boundary, param_t *params);
 void allocate_neighbors(neighbors_t *neighbors, AABB_t *boundary_global, param_t *params);
+void free_neighbors(neighbors_t *neighbors);
 
 #endif
