@@ -21,7 +21,6 @@ struct PARAM {
     int number_halo_particles_left;    // Starting at max_fluid_particle_index
     int number_halo_particles_right;
     int number_steps;
-    int length_hash;
     int rank;
     int nprocs;
 }; // Simulation paramaters
