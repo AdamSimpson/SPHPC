@@ -50,10 +50,12 @@ void vorticity_confinement(fluid_particle_t *fluid_particles, neighbors_t* neigh
     fluid_particle_t *p, *q;
     neighbor_t *n;
     double dt = params->time_step;
-    double x_diff, y_diff, z_diff, vx_diff, vy_diff, vz_diff, r_mag,
-          dw, dw_x, dw_y, dw_z,
-          vort_x, vort_y, vort_z, vort_mag,
-          eta_x, eta_y, eta_z, eta_mag, N_x, N_y, N_z;
+    double x_diff, y_diff, z_diff, r_mag,
+           vx_diff, vy_diff, vz_diff,
+           dw, dw_x, dw_y, dw_z,
+           vort_x, vort_y, vort_z, vort_mag,
+           eta_x, eta_y, eta_z, eta_mag,
+           N_x, N_y, N_z;
 
     double eps = 5.0;
 
@@ -392,7 +394,7 @@ void identify_oob_particles(fluid_particle_t *fluid_particles, communication_t *
     }
 
    // Transfer particles that have left the processor bounds
-   transferOOBParticles(communication, fluid_particles, params);
+   transfer_OOB_particles(communication, fluid_particles, params);
 }
 
 // Predict position
@@ -475,8 +477,7 @@ void boundary_conditions(fluid_particle_t *fluid_particles, unsigned int i, AABB
         fluid_particles[i].z_star = boundary->max_z-0.00001;
 }
 
-// Initialize particles
-void initParticles(fluid_particle_t *fluid_particles,
+void init_particles(fluid_particle_t *fluid_particles,
                 neighbors_t *neighbors, AABB_t* water,
                 AABB_t* boundary_global, param_t* params)
 {

@@ -39,12 +39,12 @@ void free_communication(communication_t *communication)
 void init_communication(int argc, char *argv[])
 {
     MPI_Init(&argc, &argv);
-    createMpiTypes();
+    create_MPI_types();
 }
 
 void finalize_communication()
 {
-  freeMpiTypes();
+  free_MPI_types();
   MPI_Finalize();
 }
 
@@ -62,7 +62,7 @@ int get_num_procs()
   return nprocs;
 }
 
-void createMpiTypes()
+void create_MPI_types()
 {
     //Create fluid particle type
     MPI_Datatype types[18];
@@ -96,12 +96,12 @@ void createMpiTypes()
     MPI_Type_commit( &Particletype );
 }
 
-void freeMpiTypes()
+void free_MPI_types()
 {
     MPI_Type_free(&Particletype);
 }
 
-void startHaloExchange(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params)
+void start_halo_exchange(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params)
 {
     int i;
     int rank = params->rank;
@@ -169,7 +169,7 @@ void startHaloExchange(communication_t *communication, fluid_particle_t *fluid_p
     MPI_Isend(sendl_buffer, num_moving_left, Particletype, proc_to_left, tagr, MPI_COMM_WORLD, &edges->reqs[3]);
 }
 
-void finishHaloExchange(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params)
+void finish_halo_exchange(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params)
 {
     // Wait for transfer to complete
     MPI_Status statuses[4];
@@ -187,7 +187,7 @@ void finishHaloExchange(communication_t *communication, fluid_particle_t *fluid_
 }
 
 // Transfer particles that are out of node bounds
-void transferOOBParticles(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params)
+void transfer_OOB_particles(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params)
 {
     int i;
     fluid_particle_t *p;

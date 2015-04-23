@@ -7,7 +7,7 @@
 #include "fileio.h"
 
 // Write boundary in MPI
-void writeMPI(fluid_particle_t *particles, int fileNum, param_t *params)
+void write_MPI(fluid_particle_t *particles, int fileNum, param_t *params)
 {
     MPI_File file;
     MPI_Status status;
@@ -56,25 +56,4 @@ void writeMPI(fluid_particle_t *particles, int fileNum, param_t *params)
 
     // Free buffer
     free(send_buffer);
-}
-
-// Write fluid particle data to file
-void writeFile(fluid_particle_t *particles, int fileNum, param_t *params)
-{
-    fluid_particle_t *p;
-    FILE *fp ;
-    int i;
-    char name[64];
-    sprintf(name, "/lustre/atlas/scratch/atj/stf007/sim-%d.csv", fileNum);
-    fp = fopen ( name,"w" );
-    if (!fp) {
-        printf("ERROR: error opening file\n");
-        exit(1);
-    }
-    for(i=0; i<params->number_fluid_particles_local; i++) {
-        p = &particles[i];
-        fprintf(fp,"%f,%f,%f\n",p->x,p->y,p->z);
-    }
-    fclose(fp);
-    printf("wrote file: %s\n", name);
 }

@@ -43,12 +43,12 @@ void allocate_communication(communication_t *communication);
 void free_communication(communication_t *communication);
 int get_rank();
 int get_num_procs();
-void createMpiTypes();
-void freeMpiTypes();
-void transferHalos(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params);
-void transferOOBParticles(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params);
-void startHaloExchange(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params);
-void finishHaloExchange(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params);
+void create_MPI_types();
+void free_MPI_types();
+void transfer_halos(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params);
+void transfer_OOB_particles(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params);
+void start_halo_exchange(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params);
+void finish_halo_exchange(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params);
 void update_halo_lambdas(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params);
 void update_halo_positions(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params);
 

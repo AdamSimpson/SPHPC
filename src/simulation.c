@@ -29,25 +29,22 @@ int main(int argc, char *argv[])
     allocate_communication(&communication);
 
     // Initialize particles
-    initParticles(fluid_particles, &neighbors, &water_volume_global, &boundary_global, &params);
+    init_particles(fluid_particles, &neighbors, &water_volume_global, &boundary_global, &params);
 
     // Print some parameters
     printf("Rank: %d, fluid_particles: %d, smoothing radius: %f \n", params.rank, params.number_fluid_particles_local, params.smoothing_radius);
 
     // Initial configuration
     int fileNum=0;
-    writeMPI(fluid_particles, fileNum++, &params);
+    write_MPI(fluid_particles, fileNum++, &params);
 
     // Main loop
     int n;
     double start_time, end_time;
 
-    // Number of steps before frame needs to be written for 30 fps
-    int steps_per_frame = (int)(1.0/(params.time_step*30.0));
-
     MPI_Barrier(MPI_COMM_WORLD);
-
     start_time = MPI_Wtime();
+
     for(n=0; n<params.number_steps; n++) {
 
         printf("Rank %d Entering fluid step %d with %d particles\n",params.rank, n, params.number_fluid_particles_local);
@@ -64,11 +61,11 @@ int main(int argc, char *argv[])
         // Identify out of bounds particles and send them to appropriate rank
         identify_oob_particles(fluid_particles, &communication, &params);
 
-        startHaloExchange(&communication, fluid_particles, &params);
+        start_halo_exchange(&communication, fluid_particles, &params);
 
         hash_fluid(fluid_particles, &neighbors, &boundary_global, &params);
 
-        finishHaloExchange(&communication, fluid_particles, &params);
+        finish_halo_exchange(&communication, fluid_particles, &params);
 
         hash_halo(fluid_particles, &neighbors, &boundary_global, &params);
 
@@ -97,8 +94,9 @@ int main(int argc, char *argv[])
 
         update_positions(fluid_particles, &params);
 
-        if (n % steps_per_frame == 0)
-            writeMPI(fluid_particles, fileNum++, &params);
+        // Write file at 30 FPS
+        if (n % (int)(1.0/(params.time_step*30.0)) )
+            write_MPI(fluid_particles, fileNum++, &params);
 
     }
     end_time = MPI_Wtime();
@@ -169,11 +167,11 @@ void set_parameters(param_t *params, neighbors_t *neighbors,
 
   params->node_end_x = params->node_start_x + equal_spacing;
 
-  // "Stretch" first and last ranks bounds to match boundary
-  if (params->rank == 0)
-      params->node_start_x  = boundary_global->min_x;
-  if (params->rank == params->nprocs-1)
-      params->node_end_x   = boundary_global->max_x;
+    // "Stretch" first and last ranks bounds to match boundary
+    if (params->rank == 0)
+        params->node_start_x  = boundary_global->min_x;
+    if (params->rank == params->nprocs-1)
+        params->node_end_x   = boundary_global->max_x;
 
     neighbors->max_neighbors = 60;
     neighbors->hash_spacing = params->smoothing_radius;

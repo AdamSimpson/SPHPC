@@ -4,7 +4,6 @@
 #include "fluid.h"
 #include "simulation.h"
 
-void writeMPI(fluid_particle_t *particles, int fileNum, param_t *params);
-void writeFile(fluid_particle_t *particles, int fileNum, param_t *params);
+void write_MPI(fluid_particle_t *particles, int fileNum, param_t *params);
 
 #endif

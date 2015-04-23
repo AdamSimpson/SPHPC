@@ -57,7 +57,7 @@ void check_velocity(double *v_x, double *v_y, double *v_z);
 void update_velocities(fluid_particle_t *fluid_particles, param_t *params);
 void boundary_conditions(fluid_particle_t *fluid_particles, unsigned int i, AABB_t *boudnary);
 void allocate_fluid(fluid_particle_t **fluid_particles, param_t *params);
-void initParticles(fluid_particle_t *fluid_particles,
+void init_particles(fluid_particle_t *fluid_particles,
                 neighbors_t *neighbors, AABB_t* water, AABB_t* boundary_global,
                 param_t* params);
 
