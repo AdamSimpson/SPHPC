@@ -19,12 +19,12 @@ struct AABB {
 double min(double a, double b);
 double max(double a, double b);
 int sgn(double x);
-void constructFluidVolume(fluid_particle_t *fluid_particles, AABB_t* fluid,
-                          param_t *params);
-void setParticleNumbers(AABB_t *fluid_global,
-                       communication_t *communications, param_t *params);
-void partitionProblem(AABB_t *boundary_global, AABB_t *fluid_global,
-                      int *x_start, int *number_particles_x, param_t *params);
-void checkPartition(fluid_particle_t *fluid_particles,
-                    param_t *params);
+void construct_fluid_volume(fluid_particle_t *fluid_particles, AABB_t* fluid,
+                            param_t *params);
+void set_particle_numbers(AABB_t *fluid_global,
+                          communication_t *communications, param_t *params);
+void partition_problem(AABB_t *boundary_global, AABB_t *fluid_global,
+                       int *x_start, int *number_particles_x, param_t *params);
+void check_partition(fluid_particle_t *fluid_particles,
+                     param_t *params);
 #endif

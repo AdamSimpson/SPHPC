@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
 
     set_parameters(&params, &neighbors, &boundary_global, &water_volume_global);
 
-    setParticleNumbers(&water_volume_global, &communication, &params);
+    set_particle_numbers(&water_volume_global, &communication, &params);
 
     allocate_fluid(&fluid_particles, &params);
 
@@ -54,9 +54,8 @@ int main(int argc, char *argv[])
         // Advance to predicted position
         predict_positions(fluid_particles, &boundary_global, &params);
 
-        // Check boundary partitions
         if (n % 10 == 0)
-            checkPartition(fluid_particles, &params);
+            check_partition(fluid_particles, &params);
 
         // Identify out of bounds particles and send them to appropriate rank
         identify_oob_particles(fluid_particles, &communication, &params);

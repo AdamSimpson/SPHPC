@@ -2,7 +2,7 @@
 #include "geometry.h"
 #include "communication.h"
 
-void constructFluidVolume(fluid_particle_t *fluid_particles, AABB_t* fluid, param_t *params)
+void construct_fluid_volume(fluid_particle_t *fluid_particles, AABB_t* fluid, param_t *params)
 {
     double spacing, x, y, z, min_x, max_x;
     int num_x, num_y, num_z, nx, ny, nz;
@@ -46,7 +46,7 @@ void constructFluidVolume(fluid_particle_t *fluid_particles, AABB_t* fluid, para
 }
 
 // Sets upper bound on number of particles, used for memory allocation
-void setParticleNumbers(AABB_t *fluid_global, communication_t *communication, param_t *params)
+void set_particle_numbers(AABB_t *fluid_global, communication_t *communication, param_t *params)
 {
     int num_x;
     int num_y;
@@ -72,7 +72,7 @@ void setParticleNumbers(AABB_t *fluid_global, communication_t *communication, pa
 }
 
 // Test if boundaries need to be adjusted
-void checkPartition(fluid_particle_t *fluid_particles, param_t *params)
+void check_partition(fluid_particle_t *fluid_particles, param_t *params)
 {
     int num_rank = params->number_fluid_particles_local;
     int rank = params->rank;
