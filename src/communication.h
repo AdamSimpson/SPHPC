@@ -56,7 +56,7 @@ void finish_halo_exchange(communication_t *const communication,
                           param_t *const params);
 void update_halo_lambdas(const communication_t *const communication,
                          const param_t *const params,
-                        fluid_particle_t *const fluid_particles);
+                         fluid_particle_t *const fluid_particles);
 void update_halo_positions(const communication_t *const communication,
                           const param_t *const params,
                           fluid_particle_t *const fluid_particles);
