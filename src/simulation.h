@@ -1,5 +1,5 @@
-#ifndef SIMULATION_H
-#define SIMULATION_H
+#ifndef SPH_SRC_SIMULATION_H_
+#define SPH_SRC_SIMULATION_H_
 
 typedef struct PARAM param_t;
 

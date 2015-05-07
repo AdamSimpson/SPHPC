@@ -1,5 +1,5 @@
-#ifndef fluid_fileio_h
-#define fluid_fileio_h
+#ifndef SPH_SRC_FILEIO_H_
+#define SPH_SRC_FILEIO_H_
 
 #include "fluid.h"
 #include "simulation.h"

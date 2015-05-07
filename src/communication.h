@@ -1,5 +1,5 @@
-#ifndef fluid_communication_h
-#define fluid_communication_h
+#ifndef SPH_SRC_COMMUNICATION_H_
+#define SPH_SRC_COMMUNICATION_H_
 
 typedef struct EDGES edge_t;
 typedef struct OOB oob_t;

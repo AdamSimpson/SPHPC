@@ -1,5 +1,5 @@
-#ifndef fluid_geometry_h
-#define fluid_geometry_h
+#ifndef SPH_SRC_GEOMETRY_H_
+#define SPH_SRC_GEOMETRY_H_
 
 typedef struct AABB AABB_t;
 

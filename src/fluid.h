@@ -1,5 +1,5 @@
-#ifndef fluid_fluid_h
-#define fluid_fluid_h
+#ifndef SPH_SRC_FLUID_H_
+#define SPH_SRC_FLUID_H_
 
 typedef struct FLUID_PARTICLE fluid_particle_t;
 

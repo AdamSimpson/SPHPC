@@ -1,5 +1,5 @@
-#ifndef NEIGHBORS_h
-#define NEIGHBORS_h
+#ifndef SPH_SRC_NEIGHBORS_H_
+#define SPH_SRC_NEIGHBORS_H_
 
 typedef struct BUCKET bucket_t;
 typedef struct NEIGHBORS neighbors_t;
