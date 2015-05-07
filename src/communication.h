@@ -39,17 +39,25 @@ struct COMMUNICATION {
 
 void init_communication(int argc, char *argv[]);
 void finalize_communication();
-void allocate_communication(communication_t *communication);
-void free_communication(communication_t *communication);
+void allocate_communication(communication_t *const communication);
+void free_communication(communication_t *const communication);
 int get_rank();
 int get_num_procs();
 void create_MPI_types();
 void free_MPI_types();
-void transfer_halos(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params);
-void transfer_OOB_particles(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params);
-void start_halo_exchange(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params);
-void finish_halo_exchange(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params);
-void update_halo_lambdas(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params);
-void update_halo_positions(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params);
-
+void transfer_OOB_particles(const communication_t *const communication,
+                            fluid_particle_t *const fluid_particles,
+                            param_t *const params);
+void start_halo_exchange(communication_t *const communication,
+                         const param_t *const params,
+                         fluid_particle_t *const fluid_particles);
+void finish_halo_exchange(communication_t *const communication,
+                          const fluid_particle_t *const fluid_particles,
+                          param_t *const params);
+void update_halo_lambdas(const communication_t *const communication,
+                         const param_t *const params,
+                        fluid_particle_t *const fluid_particles);
+void update_halo_positions(const communication_t *const communication,
+                          const param_t *const params,
+                          fluid_particle_t *const fluid_particles);
 #endif

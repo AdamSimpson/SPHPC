@@ -3,7 +3,7 @@
 #include <string.h>
 #include "communication.h"
 
-void allocate_communication(communication_t *communication)
+void allocate_communication(communication_t *const communication)
 {
     // Allocate index arrays
     size_t index_bytes = communication->max_comm_particles*sizeof(int);
@@ -25,7 +25,7 @@ void allocate_communication(communication_t *communication)
     communication->halo_components_recv_buffer = malloc(component_bytes);
 }
 
-void free_communication(communication_t *communication)
+void free_communication(communication_t *const communication)
 {
     free(communication->edges.edge_indices_left);
     free(communication->edges.edge_indices_right);
@@ -101,14 +101,16 @@ void free_MPI_types()
     MPI_Type_free(&Particletype);
 }
 
-void start_halo_exchange(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params)
+void start_halo_exchange(communication_t *const communication,
+                         const param_t *const params,
+                         fluid_particle_t *const fluid_particles)
 {
     int i;
     int rank = params->rank;
     int nprocs = params->nprocs;
-    edge_t *edges = &communication->edges;
+    edge_t *const edges = &communication->edges;
 
-    fluid_particle_t *p;
+    const fluid_particle_t *p;
     double h = params->smoothing_radius;
 
     // Set edge particle indices and update number
@@ -169,7 +171,9 @@ void start_halo_exchange(communication_t *communication, fluid_particle_t *fluid
     MPI_Isend(sendl_buffer, num_moving_left, Particletype, proc_to_left, tagr, MPI_COMM_WORLD, &edges->reqs[3]);
 }
 
-void finish_halo_exchange(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params)
+void finish_halo_exchange(communication_t *const communication,
+                          const fluid_particle_t *const fluid_particles,
+                          param_t *const params)
 {
     // Wait for transfer to complete
     MPI_Status statuses[4];
@@ -187,10 +191,12 @@ void finish_halo_exchange(communication_t *communication, fluid_particle_t *flui
 }
 
 // Transfer particles that are out of node bounds
-void transfer_OOB_particles(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params)
+void transfer_OOB_particles(const communication_t *const communication,
+                            fluid_particle_t *const fluid_particles,
+                            param_t *const params)
 {
     int i;
-    fluid_particle_t *p;
+    const fluid_particle_t *p;
     int rank = params->rank;
     int nprocs = params->nprocs;
 
@@ -198,8 +204,8 @@ void transfer_OOB_particles(communication_t *communication, fluid_particle_t *fl
     int i_right = 0;
 
     // Set send buffers
-    fluid_particle_t *sendl_buffer = communication->particle_send_buffer;
-    fluid_particle_t *sendr_buffer = sendl_buffer + communication->max_comm_particles;
+    fluid_particle_t *const sendl_buffer = communication->particle_send_buffer;
+    fluid_particle_t *const sendr_buffer = sendl_buffer + communication->max_comm_particles;
 
     for(i=0; i<params->number_fluid_particles_local; i++) {
         p = &fluid_particles[i];
@@ -275,11 +281,13 @@ void transfer_OOB_particles(communication_t *communication, fluid_particle_t *fl
     printf("rank %d OOB: sent left %d, right: %d recv left:%d, right: %d\n", rank, num_moving_left, num_moving_right, num_received_left, num_received_right);
 }
 
-void update_halo_lambdas(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params)
+void update_halo_lambdas(const communication_t *const communication,
+                         const param_t *const params,
+                         fluid_particle_t *const fluid_particles)
 {
     int i;
     fluid_particle_t *p;
-    edge_t *edges = &communication->edges;
+    const edge_t *const edges = &communication->edges;
 
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -337,11 +345,13 @@ void update_halo_lambdas(communication_t *communication, fluid_particle_t *fluid
     }
 }
 
-void update_halo_positions(communication_t *communication, fluid_particle_t *fluid_particles, param_t *params)
+void update_halo_positions(const communication_t *const communication,
+                           const param_t *const params,
+                           fluid_particle_t *const fluid_particles)
 {
     int i;
     fluid_particle_t *p;
-    edge_t *edges = &communication->edges;
+    const edge_t *const edges = &communication->edges;
 
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
