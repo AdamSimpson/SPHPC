@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
     allocate_communication(&communication);
 
     // Initialize particles
-    init_particles(fluid_particles, &neighbors, &water_volume_global, &boundary_global, &params);
+    init_particles(fluid_particles, &params, &water_volume_global);
 
     // Print some parameters
     printf("Rank: %d, fluid_particles: %d, smoothing radius: %f \n", params.rank, params.number_fluid_particles_local, params.smoothing_radius);
@@ -52,15 +52,15 @@ int main(int argc, char *argv[])
         apply_gravity(fluid_particles, &params);
 
         // Advance to predicted position
-        predict_positions(fluid_particles, &boundary_global, &params);
+        predict_positions(fluid_particles, &params, &boundary_global);
 
         if (n % 10 == 0)
             check_partition(fluid_particles, &params);
 
         // Identify out of bounds particles and send them to appropriate rank
-        identify_oob_particles(fluid_particles, &communication, &params);
+        identify_oob_particles(fluid_particles, &params, &communication);
 
-        start_halo_exchange(&communication, fluid_particles, &params);
+        start_halo_exchange(&communication, &params, fluid_particles);
 
         hash_fluid(fluid_particles, &neighbors, &boundary_global, &params);
 
@@ -72,24 +72,24 @@ int main(int argc, char *argv[])
         int si;
         for(si=0; si<solve_iterations; si++)
         {
-            compute_densities(fluid_particles, &neighbors, &params);
+            compute_densities(fluid_particles, &params, &neighbors);
 
-            calculate_lambda(fluid_particles, &neighbors, &params);
+            calculate_lambda(fluid_particles, &params, &neighbors);
 
-            update_halo_lambdas(&communication, fluid_particles, &params);
+            update_halo_lambdas(&communication, &params, fluid_particles);
 
-            update_dp(fluid_particles, &neighbors, &params);
+            update_dp(fluid_particles, &params, &neighbors);
 
-            update_dp_positions(fluid_particles, &boundary_global, &params);
+            update_dp_positions(fluid_particles, &params, &boundary_global);
 
-            update_halo_positions(&communication, fluid_particles, &params);
+            update_halo_positions(&communication, &params, fluid_particles);
         }
 
         update_velocities(fluid_particles, &params);
 
-        XSPH_viscosity(fluid_particles, &neighbors, &params);
+        XSPH_viscosity(fluid_particles, &params, &neighbors);
 
-        vorticity_confinement(fluid_particles, &neighbors, &params);
+        vorticity_confinement(fluid_particles, &params, &neighbors);
 
         update_positions(fluid_particles, &params);
 
