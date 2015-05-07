@@ -305,7 +305,7 @@ void calculate_lambda(fluid_particle_t *fluid_particles, neighbors_t *neighbors,
             grad = del_W(r_mag, params->smoothing_radius);
             if(r_mag < 0.0001) {
               r_mag = 0.0001;
-              printf("pstar: %f, %f, %f grad: %f\n", fluid_particles[i].x_star, fluid_particles[i].y_star,fluid_particles[i].z_star, grad);
+              DEBUG_PRINT("pstar: %f, %f, %f grad: %f\n", fluid_particles[i].x_star, fluid_particles[i].y_star,fluid_particles[i].z_star, grad);
             }
             grad_x = grad*x_diff/r_mag;
             grad_y = grad*y_diff/r_mag;
