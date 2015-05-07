@@ -7,7 +7,9 @@
 #include "fileio.h"
 
 // Write boundary in MPI
-void write_MPI(fluid_particle_t *particles, int fileNum, param_t *params)
+void write_MPI(const fluid_particle_t *const particles,
+               const param_t *const params,
+               const int fileNum)
 {
     MPI_File file;
     MPI_Status status;

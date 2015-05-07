@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
 
     // Initial configuration
     int fileNum=0;
-    write_MPI(fluid_particles, fileNum++, &params);
+    write_MPI(fluid_particles, &params, fileNum++);
 
     // Main loop
     int n;
@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
 
         // Write file at 30 FPS
         if (n % (int)(1.0/(params.time_step*30.0)) )
-            write_MPI(fluid_particles, fileNum++, &params);
+            write_MPI(fluid_particles, &params, fileNum++);
 
     }
     end_time = MPI_Wtime();
