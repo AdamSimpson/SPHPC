@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
 
     allocate_fluid(&fluid_particles, &params);
 
-    allocate_neighbors(&neighbors, &boundary_global, &params);
+    allocate_neighbors(&neighbors, &params, &boundary_global);
 
     allocate_communication(&communication);
 
@@ -62,11 +62,11 @@ int main(int argc, char *argv[])
 
         start_halo_exchange(&communication, &params, fluid_particles);
 
-        hash_fluid(fluid_particles, &neighbors, &boundary_global, &params);
+        hash_fluid(fluid_particles, &params, &boundary_global, &neighbors);
 
         finish_halo_exchange(&communication, fluid_particles, &params);
 
-        hash_halo(fluid_particles, &neighbors, &boundary_global, &params);
+        hash_halo(fluid_particles, &params, &boundary_global, &neighbors);
 
         int solve_iterations = 4;
         int si;

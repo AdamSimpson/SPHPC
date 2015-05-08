@@ -3,7 +3,9 @@
 #include <string.h>
 #include "neighbors.h"
 
-void allocate_neighbors(neighbors_t *neighbors, AABB_t *boundary_global, param_t *params)
+void allocate_neighbors(neighbors_t *const neighbors,
+                        const param_t *const params,
+                        const AABB_t *const boundary_global)
 {
     // Allocate neighbors array
     neighbors->particle_neighbors = calloc(params->max_fluid_particles_local, sizeof(neighbor_t));
@@ -29,21 +31,23 @@ void free_neighbors(neighbors_t *neighbors)
 
 // Uniform grid hash
 // We don't check if the position is out of bounds so x,y,z must be valid
-unsigned int hash_val(neighbors_t *neighbors, double x, double y, double z)
+unsigned int hash_val(const neighbors_t *const neighbors,
+                      const double x,
+                      const double y,
+                      const double z)
 {
-    double spacing = neighbors->hash_spacing;
+    const double spacing = neighbors->hash_spacing;
 
     // Calculate grid coordinates
-    unsigned int grid_x,grid_y,grid_z;
-    grid_x = floor(x/spacing);
-    grid_y = floor(y/spacing);
-    grid_z = floor(z/spacing);
+    const int grid_x = floor(x/spacing);
+    const int grid_y = floor(y/spacing);
+    const int grid_z = floor(z/spacing);
 
     // If using glboal boundary size this can be static
-    int num_x = neighbors->hash_size_x;
-    int num_y = neighbors->hash_size_y;
+    const int num_x = neighbors->hash_size_x;
+    const int num_y = neighbors->hash_size_y;
 
-    unsigned int grid_position = (num_x * num_y * grid_z) + (grid_y * num_x + grid_x);
+    const int grid_position = (num_x * num_y * grid_z) + (grid_y * num_x + grid_x);
 
     return grid_position;
 }
@@ -52,17 +56,20 @@ unsigned int hash_val(neighbors_t *neighbors, double x, double y, double z)
 // Halo particles are not added to hash, only neighbors list
 // Neighbors may be more than h away...since distance is computed in all smoothing functions
 // it is a waste to check as we hash as well
-void hash_halo(fluid_particle_t *fluid_particles, neighbors_t *neighbors, AABB_t *boundary, param_t *params)
+void hash_halo(const fluid_particle_t *const fluid_particles,
+               const param_t *const params,
+               const AABB_t *const boundary,
+               neighbors_t *const neighbors)
 {
     printf("Enter hash halo\n");
     int index,i,dx,dy,dz,dupes,n;
     double x,y,z,r;
     bool duped;
-    fluid_particle_t *h_p, *q;
-    int n_s = params->number_fluid_particles_local;
-    int n_f = n_s + params->number_halo_particles_left + params->number_halo_particles_right;
-    double spacing = neighbors->hash_spacing;
-    double h = params->smoothing_radius;
+    const fluid_particle_t *h_p, *q;
+    const int n_s = params->number_fluid_particles_local;
+    const int n_f = n_s + params->number_halo_particles_left + params->number_halo_particles_right;
+    const double spacing = neighbors->hash_spacing;
+    const double h = params->smoothing_radius;
     neighbor_t *ne;
 
     for(i=n_s; i<n_f; i++)
@@ -119,21 +126,23 @@ void hash_halo(fluid_particle_t *fluid_particles, neighbors_t *neighbors, AABB_t
 // Fill fluid particles into hash
 // Neighbors may be more than h away...since distance is computed in all smoothing functions
 // it is a waste to check as we hash as well
-void hash_fluid(fluid_particle_t *fluid_particles, neighbors_t *neighbors,
-                AABB_t *boundary, param_t *params)
+void hash_fluid(const fluid_particle_t *const fluid_particles,
+                const param_t *const params,
+                const AABB_t *const boundary,
+                neighbors_t *neighbors)
 {
         printf("Hash fluid\n");
         int i,dx,dy,dz,n,c;
         double x,y,z, px,py,pz;
-        double spacing = neighbors->hash_spacing;
-        double h = params->smoothing_radius;
-        int n_f = params->number_fluid_particles_local;
-        fluid_particle_t *p, *q, *q_neighbor;
+        const double spacing = neighbors->hash_spacing;
+        const double h = params->smoothing_radius;
+        const int n_f = params->number_fluid_particles_local;
+        const fluid_particle_t *p, *q, *q_neighbor;
         neighbor_t *ne;
         double r;
         unsigned int index, neighbor_index;
 
-        unsigned int length_hash = neighbors->hash_size_x
+        const unsigned int length_hash = neighbors->hash_size_x
                                  * neighbors->hash_size_y
                                  * neighbors->hash_size_z;
 

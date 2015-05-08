@@ -27,15 +27,30 @@ struct NEIGHBOR {
 
 // hash 'bucket' for hash value
 struct BUCKET {
-    fluid_particle_t *fluid_particles[200];
+    const fluid_particle_t *fluid_particles[200];
     unsigned int number_fluid;
     bool hashed;
 };
 
-unsigned int hash_val(neighbors_t *neighbors, double x, double y, double z);
-void hash_fluid(fluid_particle_t *fluid_particles, neighbors_t *neighbors, AABB_t *boundary, param_t *params);
-void hash_halo(fluid_particle_t *fluid_particles, neighbors_t *neighbors, AABB_t *boundary, param_t *params);
-void allocate_neighbors(neighbors_t *neighbors, AABB_t *boundary_global, param_t *params);
+void allocate_neighbors(neighbors_t *const neighbors,
+                        const param_t *const params,
+                        const AABB_t *const boundary_global);
+
 void free_neighbors(neighbors_t *neighbors);
+
+unsigned int hash_val(const neighbors_t *const neighbors,
+                      const double x,
+                      const double y,
+                      const double z);
+
+void hash_halo(const fluid_particle_t *const fluid_particles,
+               const param_t *const params,
+               const AABB_t *const boundary,
+               neighbors_t *const neighbors);
+
+void hash_fluid(const fluid_particle_t *const fluid_particles,
+                const param_t *const params,
+                const AABB_t *const boundary,
+                neighbors_t *neighbors);
 
 #endif
