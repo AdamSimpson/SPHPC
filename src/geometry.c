@@ -58,8 +58,8 @@ void construct_fluid_volume(fluid_particle_t *const fluid_particles,
 
 // Sets upper bound on number of particles, used for memory allocation
 void set_particle_numbers(const AABB_t *const fluid_global,
-                         communication_t *const communication,
-                         param_t *const params)
+                         param_t *const params,
+                         communication_t *const communication)
 {
     int num_x;
     int num_y;

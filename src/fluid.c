@@ -505,7 +505,7 @@ void init_particles(fluid_particle_t *const fluid_particles,
     int i;
 
     // Create fluid volume
-    construct_fluid_volume(fluid_particles, water, params);
+    construct_fluid_volume(fluid_particles, params, water);
 
     // Initialize particle values
     for(i=0; i<params->number_fluid_particles_local; i++) {
