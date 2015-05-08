@@ -2,14 +2,25 @@
 #include "geometry.h"
 #include "communication.h"
 
-void construct_fluid_volume(fluid_particle_t *fluid_particles, AABB_t* fluid, param_t *params)
+////////////////////////////////////////////////
+// Utility Functions
+////////////////////////////////////////////////
+static double min(const double a, const double b){
+    double min = a;
+    min = b < min ? b : min;
+    return min;
+}
+
+void construct_fluid_volume(fluid_particle_t *const fluid_particles,
+                            param_t *const params,
+                            const AABB_t *const fluid)
 {
-    double spacing, x, y, z, min_x, max_x;
+    double x, y, z, min_x, max_x;
     int num_x, num_y, num_z, nx, ny, nz;
     int i = 0;
     fluid_particle_t *p;
 
-    spacing = params->smoothing_radius/2.0;
+    const double spacing = params->smoothing_radius/2.0;
 
     // Start node particles at integer multiple of spacing
     if(params->rank == 0)
@@ -46,12 +57,14 @@ void construct_fluid_volume(fluid_particle_t *fluid_particles, AABB_t* fluid, pa
 }
 
 // Sets upper bound on number of particles, used for memory allocation
-void set_particle_numbers(AABB_t *fluid_global, communication_t *communication, param_t *params)
+void set_particle_numbers(const AABB_t *const fluid_global,
+                         communication_t *const communication,
+                         param_t *const params)
 {
     int num_x;
     int num_y;
     int num_z;
-    double spacing = params->smoothing_radius/2.0;
+    const double spacing = params->smoothing_radius/2.0;
 
     // Get some baseline numbers useful to define maximum particle numbers
     num_x = floor((fluid_global->max_x - fluid_global->min_x ) / spacing);
@@ -72,19 +85,19 @@ void set_particle_numbers(AABB_t *fluid_global, communication_t *communication, 
 }
 
 // Test if boundaries need to be adjusted
-void check_partition(fluid_particle_t *fluid_particles, param_t *params)
+void check_partition(param_t *const params)
 {
-    int num_rank = params->number_fluid_particles_local;
-    int rank = params->rank;
-    int nprocs = params->nprocs;
-    double h = params->smoothing_radius;
+    const int num_rank = params->number_fluid_particles_local;
+    const int rank = params->rank;
+    const int nprocs = params->nprocs;
+    const double h = params->smoothing_radius;
 
     // Setup nodes to left and right of self
-    int proc_to_left =  (rank == 0 ? MPI_PROC_NULL : rank-1);
-    int proc_to_right = (rank == nprocs-1 ? MPI_PROC_NULL : rank+1);
+    const int proc_to_left =  (rank == 0 ? MPI_PROC_NULL : rank-1);
+    const int proc_to_right = (rank == nprocs-1 ? MPI_PROC_NULL : rank+1);
 
     // Get number of particles and partition length  from right and left
-    double length = params->node_end_x - params->node_start_x;
+    const double length = params->node_end_x - params->node_start_x;
     double node[2]  = {(double)num_rank, length};
     double left[2]  = {0.0, 0.0};
     double right[2] = {0.0, 0.0};
@@ -96,20 +109,18 @@ void check_partition(fluid_particle_t *fluid_particles, param_t *params)
     MPI_Sendrecv(node, 2, MPI_DOUBLE, proc_to_left, tag, right,2,MPI_DOUBLE,proc_to_right,tag,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
 
     // Number of particles in left/right ranks
-    int num_left = (int)left[0];
-    int num_right = (int)right[0];
+    const int num_right = (int)right[0];
 
     // Partition length of left/right ranks
-    double length_left = left[1];
-    double length_right = right[1];
+    const double length_left = left[1];
+    const double length_right = right[1];
 
-    int even_particles = params->number_fluid_particles_global/(double)params->nprocs;
-    int max_diff = even_particles/10.0f;
+    const int even_particles = params->number_fluid_particles_global/(double)params->nprocs;
+    const int max_diff = even_particles/10.0f;
 
     // Difference in particle numbers from an even distribution
-    int diff_left  = num_left  - even_particles;
-    int diff_right = num_right - even_particles;
-    int diff_self  = num_rank  - even_particles;
+    const int diff_right = num_right - even_particles;
+    const int diff_self  = num_rank  - even_particles;
 
     // Look at "bins" formed by node start/ends from right to left
     // Only modify node start based upon bin to the left
@@ -131,29 +142,4 @@ void check_partition(fluid_particle_t *fluid_particles, param_t *params)
         params->node_end_x -= h;
 
     printf("rank %d node_start %f node_end %f \n", rank, params->node_start_x, params->node_end_x);
-}
-
-////////////////////////////////////////////////
-// Utility Functions
-////////////////////////////////////////////////
-double min(double a, double b){
-    double min = a;
-    min = b < min ? b : min;
-    return min;
-}
-
-double max(double a, double b){
-    double max = a;
-    max = b > max ? b : max;
-    return max;
-}
-
-int sgn(double x) {
-    int val = 0;
-    if (x < 0.0)
-        val = -1;
-    else if (x > 0.0)
-        val = 1;
-
-    return val;
 }

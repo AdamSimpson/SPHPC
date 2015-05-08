@@ -16,15 +16,14 @@ struct AABB {
     double max_z;
 };//Axis aligned bounding box
 
-double min(double a, double b);
-double max(double a, double b);
-int sgn(double x);
-void construct_fluid_volume(fluid_particle_t *fluid_particles, AABB_t* fluid,
-                            param_t *params);
-void set_particle_numbers(AABB_t *fluid_global,
-                          communication_t *communications, param_t *params);
-void partition_problem(AABB_t *boundary_global, AABB_t *fluid_global,
-                       int *x_start, int *number_particles_x, param_t *params);
-void check_partition(fluid_particle_t *fluid_particles,
-                     param_t *params);
+void construct_fluid_volume(fluid_particle_t *const fluid_particles,
+                            param_t *const params,
+                            const AABB_t *const fluid);
+
+void set_particle_numbers(const AABB_t *const fluid_global,
+                          communication_t *const communication,
+                          param_t *const params);
+
+void check_partition(param_t *const params);
+
 #endif
