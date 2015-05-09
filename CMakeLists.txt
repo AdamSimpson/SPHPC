@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 2.8)
 project(sph)
 
+# Not ideal but works
+set(CMAKE_C_FLAGS "-std=c99")
+
 file(GLOB SRC_FILES src/*.c)
 
 add_executable(sph ${SRC_FILES})

@@ -12,6 +12,10 @@
 # define DEBUG_PRINT(str, args...) do {} while (0)
 #endif
 
+#ifndef M_PI
+#define M_PI  3.14159265358979323846
+#endif
+
 ////////////////////////////////////////////////////////////////////////////
 // Smoothing Kernels
 // Don't use pow as it's POWerfully slow
