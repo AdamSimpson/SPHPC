@@ -27,8 +27,8 @@ static double W(const double r, const double h)
     if(r > h)
         return 0.0;
 
-    double C = 315.0/(64.0*M_PI* h*h*h*h*h*h*h*h*h);
-    double W = C*(h*h-r*r)*(h*h-r*r)*(h*h-r*r);
+    const double C = 315.0/(64.0*M_PI* h*h*h*h*h*h*h*h*h);
+    const double W = C*(h*h-r*r)*(h*h-r*r)*(h*h-r*r);
     return W;
 }
 
@@ -39,8 +39,8 @@ static double del_W(const double r, const double h)
     if(r > h)
         return 0.0;
 
-    double C = -45.0/(M_PI * h*h*h*h*h*h);
-    double del_W = C*(h-r)*(h-r);
+    const double C = -45.0/(M_PI * h*h*h*h*h*h);
+    const double del_W = C*(h-r)*(h-r);
     return del_W;
 }
 
@@ -52,49 +52,40 @@ void vorticity_confinement(fluid_particle_t *const fluid_particles,
                            const param_t *const params,
                            const neighbors_t *const neighbors)
 {
-    int i,j;
-    fluid_particle_t *p, *q;
-    const neighbor_t *n;
     const double dt = params->time_step;
-    double x_diff, y_diff, z_diff, r_mag,
-           vx_diff, vy_diff, vz_diff,
-           dw, dw_x, dw_y, dw_z,
-           vort_x, vort_y, vort_z, vort_mag,
-           eta_x, eta_y, eta_z, eta_mag,
-           N_x, N_y, N_z;
-
-    double eps = 5.0;
+    const double eps = 5.0;
 
     // Calculate vorticy at each particle
-    for(i=0; i<params->number_fluid_particles_local; i++)
+    for(int i=0; i<params->number_fluid_particles_local; i++)
     {
-        p = &fluid_particles[i];
-        n = &neighbors->particle_neighbors[i];
-        vort_x = 0.0;
-        vort_y = 0.0;
-        vort_z = 0.0;
+        fluid_particle_t *const p = &fluid_particles[i];
+        const neighbor_t *const n = &neighbors->particle_neighbors[i];
 
-        for(j=0; j<n->number_fluid_neighbors; j++)
+        double vort_x = 0.0;
+        double vort_y = 0.0;
+        double vort_z = 0.0;
+
+        for(int j=0; j<n->number_fluid_neighbors; j++)
         {
-            q = &fluid_particles[n->neighbor_indices[j]];
+            const fluid_particle_t *const q = &fluid_particles[n->neighbor_indices[j]];
 
-            x_diff = p->x_star - q->x_star;
-            y_diff = p->y_star - q->y_star;
-            z_diff = p->z_star - q->z_star;
+            const double x_diff = p->x_star - q->x_star;
+            const double y_diff = p->y_star - q->y_star;
+            const double z_diff = p->z_star - q->z_star;
 
-            vx_diff = q->v_x - p->v_x;
-            vy_diff = q->v_y - p->v_y;
-            vz_diff = q->v_z - p->v_z;
+            const double vx_diff = q->v_x - p->v_x;
+            const double vy_diff = q->v_y - p->v_y;
+            const double vz_diff = q->v_z - p->v_z;
 
-            r_mag = sqrt(x_diff*x_diff + y_diff*y_diff + z_diff*z_diff);
+            double r_mag = sqrt(x_diff*x_diff + y_diff*y_diff + z_diff*z_diff);
             if(r_mag < 0.0001)
               r_mag = 0.0001;
 
-            dw = del_W(r_mag, params->smoothing_radius);
+            const double dw = del_W(r_mag, params->smoothing_radius);
 
-            dw_x = dw*x_diff/r_mag;
-            dw_y = dw*y_diff/r_mag;
-            dw_z = dw*z_diff/r_mag;
+            const double dw_x = dw*x_diff/r_mag;
+            const double dw_y = dw*y_diff/r_mag;
+            const double dw_z = dw*z_diff/r_mag;
 
             vort_x +=  vy_diff*dw_z - vz_diff*dw_y;
             vort_y +=  vz_diff*dw_x - vx_diff*dw_z;
@@ -107,46 +98,47 @@ void vorticity_confinement(fluid_particle_t *const fluid_particles,
     }
 
     // Apply vorticity confinement
-    for(i=0; i<params->number_fluid_particles_local; i++)
+    for(int i=0; i<params->number_fluid_particles_local; i++)
     {
-        p = &fluid_particles[i];
-        n = &neighbors->particle_neighbors[i];
-        eta_x  = 0.0;
-        eta_y  = 0.0;
-        eta_z  = 0.0;
+        fluid_particle_t *const p = &fluid_particles[i];
+        const neighbor_t *const n = &neighbors->particle_neighbors[i];
 
-        for(j=0; j<n->number_fluid_neighbors; j++)
+        double eta_x  = 0.0;
+        double eta_y  = 0.0;
+        double eta_z  = 0.0;
+
+        for(int j=0; j<n->number_fluid_neighbors; j++)
         {
-            q = &fluid_particles[n->neighbor_indices[j]];
+            const fluid_particle_t *const q = &fluid_particles[n->neighbor_indices[j]];
 
-            x_diff = p->x_star - q->x_star;
-            y_diff = p->y_star - q->y_star;
-            z_diff = p->z_star - q->z_star;
+            const double x_diff = p->x_star - q->x_star;
+            const double y_diff = p->y_star - q->y_star;
+            const double z_diff = p->z_star - q->z_star;
 
-            r_mag = sqrt(x_diff*x_diff + y_diff*y_diff + z_diff*z_diff);
+            double r_mag = sqrt(x_diff*x_diff + y_diff*y_diff + z_diff*z_diff);
             if(r_mag < 0.0001)
               r_mag = 0.0001;
 
-            dw = del_W(r_mag, params->smoothing_radius);
+            const double dw = del_W(r_mag, params->smoothing_radius);
 
-            dw_x = dw*x_diff/r_mag;
-            dw_y = dw*y_diff/r_mag;
-            dw_z = dw*z_diff/r_mag;
+            const double dw_x = dw*x_diff/r_mag;
+            const double dw_y = dw*y_diff/r_mag;
+            const double dw_z = dw*z_diff/r_mag;
 
-            vort_mag = sqrt(q->w_x*q->w_x + q->w_y*q->w_y + q->w_z*q->w_z);
+            const double vort_mag = sqrt(q->w_x*q->w_x + q->w_y*q->w_y + q->w_z*q->w_z);
 
             eta_x += vort_mag*dw_x;
             eta_y += vort_mag*dw_y;
             eta_z += vort_mag*dw_z;
         }
 
-        eta_mag = sqrt(eta_x*eta_x + eta_y*eta_y + eta_z*eta_z);
+        double eta_mag = sqrt(eta_x*eta_x + eta_y*eta_y + eta_z*eta_z);
         if(eta_mag < 0.0001)
-          r_mag = 0.0001;
+          eta_mag = 0.0001;
 
-        N_x = eta_x/eta_mag;
-        N_y = eta_y/eta_mag;
-        N_z = eta_z/eta_mag;
+        const double N_x = eta_x/eta_mag;
+        const double N_y = eta_y/eta_mag;
+        const double N_z = eta_z/eta_mag;
 
         p->v_x += dt*eps * (N_y*p->w_z - N_z*p->w_y);
         p->v_y += dt*eps * (N_z*p->w_x - N_x*p->w_z);
@@ -159,35 +151,31 @@ void XSPH_viscosity(fluid_particle_t *const fluid_particles,
                     const param_t *const params,
                     const neighbors_t *const neighbors)
 {
-    int i,j;
-    unsigned int q_index;
-    const neighbor_t *n;
     const double c = params->c;
     const double h = params->smoothing_radius;
 
-    double x_diff, y_diff, z_diff, vx_diff, vy_diff, vz_diff, r_mag, w;
-
-    for(i=0; i<params->number_fluid_particles_local; i++)
+    for(int i=0; i<params->number_fluid_particles_local; i++)
     {
-        n = &neighbors->particle_neighbors[i];
+        const neighbor_t *const n = &neighbors->particle_neighbors[i];
 
         double partial_sum_x = 0.0;
         double partial_sum_y = 0.0;
         double partial_sum_z = 0.0;
-        for(j=0; j<n->number_fluid_neighbors; j++)
+
+        for(int j=0; j<n->number_fluid_neighbors; j++)
         {
-            q_index = n->neighbor_indices[j];
-            x_diff = fluid_particles[i].x_star - fluid_particles[q_index].x_star;
-            y_diff = fluid_particles[i].y_star - fluid_particles[q_index].y_star;
-            z_diff = fluid_particles[i].z_star - fluid_particles[q_index].z_star;
+            const int q_index = n->neighbor_indices[j];
+            const double x_diff = fluid_particles[i].x_star - fluid_particles[q_index].x_star;
+            const double y_diff = fluid_particles[i].y_star - fluid_particles[q_index].y_star;
+            const double z_diff = fluid_particles[i].z_star - fluid_particles[q_index].z_star;
 
-            vx_diff = fluid_particles[q_index].v_x - fluid_particles[i].v_x;
-            vy_diff = fluid_particles[q_index].v_y - fluid_particles[i].v_y;
-            vz_diff = fluid_particles[q_index].v_z - fluid_particles[i].v_z;
+            const double vx_diff = fluid_particles[q_index].v_x - fluid_particles[i].v_x;
+            const double vy_diff = fluid_particles[q_index].v_y - fluid_particles[i].v_y;
+            const double vz_diff = fluid_particles[q_index].v_z - fluid_particles[i].v_z;
 
-            r_mag = sqrt(x_diff*x_diff + y_diff*y_diff * z_diff*z_diff);
+            const double r_mag = sqrt(x_diff*x_diff + y_diff*y_diff * z_diff*z_diff);
 
-            w = W(r_mag, h);
+            const double w = W(r_mag, h);
 
             // http://mmacklin.com/pbf_sig_preprint.pdf is missing 1/sigma contribution
             // see: http://www.cs.ubc.ca/~rbridson/docs/schechter-siggraph2012-ghostsph.pdf
@@ -210,29 +198,24 @@ void compute_densities(fluid_particle_t *const fluid_particles,
                        const param_t *const params,
                        const neighbors_t *const neighbors)
 {
-    int i,j;
-    unsigned int q_index;
-    const neighbor_t *n;
     const double h = params->smoothing_radius;
 
-    for(i=0; i<params->number_fluid_particles_local; i++)
+    for(int i=0; i<params->number_fluid_particles_local; i++)
     {
-        n = &neighbors->particle_neighbors[i];
-
-        double x_diff, y_diff, z_diff, r_mag, density;
+        const neighbor_t *const n = &neighbors->particle_neighbors[i];
 
         // Own contribution to density
-        density = W(0.0, h);
+        double density = W(0.0, h);
 
         // Neighbor contribution
-        for(j=0; j<n->number_fluid_neighbors; j++)
+        for(int j=0; j<n->number_fluid_neighbors; j++)
         {
-            q_index = n->neighbor_indices[j];
-            x_diff = fluid_particles[i].x_star - fluid_particles[q_index].x_star;
-            y_diff = fluid_particles[i].y_star - fluid_particles[q_index].y_star;
-            z_diff = fluid_particles[i].z_star - fluid_particles[q_index].z_star;
+            const int q_index = n->neighbor_indices[j];
+            const double x_diff = fluid_particles[i].x_star - fluid_particles[q_index].x_star;
+            const double y_diff = fluid_particles[i].y_star - fluid_particles[q_index].y_star;
+            const double z_diff = fluid_particles[i].z_star - fluid_particles[q_index].z_star;
 
-            r_mag = sqrt(x_diff*x_diff + y_diff*y_diff + z_diff*z_diff);
+            const double r_mag = sqrt(x_diff*x_diff + y_diff*y_diff + z_diff*z_diff);
             density += W(r_mag, h);
         }
 
@@ -244,11 +227,10 @@ void compute_densities(fluid_particle_t *const fluid_particles,
 void apply_gravity(fluid_particle_t *const fluid_particles,
                    const param_t *const params)
 {
-    int i;
     const double dt = params->time_step;
     const double g = -params->g;
 
-    for(i=0; i<(params->number_fluid_particles_local); i++) {
+    for(int i=0; i<(params->number_fluid_particles_local); i++) {
         fluid_particles[i].v_y += g*dt;
     }
 }
@@ -257,9 +239,7 @@ void update_dp_positions(fluid_particle_t *const fluid_particles,
                          const param_t *const params,
                          const AABB_t *const boundary_global)
 {
-    int i;
-
-    for(i=0; i<(params->number_fluid_particles_local); i++) {
+    for(int i=0; i<(params->number_fluid_particles_local); i++) {
 
         fluid_particles[i].x_star += fluid_particles[i].dp_x;
         fluid_particles[i].y_star += fluid_particles[i].dp_y;
@@ -274,9 +254,7 @@ void update_dp_positions(fluid_particle_t *const fluid_particles,
 void update_positions(fluid_particle_t *const fluid_particles,
                       const param_t *const params)
 {
-     int i;
-
-     for(i=0; i<(params->number_fluid_particles_local); i++) {
+     for(int i=0; i<(params->number_fluid_particles_local); i++) {
         fluid_particles[i].x = fluid_particles[i].x_star;
         fluid_particles[i].y = fluid_particles[i].y_star;
         fluid_particles[i].z = fluid_particles[i].z_star;
@@ -287,45 +265,35 @@ void calculate_lambda(fluid_particle_t *const fluid_particles,
                       const param_t *const params,
                       const neighbors_t *const neighbors)
 {
-    int i,j;
-    unsigned int q_index;
-    const neighbor_t *n;
-
-    for(i=0; i<params->number_fluid_particles_local; i++)
+    for(int i=0; i<params->number_fluid_particles_local; i++)
     {
-        n = &neighbors->particle_neighbors[i];
+        const neighbor_t *const n = &neighbors->particle_neighbors[i];
 
-        double Ci = fluid_particles[i].density/params->rest_density - 1.0;
+        const double Ci = fluid_particles[i].density/params->rest_density - 1.0;
 
-        double sum_C, x_diff, y_diff, z_diff, r_mag,
-              grad, grad_x, grad_y, grad_z,
-              sum_grad_x, sum_grad_y, sum_grad_z;
+        double sum_C = 0.0;
+        double sum_grad_x = 0.0;
+        double sum_grad_y = 0.0;
+        double sum_grad_z = 0.0;
 
-        sum_C = 0.0;
-        grad_x = 0.0;
-        grad_y = 0.0;
-        grad_z = 0.0;
-        sum_grad_x = 0.0;
-        sum_grad_y = 0.0;
-        sum_grad_z = 0.0;
-
-        for(j=0; j<n->number_fluid_neighbors; j++)
+        for(int j=0; j<n->number_fluid_neighbors; j++)
         {
-            q_index = n->neighbor_indices[j];
-            x_diff = fluid_particles[i].x_star - fluid_particles[q_index].x_star;
-            y_diff = fluid_particles[i].y_star - fluid_particles[q_index].y_star;
-            z_diff = fluid_particles[i].z_star - fluid_particles[q_index].z_star;
+            const int q_index = n->neighbor_indices[j];
+            const double x_diff = fluid_particles[i].x_star - fluid_particles[q_index].x_star;
+            const double y_diff = fluid_particles[i].y_star - fluid_particles[q_index].y_star;
+            const double z_diff = fluid_particles[i].z_star - fluid_particles[q_index].z_star;
 
-            r_mag = sqrt(x_diff*x_diff + y_diff*y_diff + z_diff*z_diff);
-
-            grad = del_W(r_mag, params->smoothing_radius);
+            double r_mag = sqrt(x_diff*x_diff + y_diff*y_diff + z_diff*z_diff);
             if(r_mag < 0.0001) {
               r_mag = 0.0001;
               DEBUG_PRINT("pstar: %f, %f, %f grad: %f\n", fluid_particles[i].x_star, fluid_particles[i].y_star,fluid_particles[i].z_star, grad);
             }
-            grad_x = grad*x_diff/r_mag;
-            grad_y = grad*y_diff/r_mag;
-            grad_z = grad*z_diff/r_mag;
+
+            const double grad = del_W(r_mag, params->smoothing_radius);
+
+            const double grad_x = grad*x_diff/r_mag;
+            const double grad_y = grad*y_diff/r_mag;
+            const double grad_z = grad*z_diff/r_mag;
             sum_grad_x += grad_x;
             sum_grad_y += grad_y;
             sum_grad_z += grad_z;
@@ -340,7 +308,7 @@ void calculate_lambda(fluid_particle_t *const fluid_particles,
 
         sum_C *= (1.0/(params->rest_density*params->rest_density));
 
-        double epsilon = 1.0;
+        const double epsilon = 1.0;
         fluid_particles[i].lambda = -Ci/(sum_C + epsilon);
     }
 }
@@ -349,39 +317,33 @@ void update_dp(fluid_particle_t *const fluid_particles,
                const param_t *const params,
                const neighbors_t *const neighbors)
 {
-    unsigned int q_index;
-    const neighbor_t *n;
-    double x_diff, y_diff, z_diff, dp, r_mag;
-    double h = params->smoothing_radius;
-    double k = params->k;
-    double dq = params->dq;
-    double Wdq = W(dq, h);
+    const double h = params->smoothing_radius;
+    const double k = params->k;
+    const double dq = params->dq;
+    const double Wdq = W(dq, h);
 
-    int i,j;
-    for(i=0; i<params->number_fluid_particles_local; i++)
+    for(int i=0; i<params->number_fluid_particles_local; i++)
     {
-        n = &neighbors->particle_neighbors[i];
+        const neighbor_t *const n = &neighbors->particle_neighbors[i];
 
         double dp_x = 0.0;
         double dp_y = 0.0;
         double dp_z = 0.0;
-        double s_corr;
-        double WdWdq; // W()/Wdq()
 
-        for(j=0; j<n->number_fluid_neighbors; j++)
+        for(int j=0; j<n->number_fluid_neighbors; j++)
         {
-            q_index = n->neighbor_indices[j];
-            x_diff = fluid_particles[i].x_star - fluid_particles[q_index].x_star;
-            y_diff = fluid_particles[i].y_star - fluid_particles[q_index].y_star;
-            z_diff = fluid_particles[i].z_star - fluid_particles[q_index].z_star;
+            const int q_index = n->neighbor_indices[j];
+            const double x_diff = fluid_particles[i].x_star - fluid_particles[q_index].x_star;
+            const double y_diff = fluid_particles[i].y_star - fluid_particles[q_index].y_star;
+            const double z_diff = fluid_particles[i].z_star - fluid_particles[q_index].z_star;
 
-            r_mag = sqrt(x_diff*x_diff + y_diff*y_diff + z_diff*z_diff);
+            double r_mag = sqrt(x_diff*x_diff + y_diff*y_diff + z_diff*z_diff);
             if(r_mag < 0.0001)
               r_mag = 0.0001;
 
-            WdWdq = W(r_mag, h)/Wdq;
-            s_corr = -k*WdWdq*WdWdq*WdWdq*WdWdq;
-            dp = (fluid_particles[i].lambda + fluid_particles[q_index].lambda + s_corr)*del_W(r_mag, h);
+            const double WdWdq = W(r_mag, h)/Wdq;
+            const double s_corr = -k*WdWdq*WdWdq*WdWdq*WdWdq;
+            const double dp = (fluid_particles[i].lambda + fluid_particles[q_index].lambda + s_corr)*del_W(r_mag, h);
 
             dp_x += dp*x_diff/r_mag;
             dp_y += dp*y_diff/r_mag;
@@ -398,14 +360,13 @@ void identify_oob_particles(fluid_particle_t *const fluid_particles,
                             param_t *const params,
                             communication_t *const communication)
 {
-    int i;
     oob_t *const out_of_bounds = &communication->out_of_bounds;
 
     // Reset OOB numbers
     out_of_bounds->number_oob_particles_left = 0;
     out_of_bounds->number_oob_particles_right = 0;
 
-    for(i=0; i<params->number_fluid_particles_local; i++) {
+    for(int i=0; i<params->number_fluid_particles_local; i++) {
         // Set OOB particle indices and update number
         if (fluid_particles[i].x_star < params->node_start_x)
             out_of_bounds->oob_indices_left[out_of_bounds->number_oob_particles_left++] = i;
@@ -422,10 +383,9 @@ void predict_positions(fluid_particle_t *const fluid_particles,
                        const param_t *const params,
                        const AABB_t *const boundary_global)
 {
-    int i;
-    double dt = params->time_step;
+    const double dt = params->time_step;
 
-    for(i=0; i<params->number_fluid_particles_local; i++) {
+    for(int i=0; i<params->number_fluid_particles_local; i++) {
         fluid_particles[i].x_star = fluid_particles[i].x + (fluid_particles[i].v_x * dt);
         fluid_particles[i].y_star = fluid_particles[i].y + (fluid_particles[i].v_y * dt);
         fluid_particles[i].z_star = fluid_particles[i].z + (fluid_particles[i].v_z * dt);
@@ -459,15 +419,13 @@ void check_velocity(double *const v_x, double *const v_y, double *const v_z)
 void update_velocities(fluid_particle_t *const fluid_particles,
                        const param_t *const params)
 {
-    int i;
     const double dt = params->time_step;
-    double v_x, v_y, v_z;
 
     // Update local and halo particles, update halo so that XSPH visc. is correct
-    for(i=0; i<params->number_fluid_particles_local + params->number_halo_particles_left + params->number_halo_particles_right; i++) {
-        v_x = (fluid_particles[i].x_star - fluid_particles[i].x)/dt;
-        v_y = (fluid_particles[i].y_star - fluid_particles[i].y)/dt;
-        v_z = (fluid_particles[i].z_star - fluid_particles[i].z)/dt;
+    for(int i=0; i<params->number_fluid_particles_local + params->number_halo_particles_left + params->number_halo_particles_right; i++) {
+        double v_x = (fluid_particles[i].x_star - fluid_particles[i].x)/dt;
+        double v_y = (fluid_particles[i].y_star - fluid_particles[i].y)/dt;
+        double v_z = (fluid_particles[i].z_star - fluid_particles[i].z)/dt;
 
         check_velocity(&v_x, &v_y, &v_z);
 
@@ -506,13 +464,11 @@ void init_particles(fluid_particle_t *const fluid_particles,
                     param_t *const params,
                     const AABB_t *const water)
 {
-    int i;
-
     // Create fluid volume
     construct_fluid_volume(fluid_particles, params, water);
 
     // Initialize particle values
-    for(i=0; i<params->number_fluid_particles_local; i++) {
+    for(int i=0; i<params->number_fluid_particles_local; i++) {
         fluid_particles[i].x_star = fluid_particles[i].x;
         fluid_particles[i].y_star = fluid_particles[i].y;
         fluid_particles[i].z_star = fluid_particles[i].z;
