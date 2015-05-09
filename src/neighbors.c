@@ -1,7 +1,8 @@
+#include "neighbors.h"
+
 #include <math.h>
 #include <stdbool.h>
 #include <string.h>
-#include "neighbors.h"
 
 void allocate_neighbors(neighbors_t *const neighbors,
                         const param_t *const params,

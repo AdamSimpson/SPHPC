@@ -1,7 +1,8 @@
+#include "communication.h"
+
 #include <stdio.h>
 #include <stddef.h>
 #include <string.h>
-#include "communication.h"
 
 void allocate_communication(communication_t *const communication)
 {

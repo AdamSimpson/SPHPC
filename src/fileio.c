@@ -1,10 +1,10 @@
 ////////////////////////////////////////////////
 // Utility Functions
 ////////////////////////////////////////////////
+#include "fileio.h"
 
 #include <stdio.h>
 #include <inttypes.h>
-#include "fileio.h"
 
 // Write boundary in MPI
 void write_MPI(const fluid_particle_t *const particles,

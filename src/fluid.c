@@ -1,8 +1,8 @@
+#include "fluid.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "fluid.h"
-
 
 // Compiler must support vardiac macros
 #ifdef DEBUG

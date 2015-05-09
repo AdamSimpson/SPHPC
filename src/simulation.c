@@ -1,11 +1,13 @@
+#include "simulation.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+
 #include "communication.h"
 #include "fluid.h"
 #include "geometry.h"
 #include "fileio.h"
-#include "simulation.h"
 
 int main(int argc, char *argv[])
 {

@@ -5,8 +5,9 @@ typedef struct EDGES edge_t;
 typedef struct OOB oob_t;
 typedef struct COMMUNICATION communication_t;
 
-#include "fluid.h"
 #include "mpi.h"
+
+#include "fluid.h"
 #include "simulation.h"
 
 MPI_Datatype Particletype;

@@ -1,5 +1,7 @@
-#include <stdio.h>
 #include "geometry.h"
+
+#include <stdio.h>
+
 #include "communication.h"
 
 ////////////////////////////////////////////////

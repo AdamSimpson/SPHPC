@@ -7,6 +7,7 @@ typedef struct FLUID_PARTICLE fluid_particle_t;
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
+
 #include "neighbors.h"
 #include "fileio.h"
 #include "geometry.h"
