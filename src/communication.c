@@ -7,7 +7,7 @@
 void allocate_communication(communication_t *const communication)
 {
     // Allocate index arrays
-    size_t index_bytes = communication->max_comm_particles*sizeof(int);
+    const size_t index_bytes = communication->max_comm_particles*sizeof(int);
 
     communication->edges.edge_indices_left  = malloc(index_bytes);
     communication->edges.edge_indices_right = malloc(index_bytes);
@@ -16,9 +16,9 @@ void allocate_communication(communication_t *const communication)
     communication->out_of_bounds.oob_indices_right = malloc(index_bytes);
 
     // Allocate send and receive buffers
-    int num_components=3;
-    size_t particle_bytes = communication->max_comm_particles*sizeof(fluid_particle_t);
-    size_t component_bytes = num_components*communication->max_comm_particles*sizeof(double);
+    const int num_components=3;
+    const size_t particle_bytes = communication->max_comm_particles*sizeof(fluid_particle_t);
+    const size_t component_bytes = num_components*communication->max_comm_particles*sizeof(double);
 
     communication->particle_send_buffer = malloc(particle_bytes);
 
@@ -67,11 +67,10 @@ void create_MPI_types()
 {
     //Create fluid particle type
     MPI_Datatype types[18];
-    int i;
-    for (i=0; i<17; i++) types[i] = MPI_DOUBLE;
+    for (int i=0; i<17; i++) types[i] = MPI_DOUBLE;
     types[17] = MPI_INT;
     int blocklens[18];
-    for (i=0; i<18; i++) blocklens[i] = 1;
+    for (int i=0; i<18; i++) blocklens[i] = 1;
     MPI_Aint disps[18];
     // Get displacement of each struct member
     disps[0] = offsetof( fluid_particle_t,  x_star);
@@ -106,9 +105,8 @@ void start_halo_exchange(communication_t *const communication,
                          const param_t *const params,
                          fluid_particle_t *const fluid_particles)
 {
-    int i;
-    int rank = params->rank;
-    int nprocs = params->nprocs;
+    const int rank = params->rank;
+    const int nprocs = params->nprocs;
     edge_t *const edges = &communication->edges;
 
     const fluid_particle_t *p;
@@ -117,7 +115,7 @@ void start_halo_exchange(communication_t *const communication,
     // Set edge particle indices and update number
     edges->number_edge_particles_left = 0;
     edges->number_edge_particles_right = 0;
-    for(i=0; i<params->number_fluid_particles_local; i++)
+    for(int i=0; i<params->number_fluid_particles_local; i++)
     {
         p = &fluid_particles[i];
         if (p->x_star - params->node_start_x <= h)
@@ -130,8 +128,8 @@ void start_halo_exchange(communication_t *const communication,
     int num_moving_right = edges->number_edge_particles_right;
 
     // Setup nodes to left and right of self
-    int proc_to_left =  (rank == 0 ? MPI_PROC_NULL : rank-1);
-    int proc_to_right = (rank == nprocs-1 ? MPI_PROC_NULL : rank+1);
+    const int proc_to_left =  (rank == 0 ? MPI_PROC_NULL : rank-1);
+    const int proc_to_right = (rank == nprocs-1 ? MPI_PROC_NULL : rank+1);
 
     // Get number of halo particles from right and left
     int num_from_left = 0;
@@ -146,22 +144,21 @@ void start_halo_exchange(communication_t *const communication,
     printf("total moving: %d\n", num_moving_right + num_moving_left);
 
     // Set send buffer points
-    fluid_particle_t *sendl_buffer = communication->particle_send_buffer;
-    fluid_particle_t *sendr_buffer = sendl_buffer + num_moving_left;
+    fluid_particle_t *const sendl_buffer = communication->particle_send_buffer;
+    fluid_particle_t *const sendr_buffer = sendl_buffer + num_moving_left;
 
     // Pack send buffers
-    for(i=0; i<edges->number_edge_particles_left; i++)
+    for(int i=0; i<edges->number_edge_particles_left; i++)
         sendl_buffer[i] = fluid_particles[edges->edge_indices_left[i]];
-    for(i=0; i<edges->number_edge_particles_right; i++)
+    for(int i=0; i<edges->number_edge_particles_right; i++)
         sendr_buffer[i] = fluid_particles[edges->edge_indices_right[i]];
 
     //Index to start receiving halo particles
-    int indexToReceiveLeft = params->number_fluid_particles_local;
-    int indexToReceiveRight = indexToReceiveLeft + num_from_left;
+    const int indexToReceiveLeft = params->number_fluid_particles_local;
+    const int indexToReceiveRight = indexToReceiveLeft + num_from_left;
 
-    int tagl = 4312;
-    int tagr = 5177;
-
+    const int tagl = 4312;
+    const int tagr = 5177;
     // Receive halo from left rank
     MPI_Irecv(&fluid_particles[indexToReceiveLeft], num_from_left, Particletype, proc_to_left,tagl, MPI_COMM_WORLD, &edges->reqs[0]);
     // Receive halo from right rank
@@ -196,43 +193,39 @@ void transfer_OOB_particles(const communication_t *const communication,
                             fluid_particle_t *const fluid_particles,
                             param_t *const params)
 {
-    int i;
     const fluid_particle_t *p;
-    int rank = params->rank;
-    int nprocs = params->nprocs;
+    const int rank = params->rank;
+    const int nprocs = params->nprocs;
 
-    int i_left = 0;
-    int i_right = 0;
+    int num_moving_left = 0;
+    int num_moving_right = 0;
 
     // Set send buffers
     fluid_particle_t *const sendl_buffer = communication->particle_send_buffer;
     fluid_particle_t *const sendr_buffer = sendl_buffer + communication->max_comm_particles;
 
-    for(i=0; i<params->number_fluid_particles_local; i++) {
+    for(int i=0; i<params->number_fluid_particles_local; i++) {
         p = &fluid_particles[i];
 
         // Set OOB particle indices and update number
         // remove particle from end of array to fill vacancy
         if (p->x_star < params->node_start_x && params->rank != 0) {
-            sendl_buffer[i_left++] = *p;
+            sendl_buffer[num_moving_left++] = *p;
             fluid_particles[i] = fluid_particles[params->number_fluid_particles_local-1];
             fluid_particles[i].id = i;
             params->number_fluid_particles_local--;
         }
         else if (p->x_star > params->node_end_x && params->rank != params->nprocs-1) {
-            sendr_buffer[i_right++] = *p;
+            sendr_buffer[num_moving_right++] = *p;
             fluid_particles[i] = fluid_particles[params->number_fluid_particles_local-1];
             fluid_particles[i].id = i;
             params->number_fluid_particles_local--;
         }
     }
 
-    int num_moving_left = i_left;
-    int num_moving_right = i_right;
-
     // Setup nodes to left and right of self
-    int proc_to_left =  (rank == 0 ? MPI_PROC_NULL : rank-1);
-    int proc_to_right = (rank == nprocs-1 ? MPI_PROC_NULL : rank+1);
+    const int proc_to_left =  (rank == 0 ? MPI_PROC_NULL : rank-1);
+    const int proc_to_right = (rank == nprocs-1 ? MPI_PROC_NULL : rank+1);
 
     // Get number of particles from right and left
     int num_from_left = 0;
@@ -245,8 +238,8 @@ void transfer_OOB_particles(const communication_t *const communication,
     MPI_Sendrecv(&num_moving_left, 1, MPI_INT, proc_to_left, tag, &num_from_right,1,MPI_INT,proc_to_right,tag,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
 
     // Allocate recieve buffers
-    fluid_particle_t *recvl_buffer = &fluid_particles[params->number_fluid_particles_local];
-    fluid_particle_t *recvr_buffer = &fluid_particles[params->number_fluid_particles_local + num_from_left];
+    fluid_particle_t *const recvl_buffer = &fluid_particles[params->number_fluid_particles_local];
+    fluid_particle_t *const recvr_buffer = &fluid_particles[params->number_fluid_particles_local + num_from_left];
 
     MPI_Status status;
 
@@ -268,10 +261,10 @@ void transfer_OOB_particles(const communication_t *const communication,
                  MPI_COMM_WORLD, &status);
     MPI_Get_count(&status, Particletype, &num_received_right);
 
-    int total_received = num_received_right + num_received_left;
+    const int total_received = num_received_right + num_received_left;
 
     // Update received particle ID
-    for(i=params->number_fluid_particles_local; i<params->number_fluid_particles_local+total_received; i++)
+    for(int i=params->number_fluid_particles_local; i<params->number_fluid_particles_local+total_received; i++)
     {
         fluid_particles[i].id = i;
     }
@@ -286,41 +279,38 @@ void update_halo_lambdas(const communication_t *const communication,
                          const param_t *const params,
                          fluid_particle_t *const fluid_particles)
 {
-    int i;
     fluid_particle_t *p;
     const edge_t *const edges = &communication->edges;
 
-    int rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    int nprocs;
-    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+    const int rank = params->rank;
+    const int nprocs = params->nprocs;
 
-    int num_moving_left  = edges->number_edge_particles_left;
-    int num_moving_right = edges->number_edge_particles_right;
+    const int num_moving_left  = edges->number_edge_particles_left;
+    const int num_moving_right = edges->number_edge_particles_right;
 
-    int num_from_left  = params->number_halo_particles_left;
-    int num_from_right = params->number_halo_particles_right;
+    const int num_from_left  = params->number_halo_particles_left;
+    const int num_from_right = params->number_halo_particles_right;
 
     // Allocate send/recv buffers
-    double *send_lambdas_left  = communication->halo_components_send_buffer;
-    double *send_lambdas_right = send_lambdas_left + num_moving_left;
+    double *const send_lambdas_left  = communication->halo_components_send_buffer;
+    double *const send_lambdas_right = send_lambdas_left + num_moving_left;
 
-    double *recv_lambdas_left  = communication->halo_components_recv_buffer;
-    double *recv_lambdas_right = recv_lambdas_left + num_from_left;
+    double *const recv_lambdas_left  = communication->halo_components_recv_buffer;
+    double *const recv_lambdas_right = recv_lambdas_left + num_from_left;
 
     // Pack local halo lambdas
-    for(i=0; i<num_moving_left; i++) {
+    for(int i=0; i<num_moving_left; i++) {
         p = &fluid_particles[edges->edge_indices_left[i]];
         send_lambdas_left[i] = p->lambda;
     }
-    for(i=0; i<num_moving_right; i++) {
+    for(int i=0; i<num_moving_right; i++) {
         p = &fluid_particles[edges->edge_indices_right[i]];
         send_lambdas_right[i] = p->lambda;
     }
 
     // Setup nodes to left and right of self
-    int proc_to_left =  (rank == 0 ? MPI_PROC_NULL : rank-1);
-    int proc_to_right = (rank == nprocs-1 ? MPI_PROC_NULL : rank+1);
+    const int proc_to_left =  (rank == 0 ? MPI_PROC_NULL : rank-1);
+    const int proc_to_right = (rank == nprocs-1 ? MPI_PROC_NULL : rank+1);
 
     // Could do async to perhaps increase performance
     // Send lambdas to right and receive from left
@@ -336,11 +326,11 @@ void update_halo_lambdas(const communication_t *const communication,
                  MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
     // Unpack halo particle lambdas
-    for(i=0; i<num_from_left; i++) {
+    for(int i=0; i<num_from_left; i++) {
         p = &fluid_particles[params->number_fluid_particles_local + i];;
         p->lambda = recv_lambdas_left[i];
     }
-    for(i=0; i<num_from_right; i++) {
+    for(int i=0; i<num_from_right; i++) {
         p = &fluid_particles[ params->number_fluid_particles_local + num_from_left + i];
         p->lambda = recv_lambdas_right[i];
     }
@@ -350,39 +340,36 @@ void update_halo_positions(const communication_t *const communication,
                            const param_t *const params,
                            fluid_particle_t *const fluid_particles)
 {
-    int i;
     fluid_particle_t *p;
     const edge_t *const edges = &communication->edges;
 
-    int rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    int nprocs;
-    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+    const int rank = params->rank;
+    const int nprocs = params->nprocs;
 
     // x,y,z components required
-    int num_components = 3;
-    int num_moving_left = num_components*edges->number_edge_particles_left;
-    int num_moving_right = num_components*edges->number_edge_particles_right;
+    const int num_components = 3;
+    const int num_moving_left = num_components*edges->number_edge_particles_left;
+    const int num_moving_right = num_components*edges->number_edge_particles_right;
 
-    int num_from_left = num_components*params->number_halo_particles_left;
-    int num_from_right = num_components*params->number_halo_particles_right;
+    const int num_from_left = num_components*params->number_halo_particles_left;
+    const int num_from_right = num_components*params->number_halo_particles_right;
 
     // Allocate send/recv buffers
     // Could combine left/right into single malloc...
-    double *send_positions_left = communication->halo_components_send_buffer;
-    double *send_positions_right = send_positions_left + num_moving_left;
+    double *const send_positions_left = communication->halo_components_send_buffer;
+    double *const send_positions_right = send_positions_left + num_moving_left;
 
-    double *recv_positions_left = communication->halo_components_recv_buffer;
-    double *recv_positions_right = recv_positions_left + num_from_left;
+    double *const recv_positions_left = communication->halo_components_recv_buffer;
+    double *const recv_positions_right = recv_positions_left + num_from_left;
 
     // Pack local edge positions
-    for(i=0; i<num_moving_left; i+=3) {
+    for(int i=0; i<num_moving_left; i+=3) {
         p = &fluid_particles[edges->edge_indices_left[i/3]];
         send_positions_left[i]   = p->x_star;
         send_positions_left[i+1] = p->y_star;
         send_positions_left[i+2] = p->z_star;
     }
-    for(i=0; i<num_moving_right; i+=3) {
+    for(int i=0; i<num_moving_right; i+=3) {
         p = &fluid_particles[edges->edge_indices_right[i/3]];
         send_positions_right[i]   = p->x_star;
         send_positions_right[i+1] = p->y_star;
@@ -390,8 +377,8 @@ void update_halo_positions(const communication_t *const communication,
     }
 
     // Setup nodes to left and right of self
-    int proc_to_left =  (rank == 0 ? MPI_PROC_NULL : rank-1);
-    int proc_to_right = (rank == nprocs-1 ? MPI_PROC_NULL : rank+1);
+    const int proc_to_left =  (rank == 0 ? MPI_PROC_NULL : rank-1);
+    const int proc_to_right = (rank == nprocs-1 ? MPI_PROC_NULL : rank+1);
 
     // Could do async to perhaps increase performance
     // Send positions to right and receive from left
@@ -407,13 +394,13 @@ void update_halo_positions(const communication_t *const communication,
                  MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
     // Unpack halo particle positions
-    for(i=0; i<num_from_left; i+=3) {
+    for(int i=0; i<num_from_left; i+=3) {
         p = &fluid_particles[params->number_fluid_particles_local + i/3];;
         p->x_star = recv_positions_left[i];
         p->y_star = recv_positions_left[i+1];
         p->z_star = recv_positions_left[i+2];
     }
-    for(i=0; i<num_from_right; i+=3) {
+    for(int i=0; i<num_from_right; i+=3) {
         p = &fluid_particles[ params->number_fluid_particles_local + num_from_left/3 + i/3];
         p->x_star = recv_positions_right[i];
         p->y_star = recv_positions_right[i+1];
