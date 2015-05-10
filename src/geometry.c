@@ -17,14 +17,10 @@ void construct_fluid_volume(fluid_particle_t *const fluid_particles,
                             param_t *const params,
                             const AABB_t *const fluid)
 {
-    double x, y, z, min_x, max_x;
-    int num_x, num_y, num_z, nx, ny, nz;
-    int i = 0;
-    fluid_particle_t *p;
-
     const double spacing = params->smoothing_radius/2.0;
 
     // Start node particles at integer multiple of spacing
+    double min_x;
     if(params->rank == 0)
       min_x = fluid->min_x;
     else {
@@ -32,20 +28,21 @@ void construct_fluid_volume(fluid_particle_t *const fluid_particles,
       min_x = num_to_left*spacing + fluid->min_x;
     }
 
-    max_x = min(fluid->max_x, params->node_end_x);
+    const double max_x = min(fluid->max_x, params->node_end_x);
 
-    num_x = floor((max_x - min_x) / spacing);
-    num_y = floor((fluid->max_y - fluid->min_y ) / spacing);
-    num_z = floor((fluid->max_z - fluid->min_z ) / spacing);
+    const int num_x = floor((max_x - min_x) / spacing);
+    const int num_y = floor((fluid->max_y - fluid->min_y ) / spacing);
+    const int num_z = floor((fluid->max_z - fluid->min_z ) / spacing);
 
     // Place particles inside bounding volume
-    for(nz=0; nz<num_z; nz++) {
-        z = fluid->min_z + nz*spacing + spacing/2.0;
-        for(ny=0; ny<num_y; ny++) {
-            y = fluid->min_y + ny*spacing + spacing/2.0;
-            for(nx=0; nx<num_x; nx++) {
-                x = min_x + nx*spacing + spacing/2.0;
-                p = &fluid_particles[i];
+    int i = 0;
+    for(int nz=0; nz<num_z; nz++) {
+        const double z = fluid->min_z + nz*spacing + spacing/2.0;
+        for(int ny=0; ny<num_y; ny++) {
+            const double y = fluid->min_y + ny*spacing + spacing/2.0;
+            for(int nx=0; nx<num_x; nx++) {
+                const double x = min_x + nx*spacing + spacing/2.0;
+                fluid_particle_t *const p = &fluid_particles[i];
                 p->x = x;
                 p->y = y;
                 p->z = z;
@@ -55,7 +52,7 @@ void construct_fluid_volume(fluid_particle_t *const fluid_particles,
         }
     }
     params->number_fluid_particles_local = i;
-    printf("rank %d: min fluid: %f max fluid x: %f\n", params->rank, min_x + spacing/2.0, x);
+    printf("rank %d: min fluid: %f max fluid x: %f\n", params->rank, min_x + spacing/2.0, min_x + num_x*spacing + spacing/2.0);
 }
 
 // Sets upper bound on number of particles, used for memory allocation
@@ -63,18 +60,15 @@ void set_particle_numbers(const AABB_t *const fluid_global,
                          param_t *const params,
                          communication_t *const communication)
 {
-    int num_x;
-    int num_y;
-    int num_z;
     const double spacing = params->smoothing_radius/2.0;
 
     // Get some baseline numbers useful to define maximum particle numbers
-    num_x = floor((fluid_global->max_x - fluid_global->min_x ) / spacing);
-    num_y = floor((fluid_global->max_y - fluid_global->min_y ) / spacing);
-    num_z = floor((fluid_global->max_z - fluid_global->min_z ) / spacing);
+    const int num_x = floor((fluid_global->max_x - fluid_global->min_x ) / spacing);
+    const int num_y = floor((fluid_global->max_y - fluid_global->min_y ) / spacing);
+    const int num_z = floor((fluid_global->max_z - fluid_global->min_z ) / spacing);
 
     // Initial fluid particles per rank
-    int num_initial = (num_x * num_y * num_z)/get_num_procs();
+    const int num_initial = (num_x * num_y * num_z)/get_num_procs();
 
     // Set max communication particles to a 10th of node start number
     communication->max_comm_particles = num_initial/10;
