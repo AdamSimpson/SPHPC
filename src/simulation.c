@@ -42,10 +42,9 @@ int main(int argc, char *argv[])
 
     // Main loop
     int n;
-    double start_time, end_time;
 
     MPI_Barrier(MPI_COMM_WORLD);
-    start_time = MPI_Wtime();
+    const double start_time = MPI_Wtime();
 
     for(n=0; n<params.number_steps; n++) {
 
@@ -100,7 +99,7 @@ int main(int argc, char *argv[])
             write_MPI(fluid_particles, &params, fileNum++);
 
     }
-    end_time = MPI_Wtime();
+    const double end_time = MPI_Wtime();
     printf("Rank %d Elapsed seconds: %f, num particles: %d\n", params.rank, end_time-start_time, params.number_fluid_particles_local);
 
     // Release memory
@@ -144,12 +143,12 @@ void set_parameters(param_t *const params,
   water_volume_global->max_z = boundary_global->max_z - 10.0;
 
   // Cubed volume
-  double volume = (water_volume_global->max_x - water_volume_global->min_x)
+  const double volume = (water_volume_global->max_x - water_volume_global->min_x)
                 * (water_volume_global->max_y - water_volume_global->min_y)
                 * (water_volume_global->max_z - water_volume_global->min_z);
 
   // Initial spacing between particles
-  float spacing_particle = pow(volume/params->number_fluid_particles_global,1.0/3.0);
+  const float spacing_particle = pow(volume/params->number_fluid_particles_global,1.0/3.0);
 
   // Let mass of each particle equal 1
   params->rest_density = params->number_fluid_particles_global/volume;
