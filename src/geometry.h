@@ -16,14 +16,14 @@ struct AABB {
     double max_z;
 };//Axis aligned bounding box
 
-void construct_fluid_volume(FluidParticle *const fluid_particles,
+void ConstructFluidVolume(FluidParticle *const fluid_particles,
                             Params *const params,
                             const AABB *const fluid);
 
-void set_particle_numbers(const AABB *const fluid_global,
+void SetParticleNumbers(const AABB *const fluid_global,
                           Params *const params,
                           Communication *const communication);
 
-void check_partition(Params *const params);
+void CheckPartition(Params *const params);
 
 #endif

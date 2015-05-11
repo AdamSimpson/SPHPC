@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-void allocate_neighbors(Neighbors *const neighbors,
+void AllocateNeighbors(Neighbors *const neighbors,
                         const Params *const params,
                         const AABB *const boundary_global)
 {
@@ -24,7 +24,7 @@ void allocate_neighbors(Neighbors *const neighbors,
         printf("Could not allocate hash\n");
 }
 
-void free_neighbors(Neighbors *neighbors)
+void FreeNeighbors(Neighbors *neighbors)
 {
   free(neighbors->particle_neighbors);
   free(neighbors->hash);
@@ -32,7 +32,7 @@ void free_neighbors(Neighbors *neighbors)
 
 // Uniform grid hash
 // We don't check if the position is out of bounds so x,y,z must be valid
-unsigned int hash_val(const Neighbors *const neighbors,
+unsigned int HashVal(const Neighbors *const neighbors,
                       const double x,
                       const double y,
                       const double z)
@@ -57,7 +57,7 @@ unsigned int hash_val(const Neighbors *const neighbors,
 // Halo particles are not added to hash, only neighbors list
 // Neighbors may be more than h away...since distance is computed in all smoothing functions
 // it is a waste to check as we hash as well
-void hash_halo(const FluidParticle *const fluid_particles,
+void HashHalo(const FluidParticle *const fluid_particles,
                const Params *const params,
                const AABB *const boundary,
                Neighbors *const neighbors)
@@ -86,7 +86,7 @@ void hash_halo(const FluidParticle *const fluid_particles,
                       continue;
 
                     // Calculate hash index at neighbor point
-                    const int index = hash_val(neighbors, x,y,z);
+                    const int index = HashVal(neighbors, x,y,z);
                       // Go through each fluid particle in neighbor point bucket
                       for (int n=0;n<neighbors->hash[index].number_fluid;n++) {
                           const FluidParticle *const q = neighbors->hash[index].fluid_particles[n];
@@ -121,7 +121,7 @@ void hash_halo(const FluidParticle *const fluid_particles,
 // Fill fluid particles into hash
 // Neighbors may be more than h away...since distance is computed in all smoothing functions
 // it is a waste to check as we hash as well
-void hash_fluid(const FluidParticle *const fluid_particles,
+void HashFluid(const FluidParticle *const fluid_particles,
                 const Params *const params,
                 const AABB *const boundary,
                 Neighbors *neighbors)
@@ -152,7 +152,7 @@ void hash_fluid(const FluidParticle *const fluid_particles,
 
             neighbors->particle_neighbors[i].number_fluid_neighbors = 0;
 
-            const int index = hash_val(neighbors, p->x_star, p->y_star, p->z_star);
+            const int index = HashVal(neighbors, p->x_star, p->y_star, p->z_star);
 
             if (neighbors->hash[index].number_fluid < neighbors->max_neighbors) {
                 neighbors->hash[index].fluid_particles[neighbors->hash[index].number_fluid] = p;
@@ -169,7 +169,7 @@ void hash_fluid(const FluidParticle *const fluid_particles,
            const double py = p->y_star;
            const double pz = p->z_star;
 
-           const int index = hash_val(neighbors, px, py, pz);
+           const int index = HashVal(neighbors, px, py, pz);
 
            // If this bucket has been done try the next one
            if(neighbors->hash[index].hashed)
@@ -190,7 +190,7 @@ void hash_fluid(const FluidParticle *const fluid_particles,
                           continue;
 
                         // Calculate hash index at neighbor point
-                        const int neighbor_index = hash_val(neighbors, x, y, z);
+                        const int neighbor_index = HashVal(neighbors, x, y, z);
 
                         // Add neighbor particles to each particle in current bucket
                         for (int c=0; c<neighbors->hash[index].number_fluid; c++) {

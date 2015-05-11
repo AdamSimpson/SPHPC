@@ -11,7 +11,7 @@
 
 int main(int argc, char *argv[])
 {
-    init_communication(argc, argv);
+    InitCommunication(argc, argv);
 
     Params params;
     AABB water_volume_global;
@@ -20,25 +20,25 @@ int main(int argc, char *argv[])
     FluidParticle *fluid_particles = NULL;
     Neighbors neighbors;
 
-    set_parameters(&params, &neighbors, &boundary_global, &water_volume_global);
+    SetParameters(&params, &neighbors, &boundary_global, &water_volume_global);
 
-    set_particle_numbers(&water_volume_global, &params, &communication);
+    SetParticleNumbers(&water_volume_global, &params, &communication);
 
-    allocate_fluid(&fluid_particles, &params);
+    AllocateFluid(&fluid_particles, &params);
 
-    allocate_neighbors(&neighbors, &params, &boundary_global);
+    AllocateNeighbors(&neighbors, &params, &boundary_global);
 
-    allocate_communication(&communication);
+    AllocateCommunication(&communication);
 
     // Initialize particles
-    init_particles(fluid_particles, &params, &water_volume_global);
+    InitParticles(fluid_particles, &params, &water_volume_global);
 
     // Print some parameters
     printf("Rank: %d, fluid_particles: %d, smoothing radius: %f \n", params.rank, params.number_fluid_particles_local, params.smoothing_radius);
 
     // Initial configuration
     int fileNum=0;
-    write_MPI(fluid_particles, &params, fileNum++);
+    WriteMPI(fluid_particles, &params, fileNum++);
 
     // Main loop
     int n;
@@ -50,53 +50,53 @@ int main(int argc, char *argv[])
 
         printf("Rank %d Entering fluid step %d with %d particles\n",params.rank, n, params.number_fluid_particles_local);
 
-        apply_gravity(fluid_particles, &params);
+        ApplyGravity(fluid_particles, &params);
 
         // Advance to predicted position
-        predict_positions(fluid_particles, &params, &boundary_global);
+        PredictPositions(fluid_particles, &params, &boundary_global);
 
         if (n % 10 == 0)
-            check_partition(&params);
+            CheckPartition(&params);
 
         // Identify out of bounds particles and send them to appropriate rank
-        identify_oob_particles(fluid_particles, &params, &communication);
+        IdentifyOOBParticles(fluid_particles, &params, &communication);
 
-        start_halo_exchange(&communication, &params, fluid_particles);
+        StartHaloExchange(&communication, &params, fluid_particles);
 
-        hash_fluid(fluid_particles, &params, &boundary_global, &neighbors);
+        HashFluid(fluid_particles, &params, &boundary_global, &neighbors);
 
-        finish_halo_exchange(&communication, fluid_particles, &params);
+        FinishHaloExchange(&communication, fluid_particles, &params);
 
-        hash_halo(fluid_particles, &params, &boundary_global, &neighbors);
+        HashHalo(fluid_particles, &params, &boundary_global, &neighbors);
 
         int solve_iterations = 4;
         int si;
         for(si=0; si<solve_iterations; si++)
         {
-            compute_densities(fluid_particles, &params, &neighbors);
+            ComputeDensities(fluid_particles, &params, &neighbors);
 
-            calculate_lambda(fluid_particles, &params, &neighbors);
+            CalculateLambda(fluid_particles, &params, &neighbors);
 
-            update_halo_lambdas(&communication, &params, fluid_particles);
+            UpdateHaloLambdas(&communication, &params, fluid_particles);
 
-            update_dp(fluid_particles, &params, &neighbors);
+            UpdateDPs(fluid_particles, &params, &neighbors);
 
-            update_dp_positions(fluid_particles, &params, &boundary_global);
+            UpdatePositionStars(fluid_particles, &params, &boundary_global);
 
-            update_halo_positions(&communication, &params, fluid_particles);
+            UpdateHaloPositions(&communication, &params, fluid_particles);
         }
 
-        update_velocities(fluid_particles, &params);
+        UpdateVelocities(fluid_particles, &params);
 
-        XSPH_viscosity(fluid_particles, &params, &neighbors);
+        XSPHViscosity(fluid_particles, &params, &neighbors);
 
-        vorticity_confinement(fluid_particles, &params, &neighbors);
+        VorticityConfinement(fluid_particles, &params, &neighbors);
 
-        update_positions(fluid_particles, &params);
+        UpdatePositions(fluid_particles, &params);
 
         // Write file at 30 FPS
         if (n % (int)(1.0/(params.time_step*30.0)) )
-            write_MPI(fluid_particles, &params, fileNum++);
+            WriteMPI(fluid_particles, &params, fileNum++);
 
     }
     const double end_time = MPI_Wtime();
@@ -104,22 +104,22 @@ int main(int argc, char *argv[])
 
     // Release memory
     free(fluid_particles);
-    free_communication(&communication);
-    free_neighbors(&neighbors);
+    FreeCommunication(&communication);
+    FreeNeighbors(&neighbors);
 
     // Close MPI
-    finalize_communication();
+    FinalizeCommunication();
 
     return 0;
 }
 
-void set_parameters(Params *const params,
+void SetParameters(Params *const params,
                     Neighbors *const neighbors,
                     AABB *const boundary_global,
                     AABB *const water_volume_global)
 {
   params->rank = get_rank();
-  params->nprocs = get_num_procs();
+  params->num_procs = get_num_procs();
   params->g = 9.8;
   params->number_steps = 2000;
   params->time_step = 1.0/60.0;
@@ -163,7 +163,7 @@ void set_parameters(Params *const params,
   // Set initial node boundaries
   // Equally divide water volume between all ranks
   double water_length = (water_volume_global->max_x - water_volume_global->min_x);
-  double equal_spacing =  water_length / params->nprocs;
+  double equal_spacing =  water_length / params->num_procs;
   params->node_start_x = water_volume_global->min_x
                       + params->rank * equal_spacing;
 
@@ -172,7 +172,7 @@ void set_parameters(Params *const params,
     // "Stretch" first and last ranks bounds to match boundary
     if (params->rank == 0)
         params->node_start_x  = boundary_global->min_x;
-    if (params->rank == params->nprocs-1)
+    if (params->rank == params->num_procs-1)
         params->node_end_x   = boundary_global->max_x;
 
     neighbors->max_neighbors = 60;

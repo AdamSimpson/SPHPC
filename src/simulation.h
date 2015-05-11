@@ -22,10 +22,10 @@ struct PARAM {
     int number_halo_particles_right;
     int number_steps;
     int rank;
-    int nprocs;
+    int num_procs;
 }; // Simulation paramaters
 
-void set_parameters(Params *const params,
+void SetParameters(Params *const params,
                     Neighbors *const neighbors,
                     AABB *const boundary_global,
                     AABB *const water_volume_global);

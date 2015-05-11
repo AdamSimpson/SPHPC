@@ -13,7 +13,7 @@ static double min(const double a, const double b){
     return min;
 }
 
-void construct_fluid_volume(FluidParticle *const fluid_particles,
+void ConstructFluidVolume(FluidParticle *const fluid_particles,
                             Params *const params,
                             const AABB *const fluid)
 {
@@ -56,7 +56,7 @@ void construct_fluid_volume(FluidParticle *const fluid_particles,
 }
 
 // Sets upper bound on number of particles, used for memory allocation
-void set_particle_numbers(const AABB *const fluid_global,
+void SetParticleNumbers(const AABB *const fluid_global,
                          Params *const params,
                          Communication *const communication)
 {
@@ -81,16 +81,16 @@ void set_particle_numbers(const AABB *const fluid_global,
 }
 
 // Test if boundaries need to be adjusted
-void check_partition(Params *const params)
+void CheckPartition(Params *const params)
 {
     const int num_rank = params->number_fluid_particles_local;
     const int rank = params->rank;
-    const int nprocs = params->nprocs;
+    const int num_procs = params->num_procs;
     const double h = params->smoothing_radius;
 
     // Setup nodes to left and right of self
     const int proc_to_left =  (rank == 0 ? MPI_PROC_NULL : rank-1);
-    const int proc_to_right = (rank == nprocs-1 ? MPI_PROC_NULL : rank+1);
+    const int proc_to_right = (rank == num_procs-1 ? MPI_PROC_NULL : rank+1);
 
     // Get number of particles and partition length  from right and left
     const double length = params->node_end_x - params->node_start_x;
@@ -111,7 +111,7 @@ void check_partition(Params *const params)
     const double length_left = left[1];
     const double length_right = right[1];
 
-    const int even_particles = params->number_fluid_particles_global/(double)params->nprocs;
+    const int even_particles = params->number_fluid_particles_global/(double)params->num_procs;
     const int max_diff = even_particles/10.0f;
 
     // Difference in particle numbers from an even distribution
@@ -131,10 +131,10 @@ void check_partition(Params *const params)
         params->node_start_x -= h;
 
     // Rank to right has too many particles and with move its start to left
-    if( diff_right > max_diff && length_right > 2*h && rank != nprocs-1)
+    if( diff_right > max_diff && length_right > 2*h && rank != num_procs-1)
         params->node_end_x += h;
     // Rank to right has too few particles and will move its start to right
-    else if (diff_right < -max_diff && length > 2*h && rank != nprocs-1)
+    else if (diff_right < -max_diff && length > 2*h && rank != num_procs-1)
         params->node_end_x -= h;
 
     printf("rank %d node_start %f node_end %f \n", rank, params->node_start_x, params->node_end_x);

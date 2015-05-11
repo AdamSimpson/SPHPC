@@ -7,7 +7,7 @@
 #include <inttypes.h>
 
 // Write boundary in MPI
-void write_MPI(const FluidParticle *const particles,
+void WriteMPI(const FluidParticle *const particles,
                const Params *const params,
                const int fileNum)
 {
@@ -19,7 +19,7 @@ void write_MPI(const FluidParticle *const particles,
     const int num_particles = params->number_fluid_particles_local;
 
     // How many bytes each process will write
-    int rank_write_counts[params->nprocs];
+    int rank_write_counts[params->num_procs];
     // alltoall of write counts
     int num_doubles_to_send = 3 * num_particles;
     MPI_Allgather(&num_doubles_to_send, 1, MPI_INT, rank_write_counts, 1, MPI_INT, MPI_COMM_WORLD);
@@ -47,9 +47,9 @@ void write_MPI(const FluidParticle *const particles,
     // write coordinates to file
     MPI_File_write_at(file, displacement, send_buffer , num_doubles_to_send, MPI_DOUBLE, &status);
 
-    int nbytes;
-    MPI_Get_elements(&status, MPI_CHAR, &nbytes);
-    printf("rank %d wrote %d bytes(%d particles) to file %s\n",params->rank,nbytes,num_particles,name);
+    int num_bytes;
+    MPI_Get_elements(&status, MPI_CHAR, &num_bytes);
+    printf("rank %d wrote %d bytes(%d particles) to file %s\n",params->rank,num_bytes,num_particles,name);
 
     // Close file
     MPI_File_close(&file);

@@ -1,5 +1,7 @@
 #include "fluid.h"
 
+#include "communication.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -16,7 +18,7 @@
 #define M_PI  3.14159265358979323846
 #endif
 
-////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
 // Smoothing Kernels
 // Don't use pow as it's POWerfully slow
 ///////////////////////////////////////////////////////////////////////////
@@ -34,21 +36,21 @@ static double W(const double r, const double h)
 
 // Gradient (h-r)^3 normalized in 3D (Spikey) magnitude
 // Need to multiply by r/|r|
-static double del_W(const double r, const double h)
+static double DelW(const double r, const double h)
 {
     if(r > h)
         return 0.0;
 
     const double C = -45.0/(M_PI * h*h*h*h*h*h);
-    const double del_W = C*(h-r)*(h-r);
-    return del_W;
+    const double DelW = C*(h-r)*(h-r);
+    return DelW;
 }
 
 ////////////////////////////////////////////////////////////////////////////
 // Particle attribute computations
 ////////////////////////////////////////////////////////////////////////////
 
-void vorticity_confinement(FluidParticle *const fluid_particles,
+void VorticityConfinement(FluidParticle *const fluid_particles,
                            const Params *const params,
                            const Neighbors *const neighbors)
 {
@@ -81,7 +83,7 @@ void vorticity_confinement(FluidParticle *const fluid_particles,
             if(r_mag < 0.0001)
               r_mag = 0.0001;
 
-            const double dw = del_W(r_mag, params->smoothing_radius);
+            const double dw = DelW(r_mag, params->smoothing_radius);
 
             const double dw_x = dw*x_diff/r_mag;
             const double dw_y = dw*y_diff/r_mag;
@@ -119,7 +121,7 @@ void vorticity_confinement(FluidParticle *const fluid_particles,
             if(r_mag < 0.0001)
               r_mag = 0.0001;
 
-            const double dw = del_W(r_mag, params->smoothing_radius);
+            const double dw = DelW(r_mag, params->smoothing_radius);
 
             const double dw_x = dw*x_diff/r_mag;
             const double dw_y = dw*y_diff/r_mag;
@@ -147,7 +149,7 @@ void vorticity_confinement(FluidParticle *const fluid_particles,
     }
 }
 
-void XSPH_viscosity(FluidParticle *const fluid_particles,
+void XSPHViscosity(FluidParticle *const fluid_particles,
                     const Params *const params,
                     const Neighbors *const neighbors)
 {
@@ -194,7 +196,7 @@ void XSPH_viscosity(FluidParticle *const fluid_particles,
     }
 }
 
-void compute_densities(FluidParticle *const fluid_particles,
+void ComputeDensities(FluidParticle *const fluid_particles,
                        const Params *const params,
                        const Neighbors *const neighbors)
 {
@@ -224,7 +226,7 @@ void compute_densities(FluidParticle *const fluid_particles,
     }
 }
 
-void apply_gravity(FluidParticle *const fluid_particles,
+void ApplyGravity(FluidParticle *const fluid_particles,
                    const Params *const params)
 {
     const double dt = params->time_step;
@@ -235,7 +237,7 @@ void apply_gravity(FluidParticle *const fluid_particles,
     }
 }
 
-void update_dp_positions(FluidParticle *const fluid_particles,
+void UpdatePositionStars(FluidParticle *const fluid_particles,
                          const Params *const params,
                          const AABB *const boundary_global)
 {
@@ -246,12 +248,12 @@ void update_dp_positions(FluidParticle *const fluid_particles,
         fluid_particles[i].z_star += fluid_particles[i].dp_z;
 
         // Enforce boundary conditions
-        boundary_conditions(fluid_particles, i, boundary_global);
+        BoundaryConditions(fluid_particles, i, boundary_global);
 
     }
 }
 
-void update_positions(FluidParticle *const fluid_particles,
+void UpdatePositions(FluidParticle *const fluid_particles,
                       const Params *const params)
 {
      for(int i=0; i<(params->number_fluid_particles_local); i++) {
@@ -261,7 +263,7 @@ void update_positions(FluidParticle *const fluid_particles,
     }
 }
 
-void calculate_lambda(FluidParticle *const fluid_particles,
+void CalculateLambda(FluidParticle *const fluid_particles,
                       const Params *const params,
                       const Neighbors *const neighbors)
 {
@@ -289,7 +291,7 @@ void calculate_lambda(FluidParticle *const fluid_particles,
               DEBUG_PRINT("pstar: %f, %f, %f grad: %f\n", fluid_particles[i].x_star, fluid_particles[i].y_star,fluid_particles[i].z_star, grad);
             }
 
-            const double grad = del_W(r_mag, params->smoothing_radius);
+            const double grad = DelW(r_mag, params->smoothing_radius);
 
             const double grad_x = grad*x_diff/r_mag;
             const double grad_y = grad*y_diff/r_mag;
@@ -313,7 +315,7 @@ void calculate_lambda(FluidParticle *const fluid_particles,
     }
 }
 
-void update_dp(FluidParticle *const fluid_particles,
+void UpdateDPs(FluidParticle *const fluid_particles,
                const Params *const params,
                const Neighbors *const neighbors)
 {
@@ -343,7 +345,7 @@ void update_dp(FluidParticle *const fluid_particles,
 
             const double WdWdq = W(r_mag, h)/Wdq;
             const double s_corr = -k*WdWdq*WdWdq*WdWdq*WdWdq;
-            const double dp = (fluid_particles[i].lambda + fluid_particles[q_index].lambda + s_corr)*del_W(r_mag, h);
+            const double dp = (fluid_particles[i].lambda + fluid_particles[q_index].lambda + s_corr)*DelW(r_mag, h);
 
             dp_x += dp*x_diff/r_mag;
             dp_y += dp*y_diff/r_mag;
@@ -356,7 +358,7 @@ void update_dp(FluidParticle *const fluid_particles,
 }
 
 // Identify out of bounds particles and send them to appropriate rank
-void identify_oob_particles(FluidParticle *const fluid_particles,
+void IdentifyOOBParticles(FluidParticle *const fluid_particles,
                             Params *const params,
                             Communication *const communication)
 {
@@ -375,11 +377,11 @@ void identify_oob_particles(FluidParticle *const fluid_particles,
     }
 
    // Transfer particles that have left the processor bounds
-   transfer_OOB_particles(communication, fluid_particles, params);
+   TransferOOBParticles(communication, fluid_particles, params);
 }
 
 // Predict position
-void predict_positions(FluidParticle *const fluid_particles,
+void PredictPositions(FluidParticle *const fluid_particles,
                        const Params *const params,
                        const AABB *const boundary_global)
 {
@@ -392,11 +394,11 @@ void predict_positions(FluidParticle *const fluid_particles,
 
         // Enforce boundary conditions before hash
         // Otherwise predicted position can blow up hash
-        boundary_conditions(fluid_particles, i, boundary_global);
+        BoundaryConditions(fluid_particles, i, boundary_global);
     }
 }
 
-void check_velocity(double *const v_x, double *const v_y, double *const v_z)
+void CheckVelocity(double *const v_x, double *const v_y, double *const v_z)
 {
     const double v_max = 30.0;
 
@@ -416,7 +418,7 @@ void check_velocity(double *const v_x, double *const v_y, double *const v_z)
 }
 
 // Update particle position and check boundary
-void update_velocities(FluidParticle *const fluid_particles,
+void UpdateVelocities(FluidParticle *const fluid_particles,
                        const Params *const params)
 {
     const double dt = params->time_step;
@@ -427,7 +429,7 @@ void update_velocities(FluidParticle *const fluid_particles,
         double v_y = (fluid_particles[i].y_star - fluid_particles[i].y)/dt;
         double v_z = (fluid_particles[i].z_star - fluid_particles[i].z)/dt;
 
-        check_velocity(&v_x, &v_y, &v_z);
+        CheckVelocity(&v_x, &v_y, &v_z);
 
         fluid_particles[i].v_x = v_x;
         fluid_particles[i].v_y = v_y;
@@ -436,7 +438,7 @@ void update_velocities(FluidParticle *const fluid_particles,
 }
 
 // Assume AABB with min point being axis origin
-void boundary_conditions(FluidParticle *const fluid_particles,
+void BoundaryConditions(FluidParticle *const fluid_particles,
                          const unsigned int i,
                          const AABB *const boundary)
 {
@@ -460,12 +462,12 @@ void boundary_conditions(FluidParticle *const fluid_particles,
         fluid_particles[i].z_star = boundary->max_z-0.00001;
 }
 
-void init_particles(FluidParticle *const fluid_particles,
+void InitParticles(FluidParticle *const fluid_particles,
                     Params *const params,
                     const AABB *const water)
 {
     // Create fluid volume
-    construct_fluid_volume(fluid_particles, params, water);
+    ConstructFluidVolume(fluid_particles, params, water);
 
     // Initialize particle values
     for(int i=0; i<params->number_fluid_particles_local; i++) {
@@ -486,7 +488,7 @@ void init_particles(FluidParticle *const fluid_particles,
     }
 }
 
-void allocate_fluid(FluidParticle **fluid_particles,
+void AllocateFluid(FluidParticle **fluid_particles,
                     const Params *const params)
 {
     *fluid_particles = calloc(params->max_fluid_particles_local, sizeof(FluidParticle));
