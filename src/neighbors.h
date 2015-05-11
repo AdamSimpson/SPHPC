@@ -34,24 +34,24 @@ struct BUCKET {
 };
 
 void AllocateNeighbors(Neighbors *const neighbors,
-                        const Params *const params,
-                        const AABB *const boundary_global);
+                       const Params *const params,
+                       const AABB *const boundary_global);
 
 void FreeNeighbors(Neighbors *neighbors);
 
 unsigned int HashVal(const Neighbors *const neighbors,
-                      const double x,
-                      const double y,
-                      const double z);
+                     const double x,
+                     const double y,
+                     const double z);
 
 void HashHalo(const FluidParticle *const fluid_particles,
-               const Params *const params,
-               const AABB *const boundary,
-               Neighbors *const neighbors);
+              const Params *const params,
+              const AABB *const boundary,
+              Neighbors *const neighbors);
 
 void HashFluid(const FluidParticle *const fluid_particles,
-                const Params *const params,
-                const AABB *const boundary,
-                Neighbors *neighbors);
+               const Params *const params,
+               const AABB *const boundary,
+               Neighbors *neighbors);
 
 #endif
