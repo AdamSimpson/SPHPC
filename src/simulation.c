@@ -13,12 +13,12 @@ int main(int argc, char *argv[])
 {
     init_communication(argc, argv);
 
-    param_t params;
-    AABB_t water_volume_global;
-    AABB_t boundary_global;
-    communication_t communication;
-    fluid_particle_t *fluid_particles = NULL;
-    neighbors_t neighbors;
+    Params params;
+    AABB water_volume_global;
+    AABB boundary_global;
+    Communication communication;
+    FluidParticle *fluid_particles = NULL;
+    Neighbors neighbors;
 
     set_parameters(&params, &neighbors, &boundary_global, &water_volume_global);
 
@@ -113,10 +113,10 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-void set_parameters(param_t *const params,
-                    neighbors_t *const neighbors,
-                    AABB_t *const boundary_global,
-                    AABB_t *const water_volume_global)
+void set_parameters(Params *const params,
+                    Neighbors *const neighbors,
+                    AABB *const boundary_global,
+                    AABB *const water_volume_global)
 {
   params->rank = get_rank();
   params->nprocs = get_num_procs();

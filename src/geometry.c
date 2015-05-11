@@ -13,9 +13,9 @@ static double min(const double a, const double b){
     return min;
 }
 
-void construct_fluid_volume(fluid_particle_t *const fluid_particles,
-                            param_t *const params,
-                            const AABB_t *const fluid)
+void construct_fluid_volume(FluidParticle *const fluid_particles,
+                            Params *const params,
+                            const AABB *const fluid)
 {
     const double spacing = params->smoothing_radius/2.0;
 
@@ -42,7 +42,7 @@ void construct_fluid_volume(fluid_particle_t *const fluid_particles,
             const double y = fluid->min_y + ny*spacing + spacing/2.0;
             for(int nx=0; nx<num_x; nx++) {
                 const double x = min_x + nx*spacing + spacing/2.0;
-                fluid_particle_t *const p = &fluid_particles[i];
+                FluidParticle *const p = &fluid_particles[i];
                 p->x = x;
                 p->y = y;
                 p->z = z;
@@ -56,9 +56,9 @@ void construct_fluid_volume(fluid_particle_t *const fluid_particles,
 }
 
 // Sets upper bound on number of particles, used for memory allocation
-void set_particle_numbers(const AABB_t *const fluid_global,
-                         param_t *const params,
-                         communication_t *const communication)
+void set_particle_numbers(const AABB *const fluid_global,
+                         Params *const params,
+                         Communication *const communication)
 {
     const double spacing = params->smoothing_radius/2.0;
 
@@ -81,7 +81,7 @@ void set_particle_numbers(const AABB_t *const fluid_global,
 }
 
 // Test if boundaries need to be adjusted
-void check_partition(param_t *const params)
+void check_partition(Params *const params)
 {
     const int num_rank = params->number_fluid_particles_local;
     const int rank = params->rank;

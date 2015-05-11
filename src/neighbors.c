@@ -4,12 +4,12 @@
 #include <stdbool.h>
 #include <string.h>
 
-void allocate_neighbors(neighbors_t *const neighbors,
-                        const param_t *const params,
-                        const AABB_t *const boundary_global)
+void allocate_neighbors(Neighbors *const neighbors,
+                        const Params *const params,
+                        const AABB *const boundary_global)
 {
     // Allocate neighbors array
-    neighbors->particle_neighbors = calloc(params->max_fluid_particles_local, sizeof(neighbor_t));
+    neighbors->particle_neighbors = calloc(params->max_fluid_particles_local, sizeof(Neighbor));
     if(neighbors->particle_neighbors == NULL)
         printf("Could not allocate neighbors\n");
 
@@ -19,12 +19,12 @@ void allocate_neighbors(neighbors_t *const neighbors,
     neighbors->hash_size_z = ceil((boundary_global->max_z - boundary_global->min_z) / params->smoothing_radius) + 1;
     size_t hash_size = neighbors->hash_size_x * neighbors->hash_size_y * neighbors->hash_size_z;
 
-    neighbors->hash = calloc(hash_size, sizeof(bucket_t));
+    neighbors->hash = calloc(hash_size, sizeof(HashBucket));
     if(neighbors->hash == NULL)
         printf("Could not allocate hash\n");
 }
 
-void free_neighbors(neighbors_t *neighbors)
+void free_neighbors(Neighbors *neighbors)
 {
   free(neighbors->particle_neighbors);
   free(neighbors->hash);
@@ -32,7 +32,7 @@ void free_neighbors(neighbors_t *neighbors)
 
 // Uniform grid hash
 // We don't check if the position is out of bounds so x,y,z must be valid
-unsigned int hash_val(const neighbors_t *const neighbors,
+unsigned int hash_val(const Neighbors *const neighbors,
                       const double x,
                       const double y,
                       const double z)
@@ -57,10 +57,10 @@ unsigned int hash_val(const neighbors_t *const neighbors,
 // Halo particles are not added to hash, only neighbors list
 // Neighbors may be more than h away...since distance is computed in all smoothing functions
 // it is a waste to check as we hash as well
-void hash_halo(const fluid_particle_t *const fluid_particles,
-               const param_t *const params,
-               const AABB_t *const boundary,
-               neighbors_t *const neighbors)
+void hash_halo(const FluidParticle *const fluid_particles,
+               const Params *const params,
+               const AABB *const boundary,
+               Neighbors *const neighbors)
 {
     const int n_s = params->number_fluid_particles_local;
     const int n_f = n_s + params->number_halo_particles_left + params->number_halo_particles_right;
@@ -69,7 +69,7 @@ void hash_halo(const fluid_particle_t *const fluid_particles,
 
     for(int i=n_s; i<n_f; i++)
     {
-        const fluid_particle_t *const h_p = &fluid_particles[i];
+        const FluidParticle *const h_p = &fluid_particles[i];
 
         // Search bins around current particle
         for (int dx=-1; dx<=1; dx++) {
@@ -89,7 +89,7 @@ void hash_halo(const fluid_particle_t *const fluid_particles,
                     const int index = hash_val(neighbors, x,y,z);
                       // Go through each fluid particle in neighbor point bucket
                       for (int n=0;n<neighbors->hash[index].number_fluid;n++) {
-                          const fluid_particle_t *const q = neighbors->hash[index].fluid_particles[n];
+                          const FluidParticle *const q = neighbors->hash[index].fluid_particles[n];
                           const double r = sqrt((h_p->x_star-q->x_star)*(h_p->x_star-q->x_star)
                                  + (h_p->y_star-q->y_star)*(h_p->y_star-q->y_star)
                                  + (h_p->z_star-q->z_star)*(h_p->z_star-q->z_star));
@@ -97,7 +97,7 @@ void hash_halo(const fluid_particle_t *const fluid_particles,
                               continue;
 
                           // Get neighbor ne for particle q
-                          neighbor_t *const ne = &neighbors->particle_neighbors[q->id];
+                          Neighbor *const ne = &neighbors->particle_neighbors[q->id];
                           // Make sure not to add duplicate neighbors
                           bool duped = false;
                           for (int dupes=0; dupes < ne->number_fluid_neighbors; dupes++) {
@@ -121,18 +121,18 @@ void hash_halo(const fluid_particle_t *const fluid_particles,
 // Fill fluid particles into hash
 // Neighbors may be more than h away...since distance is computed in all smoothing functions
 // it is a waste to check as we hash as well
-void hash_fluid(const fluid_particle_t *const fluid_particles,
-                const param_t *const params,
-                const AABB_t *const boundary,
-                neighbors_t *neighbors)
+void hash_fluid(const FluidParticle *const fluid_particles,
+                const Params *const params,
+                const AABB *const boundary,
+                Neighbors *neighbors)
 {
 //        int i,dx,dy,dz,n,c;
 //        double x,y,z, px,py,pz;
         const double spacing = neighbors->hash_spacing;
         const double h = params->smoothing_radius;
         const int n_f = params->number_fluid_particles_local;
-//        const fluid_particle_t *p, *q, *q_neighbor;
-//        neighbor_t *ne;
+//        const FluidParticle *p, *q, *q_neighbor;
+//        Neighbor *ne;
 //        double r;
 //        unsigned int index, neighbor_index;
 
@@ -148,7 +148,7 @@ void hash_fluid(const fluid_particle_t *const fluid_particles,
 
         // First pass - insert fluid particles into hash
         for (int i=0; i<n_f; i++) {
-            const fluid_particle_t *const p = &fluid_particles[i];
+            const FluidParticle *const p = &fluid_particles[i];
 
             neighbors->particle_neighbors[i].number_fluid_neighbors = 0;
 
@@ -164,7 +164,7 @@ void hash_fluid(const fluid_particle_t *const fluid_particles,
       	// Could also iterate through hash directly but particles array will be shorter
         for (int i=0; i<n_f; i++) {
            // Calculate hash index of bucket
-           const fluid_particle_t *const p = &fluid_particles[i];
+           const FluidParticle *const p = &fluid_particles[i];
            const double px = p->x_star;
            const double py = p->y_star;
            const double pz = p->z_star;
@@ -195,11 +195,11 @@ void hash_fluid(const fluid_particle_t *const fluid_particles,
                         // Add neighbor particles to each particle in current bucket
                         for (int c=0; c<neighbors->hash[index].number_fluid; c++) {
 			                      // Particle in currently being worked on bucket
-                            const fluid_particle_t *const q = neighbors->hash[index].fluid_particles[c];
-                            neighbor_t *const ne = &neighbors->particle_neighbors[q->id];
+                            const FluidParticle *const q = neighbors->hash[index].fluid_particles[c];
+                            Neighbor *const ne = &neighbors->particle_neighbors[q->id];
 			                      for(int n=0; n<neighbors->hash[neighbor_index].number_fluid; n++){
                                 // Append neighbor to q's neighbor list
-		   	                        const fluid_particle_t *const q_neighbor = neighbors->hash[neighbor_index].fluid_particles[n];
+		   	                        const FluidParticle *const q_neighbor = neighbors->hash[neighbor_index].fluid_particles[n];
                                 if(q->id == q_neighbor->id)
                                      continue;
 

@@ -1,7 +1,7 @@
 #ifndef SPH_SRC_FLUID_H_
 #define SPH_SRC_FLUID_H_
 
-typedef struct FLUID_PARTICLE fluid_particle_t;
+typedef struct FLUID_PARTICLE FluidParticle;
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -42,58 +42,58 @@ struct FLUID_PARTICLE {
 ////////////////////////////////////////////////
 // Function prototypes
 ////////////////////////////////////////////////
-void vorticity_confinement(fluid_particle_t *const fluid_particles,
-                           const param_t *const params,
-                           const neighbors_t *const neighbors);
+void vorticity_confinement(FluidParticle *const fluid_particles,
+                           const Params *const params,
+                           const Neighbors *const neighbors);
 
-void XSPH_viscosity(fluid_particle_t *const fluid_particles,
-                    const param_t *const params,
-                    const neighbors_t *const neighbors);
+void XSPH_viscosity(FluidParticle *const fluid_particles,
+                    const Params *const params,
+                    const Neighbors *const neighbors);
 
-void compute_densities(fluid_particle_t *const fluid_particles,
-                       const param_t *const params,
-                       const neighbors_t *const neighbors);
+void compute_densities(FluidParticle *const fluid_particles,
+                       const Params *const params,
+                       const Neighbors *const neighbors);
 
-void apply_gravity(fluid_particle_t *const fluid_particles,
-                  const param_t *const params);
+void apply_gravity(FluidParticle *const fluid_particles,
+                  const Params *const params);
 
-void update_dp_positions(fluid_particle_t *const fluid_particles,
-                         const param_t *const params,
-                         const AABB_t *const boundary_global);
+void update_dp_positions(FluidParticle *const fluid_particles,
+                         const Params *const params,
+                         const AABB *const boundary_global);
 
-void update_positions(fluid_particle_t *const fluid_particles,
-                      const param_t *const params);
+void update_positions(FluidParticle *const fluid_particles,
+                      const Params *const params);
 
-void calculate_lambda(fluid_particle_t *const fluid_particles,
-                      const param_t *const params,
-                      const neighbors_t *const neighbors);
+void calculate_lambda(FluidParticle *const fluid_particles,
+                      const Params *const params,
+                      const Neighbors *const neighbors);
 
-void update_dp(fluid_particle_t *const fluid_particles,
-               const param_t *const params,
-               const neighbors_t *const neighbors);
+void update_dp(FluidParticle *const fluid_particles,
+               const Params *const params,
+               const Neighbors *const neighbors);
 
-void identify_oob_particles(fluid_particle_t *const fluid_particles,
-                            param_t *const params,
-                            communication_t *const communication);
+void identify_oob_particles(FluidParticle *const fluid_particles,
+                            Params *const params,
+                            Communication *const communication);
 
-void predict_positions(fluid_particle_t *const fluid_particles,
-                       const param_t *const params,
-                       const AABB_t *const boundary_global);
+void predict_positions(FluidParticle *const fluid_particles,
+                       const Params *const params,
+                       const AABB *const boundary_global);
 
 void check_velocity(double *const v_x, double *const v_y, double *const v_z);
 
-void update_velocities(fluid_particle_t *const fluid_particles,
-                       const param_t *const params);
+void update_velocities(FluidParticle *const fluid_particles,
+                       const Params *const params);
 
-void boundary_conditions(fluid_particle_t *const fluid_particles,
+void boundary_conditions(FluidParticle *const fluid_particles,
                          const unsigned int i,
-                         const AABB_t *const boundary);
+                         const AABB *const boundary);
 
-void init_particles(fluid_particle_t *const fluid_particles,
-                    param_t *const params,
-                    const AABB_t *const water);
+void init_particles(FluidParticle *const fluid_particles,
+                    Params *const params,
+                    const AABB *const water);
 
-void allocate_fluid(fluid_particle_t **fluid_particles,
-                    const param_t *const params);
+void allocate_fluid(FluidParticle **fluid_particles,
+                    const Params *const params);
 
 #endif

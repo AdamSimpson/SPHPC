@@ -7,8 +7,8 @@
 #include <inttypes.h>
 
 // Write boundary in MPI
-void write_MPI(const fluid_particle_t *const particles,
-               const param_t *const params,
+void write_MPI(const FluidParticle *const particles,
+               const Params *const params,
                const int fileNum)
 {
     MPI_File file;
@@ -21,7 +21,7 @@ void write_MPI(const fluid_particle_t *const particles,
     // How many bytes each process will write
     int rank_write_counts[params->nprocs];
     // alltoall of write counts
-    const int num_doubles_to_send = 3 * num_particles;
+    int num_doubles_to_send = 3 * num_particles;
     MPI_Allgather(&num_doubles_to_send, 1, MPI_INT, rank_write_counts, 1, MPI_INT, MPI_COMM_WORLD);
     // Displacement can overflow with int, max size = 8*3*(global num particles)
     uint64_t displacement=0;

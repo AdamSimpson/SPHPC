@@ -1,7 +1,7 @@
 #ifndef SPH_SRC_SIMULATION_H_
 #define SPH_SRC_SIMULATION_H_
 
-typedef struct PARAM param_t;
+typedef struct PARAM Params;
 
 #include "geometry.h"
 
@@ -25,9 +25,9 @@ struct PARAM {
     int nprocs;
 }; // Simulation paramaters
 
-void set_parameters(param_t *const params,
-                    neighbors_t *const neighbors,
-                    AABB_t *const boundary_global,
-                    AABB_t *const water_volume_global);
+void set_parameters(Params *const params,
+                    Neighbors *const neighbors,
+                    AABB *const boundary_global,
+                    AABB *const water_volume_global);
 
 #endif

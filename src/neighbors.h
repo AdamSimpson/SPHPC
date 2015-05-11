@@ -1,9 +1,9 @@
 #ifndef SPH_SRC_NEIGHBORS_H_
 #define SPH_SRC_NEIGHBORS_H_
 
-typedef struct BUCKET bucket_t;
-typedef struct NEIGHBORS neighbors_t;
-typedef struct NEIGHBOR neighbor_t;
+typedef struct BUCKET HashBucket;
+typedef struct NEIGHBORS Neighbors;
+typedef struct NEIGHBOR Neighbor;
 
 #include <stdbool.h>
 
@@ -12,8 +12,8 @@ typedef struct NEIGHBOR neighbor_t;
 #include "simulation.h"
 
 struct NEIGHBORS {
-  neighbor_t *particle_neighbors;
-  bucket_t *hash;
+  Neighbor *particle_neighbors;
+  HashBucket *hash;
   double hash_spacing;
   int max_neighbors;
   int hash_size_x;
@@ -28,30 +28,30 @@ struct NEIGHBOR {
 
 // hash 'bucket' for hash value
 struct BUCKET {
-    const fluid_particle_t *fluid_particles[200];
+    const FluidParticle *fluid_particles[200];
     unsigned int number_fluid;
     bool hashed;
 };
 
-void allocate_neighbors(neighbors_t *const neighbors,
-                        const param_t *const params,
-                        const AABB_t *const boundary_global);
+void allocate_neighbors(Neighbors *const neighbors,
+                        const Params *const params,
+                        const AABB *const boundary_global);
 
-void free_neighbors(neighbors_t *neighbors);
+void free_neighbors(Neighbors *neighbors);
 
-unsigned int hash_val(const neighbors_t *const neighbors,
+unsigned int hash_val(const Neighbors *const neighbors,
                       const double x,
                       const double y,
                       const double z);
 
-void hash_halo(const fluid_particle_t *const fluid_particles,
-               const param_t *const params,
-               const AABB_t *const boundary,
-               neighbors_t *const neighbors);
+void hash_halo(const FluidParticle *const fluid_particles,
+               const Params *const params,
+               const AABB *const boundary,
+               Neighbors *const neighbors);
 
-void hash_fluid(const fluid_particle_t *const fluid_particles,
-                const param_t *const params,
-                const AABB_t *const boundary,
-                neighbors_t *neighbors);
+void hash_fluid(const FluidParticle *const fluid_particles,
+                const Params *const params,
+                const AABB *const boundary,
+                Neighbors *neighbors);
 
 #endif
