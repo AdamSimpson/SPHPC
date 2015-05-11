@@ -62,28 +62,22 @@ void hash_halo(const fluid_particle_t *const fluid_particles,
                const AABB_t *const boundary,
                neighbors_t *const neighbors)
 {
-    printf("Enter hash halo\n");
-    int index,i,dx,dy,dz,dupes,n;
-    double x,y,z,r;
-    bool duped;
-    const fluid_particle_t *h_p, *q;
     const int n_s = params->number_fluid_particles_local;
     const int n_f = n_s + params->number_halo_particles_left + params->number_halo_particles_right;
     const double spacing = neighbors->hash_spacing;
     const double h = params->smoothing_radius;
-    neighbor_t *ne;
 
-    for(i=n_s; i<n_f; i++)
+    for(int i=n_s; i<n_f; i++)
     {
-        h_p = &fluid_particles[i];
+        const fluid_particle_t *const h_p = &fluid_particles[i];
 
         // Search bins around current particle
-        for (dx=-1; dx<=1; dx++) {
-            x = h_p->x_star + dx*spacing;
-            for (dy=-1; dy<=1; dy++) {
-                y = h_p->y_star + dy*spacing;
-                for (dz=-1; dz<=1; dz++) {
-                    z = h_p->z_star + dz*spacing;
+        for (int dx=-1; dx<=1; dx++) {
+            const double x = h_p->x_star + dx*spacing;
+            for (int dy=-1; dy<=1; dy++) {
+                const double y = h_p->y_star + dy*spacing;
+                for (int dz=-1; dz<=1; dz++) {
+                    const double z = h_p->z_star + dz*spacing;
 
                     // Make sure that the position is valid
                     if( floor(x/spacing) > neighbors->hash_size_x-1 || x < 0 ||
@@ -92,21 +86,21 @@ void hash_halo(const fluid_particle_t *const fluid_particles,
                       continue;
 
                     // Calculate hash index at neighbor point
-                    index = hash_val(neighbors, x,y,z);
+                    const int index = hash_val(neighbors, x,y,z);
                       // Go through each fluid particle in neighbor point bucket
-                      for (n=0;n<neighbors->hash[index].number_fluid;n++) {
-                          q = neighbors->hash[index].fluid_particles[n];
-                          r = sqrt((h_p->x_star-q->x_star)*(h_p->x_star-q->x_star)
+                      for (int n=0;n<neighbors->hash[index].number_fluid;n++) {
+                          const fluid_particle_t *const q = neighbors->hash[index].fluid_particles[n];
+                          const double r = sqrt((h_p->x_star-q->x_star)*(h_p->x_star-q->x_star)
                                  + (h_p->y_star-q->y_star)*(h_p->y_star-q->y_star)
                                  + (h_p->z_star-q->z_star)*(h_p->z_star-q->z_star));
                           if(r > h)
                               continue;
 
                           // Get neighbor ne for particle q
-                          ne = &neighbors->particle_neighbors[q->id];
+                          neighbor_t *const ne = &neighbors->particle_neighbors[q->id];
                           // Make sure not to add duplicate neighbors
-                          duped = false;
-                          for (dupes=0; dupes < ne->number_fluid_neighbors; dupes++) {
+                          bool duped = false;
+                          for (int dupes=0; dupes < ne->number_fluid_neighbors; dupes++) {
                                 if (ne->neighbor_indices[dupes] == i) {
                                     duped = true;
                                     break;
@@ -132,34 +126,33 @@ void hash_fluid(const fluid_particle_t *const fluid_particles,
                 const AABB_t *const boundary,
                 neighbors_t *neighbors)
 {
-        printf("Hash fluid\n");
-        int i,dx,dy,dz,n,c;
-        double x,y,z, px,py,pz;
+//        int i,dx,dy,dz,n,c;
+//        double x,y,z, px,py,pz;
         const double spacing = neighbors->hash_spacing;
         const double h = params->smoothing_radius;
         const int n_f = params->number_fluid_particles_local;
-        const fluid_particle_t *p, *q, *q_neighbor;
-        neighbor_t *ne;
-        double r;
-        unsigned int index, neighbor_index;
+//        const fluid_particle_t *p, *q, *q_neighbor;
+//        neighbor_t *ne;
+//        double r;
+//        unsigned int index, neighbor_index;
 
         const unsigned int length_hash = neighbors->hash_size_x
                                  * neighbors->hash_size_y
                                  * neighbors->hash_size_z;
 
         // zero out number of particles in bucket
-        for (index=0; index<length_hash; index++){
+        for (int index=0; index<length_hash; index++){
             neighbors->hash[index].number_fluid = 0;
             neighbors->hash[index].hashed = false;
         }
 
         // First pass - insert fluid particles into hash
-        for (i=0; i<n_f; i++) {
-            p = &fluid_particles[i];
+        for (int i=0; i<n_f; i++) {
+            const fluid_particle_t *const p = &fluid_particles[i];
 
             neighbors->particle_neighbors[i].number_fluid_neighbors = 0;
 
-            index = hash_val(neighbors, p->x_star, p->y_star, p->z_star);
+            const int index = hash_val(neighbors, p->x_star, p->y_star, p->z_star);
 
             if (neighbors->hash[index].number_fluid < neighbors->max_neighbors) {
                 neighbors->hash[index].fluid_particles[neighbors->hash[index].number_fluid] = p;
@@ -169,26 +162,26 @@ void hash_fluid(const fluid_particle_t *const fluid_particles,
 
         // Second pass - fill particle neighbors by processing buckets
       	// Could also iterate through hash directly but particles array will be shorter
-        for (i=0; i<n_f; i++) {
+        for (int i=0; i<n_f; i++) {
            // Calculate hash index of bucket
-           p = &fluid_particles[i];
-           px = p->x_star;
-           py = p->y_star;
-           pz = p->z_star;
+           const fluid_particle_t *const p = &fluid_particles[i];
+           const double px = p->x_star;
+           const double py = p->y_star;
+           const double pz = p->z_star;
 
-           index = hash_val(neighbors, px, py, pz);
+           const int index = hash_val(neighbors, px, py, pz);
 
            // If this bucket has been done try the next one
            if(neighbors->hash[index].hashed)
                continue;
 
             // Check neighbors of current bucket
-            for (dx=-1; dx<=1; dx++) {
-                x = px + dx*spacing;
-                for (dy=-1; dy<=1; dy++) {
-                    y = py + dy*spacing;
-                    for (dz=-1; dz<=1; dz++) {
-                        z = pz + dz*spacing;
+            for (int dx=-1; dx<=1; dx++) {
+                const double x = px + dx*spacing;
+                for (int dy=-1; dy<=1; dy++) {
+                    const double y = py + dy*spacing;
+                    for (int dz=-1; dz<=1; dz++) {
+                        const double z = pz + dz*spacing;
 
                         // Make sure that the position is valid
                         if( floor(x/spacing) > neighbors->hash_size_x-1 || x < 0 ||
@@ -197,20 +190,20 @@ void hash_fluid(const fluid_particle_t *const fluid_particles,
                           continue;
 
                         // Calculate hash index at neighbor point
-                        neighbor_index = hash_val(neighbors, x, y, z);
+                        const int neighbor_index = hash_val(neighbors, x, y, z);
 
                         // Add neighbor particles to each particle in current bucket
-                        for (c=0; c<neighbors->hash[index].number_fluid; c++) {
-			                // Particle in currently being worked on bucket
-                            q = neighbors->hash[index].fluid_particles[c];
-                            ne = &neighbors->particle_neighbors[q->id];
-			                for(n=0; n<neighbors->hash[neighbor_index].number_fluid; n++){
-                            // Append neighbor to q's neighbor list
-		   	                    q_neighbor = neighbors->hash[neighbor_index].fluid_particles[n];
+                        for (int c=0; c<neighbors->hash[index].number_fluid; c++) {
+			                      // Particle in currently being worked on bucket
+                            const fluid_particle_t *const q = neighbors->hash[index].fluid_particles[c];
+                            neighbor_t *const ne = &neighbors->particle_neighbors[q->id];
+			                      for(int n=0; n<neighbors->hash[neighbor_index].number_fluid; n++){
+                                // Append neighbor to q's neighbor list
+		   	                        const fluid_particle_t *const q_neighbor = neighbors->hash[neighbor_index].fluid_particles[n];
                                 if(q->id == q_neighbor->id)
                                      continue;
 
-                                r = sqrt((q_neighbor->x_star-q->x_star)*(q_neighbor->x_star-q->x_star)
+                                const double r = sqrt((q_neighbor->x_star-q->x_star)*(q_neighbor->x_star-q->x_star)
                                        + (q_neighbor->y_star-q->y_star)*(q_neighbor->y_star-q->y_star)
                                        + (q_neighbor->z_star-q->z_star)*(q_neighbor->z_star-q->z_star));
                                 if(r > h)
