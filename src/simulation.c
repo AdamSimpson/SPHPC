@@ -40,13 +40,10 @@ int main(int argc, char *argv[])
     int fileNum=0;
     WriteMPI(fluid_particles, &params, fileNum++);
 
-    // Main loop
-    int n;
-
     MPI_Barrier(MPI_COMM_WORLD);
     const double start_time = MPI_Wtime();
 
-    for(n=0; n<params.number_steps; n++) {
+    for (int n=0; n<params.number_steps; n++) {
 
         printf("Rank %d Entering fluid step %d with %d particles\n",params.rank, n, params.number_fluid_particles_local);
 
@@ -71,7 +68,7 @@ int main(int argc, char *argv[])
 
         int solve_iterations = 4;
         int si;
-        for(si=0; si<solve_iterations; si++)
+        for (si=0; si<solve_iterations; si++)
         {
             ComputeDensities(fluid_particles, &params, &neighbors);
 

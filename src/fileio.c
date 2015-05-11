@@ -8,52 +8,52 @@
 
 // Write boundary in MPI
 void WriteMPI(const FluidParticle *const particles,
-               const Params *const params,
-               const int fileNum)
-{
-    MPI_File file;
-    MPI_Status status;
-    char name[64];
-    sprintf(name, "/Users/atj/SPHPC/output/sim-%d.bin", fileNum);
+              const Params *const params,
+              const int fileNum) {
 
-    const int num_particles = params->number_fluid_particles_local;
+  MPI_File file;
+  MPI_Status status;
+  char name[64];
+  sprintf(name, "/Users/atj/SPHPC/output/sim-%d.bin", fileNum);
 
-    // How many bytes each process will write
-    int rank_write_counts[params->num_procs];
-    // alltoall of write counts
-    int num_doubles_to_send = 3 * num_particles;
-    MPI_Allgather(&num_doubles_to_send, 1, MPI_INT, rank_write_counts, 1, MPI_INT, MPI_COMM_WORLD);
-    // Displacement can overflow with int, max size = 8*3*(global num particles)
-    uint64_t displacement=0;
-    for(int i=0; i<params->rank; i++)
-        displacement+=rank_write_counts[i];
-    // Displacement is in bytes
-    displacement*=sizeof(double);
+  const int num_particles = params->number_fluid_particles_local;
 
-    // Write x,y,z data to memory
-    double *const send_buffer = malloc(num_doubles_to_send*sizeof(double));
+  // How many bytes each process will write
+  int rank_write_counts[params->num_procs];
+  // alltoall of write counts
+  int num_doubles_to_send = 3 * num_particles;
+  MPI_Allgather(&num_doubles_to_send, 1, MPI_INT, rank_write_counts, 1, MPI_INT, MPI_COMM_WORLD);
+  // Displacement can overflow with int, max size = 8*3*(global num particles)
+  uint64_t displacement=0;
+  for (int i=0; i<params->rank; i++)
+    displacement+=rank_write_counts[i];
+  // Displacement is in bytes
+  displacement*=sizeof(double);
 
-    int index=0;
-    for(int i=0; i<num_particles; i++) {
-        send_buffer[index]   = particles[i].x;
-        send_buffer[index+1] = particles[i].y;
-        send_buffer[index+2] = particles[i].z;
-        index+=3;
-    }
+  // Write x,y,z data to memory
+  double *const send_buffer = malloc(num_doubles_to_send*sizeof(double));
 
-    // Open file
-    MPI_File_open(MPI_COMM_WORLD, name, MPI_MODE_CREATE | MPI_MODE_WRONLY, MPI_INFO_NULL, &file);
+  int index=0;
+  for (int i=0; i<num_particles; i++) {
+    send_buffer[index]   = particles[i].x;
+    send_buffer[index+1] = particles[i].y;
+    send_buffer[index+2] = particles[i].z;
+    index+=3;
+  }
 
-    // write coordinates to file
-    MPI_File_write_at(file, displacement, send_buffer , num_doubles_to_send, MPI_DOUBLE, &status);
+  // Open file
+  MPI_File_open(MPI_COMM_WORLD, name, MPI_MODE_CREATE | MPI_MODE_WRONLY, MPI_INFO_NULL, &file);
 
-    int num_bytes;
-    MPI_Get_elements(&status, MPI_CHAR, &num_bytes);
-    printf("rank %d wrote %d bytes(%d particles) to file %s\n",params->rank,num_bytes,num_particles,name);
+  // write coordinates to file
+  MPI_File_write_at(file, displacement, send_buffer , num_doubles_to_send, MPI_DOUBLE, &status);
 
-    // Close file
-    MPI_File_close(&file);
+  int num_bytes;
+  MPI_Get_elements(&status, MPI_CHAR, &num_bytes);
+  printf("rank %d wrote %d bytes(%d particles) to file %s\n",params->rank,num_bytes,num_particles,name);
 
-    // Free buffer
-    free(send_buffer);
+  // Close file
+  MPI_File_close(&file);
+
+  // Free buffer
+  free(send_buffer);
 }

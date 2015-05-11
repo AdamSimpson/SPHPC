@@ -14,28 +14,28 @@ MPI_Datatype Particletype;
 
 // Particles that are within halo width of node edge
 struct EDGES {
-    int *edge_indices_left;
-    int *edge_indices_right;
-    int number_edge_particles_left;
-    int number_edge_particles_right;
-    MPI_Request reqs[4];
+  int *edge_indices_left;
+  int *edge_indices_right;
+  int number_edge_particles_left;
+  int number_edge_particles_right;
+  MPI_Request reqs[4];
 };
 
 // Particles that have left the node
 struct OOB {
-    int *oob_indices_left; // Indicies in particle pointer array for particles traveling left
-    int *oob_indices_right;
-    int number_oob_particles_left;
-    int number_oob_particles_right;
+  int *oob_indices_left; // Indicies in particle pointer array for particles traveling left
+  int *oob_indices_right;
+  int number_oob_particles_left;
+  int number_oob_particles_right;
 };
 
 struct COMMUNICATION {
-    Edges edges;
-    OOB out_of_bounds;
-    int max_comm_particles;
-    FluidParticle *particle_send_buffer;
-    double *halo_components_send_buffer;
-    double *halo_components_recv_buffer;
+  Edges edges;
+  OOB out_of_bounds;
+  int max_comm_particles;
+  FluidParticle *particle_send_buffer;
+  double *halo_components_send_buffer;
+  double *halo_components_recv_buffer;
 };
 
 void InitCommunication(int argc, char *argv[]);
@@ -48,18 +48,18 @@ void CreateMPITypes();
 void FreeMPITypes();
 
 void TransferOOBParticles(const Communication *const communication,
-                            FluidParticle *const fluid_particles,
-                            Params *const params);
-void StartHaloExchange(Communication *const communication,
-                         const Params *const params,
-                         FluidParticle *const fluid_particles);
-void FinishHaloExchange(Communication *const communication,
-                          const FluidParticle *const fluid_particles,
+                          FluidParticle *const fluid_particles,
                           Params *const params);
+void StartHaloExchange(Communication *const communication,
+                       const Params *const params,
+                       FluidParticle *const fluid_particles);
+void FinishHaloExchange(Communication *const communication,
+                        const FluidParticle *const fluid_particles,
+                        Params *const params);
 void UpdateHaloLambdas(const Communication *const communication,
+                       const Params *const params,
+                       FluidParticle *const fluid_particles);
+void UpdateHaloPositions(const Communication *const communication,
                          const Params *const params,
                          FluidParticle *const fluid_particles);
-void UpdateHaloPositions(const Communication *const communication,
-                          const Params *const params,
-                          FluidParticle *const fluid_particles);
 #endif

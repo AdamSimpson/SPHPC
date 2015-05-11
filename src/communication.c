@@ -413,7 +413,8 @@ void UpdateHaloPositions(const Communication *const communication,
         p->z_star = recv_positions_left[i+2];
     }
     for (int i=0; i<num_from_right; i+=3) {
-        p = &fluid_particles[ params->number_fluid_particles_local + num_from_left/3 + i/3];
+        p = &fluid_particles[ params->number_fluid_particles_local
+                            + num_from_left/3 + i/3];
         p->x_star = recv_positions_right[i];
         p->y_star = recv_positions_right[i+1];
         p->z_star = recv_positions_right[i+2];

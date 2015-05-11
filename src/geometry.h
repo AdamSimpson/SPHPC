@@ -8,21 +8,21 @@ typedef struct AABB AABB;
 #include "simulation.h"
 
 struct AABB {
-    double min_x;
-    double max_x;
-    double min_y;
-    double max_y;
-    double min_z;
-    double max_z;
+  double min_x;
+  double max_x;
+  double min_y;
+  double max_y;
+  double min_z;
+  double max_z;
 };//Axis aligned bounding box
 
 void ConstructFluidVolume(FluidParticle *const fluid_particles,
-                            Params *const params,
-                            const AABB *const fluid);
+                          Params *const params,
+                          const AABB *const fluid);
 
 void SetParticleNumbers(const AABB *const fluid_global,
-                          Params *const params,
-                          Communication *const communication);
+                        Params *const params,
+                        Communication *const communication);
 
 void CheckPartition(Params *const params);
 
