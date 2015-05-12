@@ -1,7 +1,6 @@
 #include "geometry.h"
-
 #include <stdio.h>
-
+#include "debug.h"
 #include "communication.h"
 
 ////////////////////////////////////////////////
@@ -53,7 +52,8 @@ void ConstructFluidVolume(FluidParticle *const fluid_particles,
   }
 
   params->number_fluid_particles_local = i;
-  printf("rank %d: min fluid: %f max fluid x: %f\n", params->rank, min_x + spacing/2.0, min_x + num_x*spacing + spacing/2.0);
+  DEBUG_PRINT("rank %d: min fluid: %f max fluid x: %f\n",
+              params->rank, min_x + spacing/2.0, min_x + num_x*spacing + spacing/2.0);
 }
 
 // Sets upper bound on number of particles, used for memory allocation
@@ -77,8 +77,8 @@ void SetParticleNumbers(const AABB *const fluid_global,
   // Add initial space and left/right out of bounds/halo particles
   params->max_fluid_particles_local = num_initial + 4*communication->max_comm_particles;
 
-  printf("initial number of particles %d\n", num_initial);
-  printf("Max fluid particles local: %d\n", params->max_fluid_particles_local);
+  DEBUG_PRINT("initial number of particles %d\n", num_initial);
+  DEBUG_PRINT("Max fluid particles local: %d\n", params->max_fluid_particles_local);
 }
 
 // Test if boundaries need to be adjusted
@@ -143,5 +143,6 @@ void CheckPartition(Params *const params)
   else if (diff_right < -max_diff && length > 2*h && rank != num_procs-1)
     params->node_end_x -= h;
 
-  printf("rank %d node_start %f node_end %f \n", rank, params->node_start_x, params->node_end_x);
+  DEBUG_PRINT("rank %d node_start %f node_end %f \n",
+              rank, params->node_start_x, params->node_end_x);
 }

@@ -6,7 +6,6 @@ typedef struct OOB OOB;
 typedef struct COMMUNICATION Communication;
 
 #include "mpi.h"
-
 #include "fluid.h"
 #include "simulation.h"
 

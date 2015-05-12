@@ -1,5 +1,5 @@
 #include "neighbors.h"
-
+#include "debug.h"
 #include <math.h>
 #include <stdbool.h>
 #include <string.h>
@@ -207,7 +207,11 @@ void HashFluid(const FluidParticle *const fluid_particles,
                 continue;
 
               if (ne->number_fluid_neighbors > neighbors->max_neighbors)
-                printf("too many neighbors: %f, %f, %f\n", fluid_particles[i].x_star,fluid_particles[i].y_star,fluid_particles[i].z_star);
+                DEBUG_PRINT("too many neighbors: %f, %f, %f\n",
+                            fluid_particles[i].x_star,
+                            fluid_particles[i].y_star,
+                            fluid_particles[i].z_star);
+
               ne->neighbor_indices[ne->number_fluid_neighbors++] = q_neighbor->id;
             }
           }

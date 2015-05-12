@@ -2,7 +2,7 @@
 // Utility Functions
 ////////////////////////////////////////////////
 #include "fileio.h"
-
+#include "debug.h"
 #include <stdio.h>
 #include <inttypes.h>
 
@@ -49,7 +49,8 @@ void WriteMPI(const FluidParticle *const particles,
 
   int num_bytes;
   MPI_Get_elements(&status, MPI_CHAR, &num_bytes);
-  printf("rank %d wrote %d bytes(%d particles) to file %s\n",params->rank,num_bytes,num_particles,name);
+  DEBUG_PRINT("rank %d wrote %d bytes(%d particles) to file %s\n",
+              params->rank,num_bytes,num_particles,name);
 
   // Close file
   MPI_File_close(&file);

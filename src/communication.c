@@ -1,5 +1,5 @@
 #include "communication.h"
-
+#include "debug.h"
 #include <stdio.h>
 #include <stddef.h>
 #include <string.h>
@@ -140,7 +140,7 @@ void StartHaloExchange(Communication *const communication,
                &num_from_right,  1, MPI_INT, proc_to_right,tag,
                MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-  printf("total moving: %d\n", num_moving_right + num_moving_left);
+  DEBUG_PRINT("total moving: %d\n", num_moving_right + num_moving_left);
 
   // Set send buffer points
   FluidParticle *const sendl_buffer = communication->particle_send_buffer;
@@ -190,8 +190,8 @@ void FinishHaloExchange(Communication *const communication,
   params->number_halo_particles_left  = num_received_left;
   params->number_halo_particles_right = num_received_right;
 
-  printf("rank %d, halo: recv %d from left, %d from right\n",
-         params->rank,num_received_left,num_received_right);
+  DEBUG_PRINT("rank %d, halo: recv %d from left, %d from right\n",
+              params->rank,num_received_left,num_received_right);
 }
 
 // Transfer particles that are out of node bounds
@@ -285,7 +285,8 @@ void TransferOOBParticles(const Communication *const communication,
   // Update number of particles
   params->number_fluid_particles_local += total_received;
 
-  printf("rank %d OOB: sent left %d, right: %d recv left:%d, right: %d\n", rank, num_moving_left, num_moving_right, num_received_left, num_received_right);
+  DEBUG_PRINT("rank %d OOB: sent left %d, right: %d recv left:%d, right: %d\n",
+              rank, num_moving_left, num_moving_right, num_received_left, num_received_right);
 }
 
 void UpdateHaloLambdas(const Communication *const communication,

@@ -1,18 +1,9 @@
 #include "fluid.h"
-
 #include "communication.h"
-
+#include "debug.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-
-// Compiler must support vardiac macros
-#ifdef DEBUG
-# define DEBUG_PRINT(str, args...) printf("DEBUG: %s:%d:%s(): " str, \
- __FILE__, __LINE__, __func__, ##args)
-#else
-# define DEBUG_PRINT(str, args...) do {} while (0)
-#endif
 
 #ifndef M_PI
 #define M_PI  3.14159265358979323846
@@ -498,5 +489,5 @@ void AllocateFluid(FluidParticle **fluid_particles,
   *fluid_particles = calloc(params->max_fluid_particles_local,
                             sizeof(FluidParticle));
   if (*fluid_particles == NULL)
-    printf("Could not allocate fluid_particles\n");
+    DEBUG_PRINT("Could not allocate fluid_particles\n");
 }

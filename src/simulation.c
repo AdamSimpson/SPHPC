@@ -1,9 +1,8 @@
 #include "simulation.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-
+#include "debug.h"
 #include "communication.h"
 #include "fluid.h"
 #include "geometry.h"
@@ -34,7 +33,8 @@ int main(int argc, char *argv[])
   InitParticles(fluid_particles, &params, &water_volume_global);
 
   // Print some parameters
-  printf("Rank: %d, fluid_particles: %d, smoothing radius: %f \n", params.rank, params.number_fluid_particles_local, params.smoothing_radius);
+  printf("Rank: %d, fluid_particles: %d, smoothing radius: %f \n",
+         params.rank, params.number_fluid_particles_local, params.smoothing_radius);
 
   // Initial configuration
   int fileNum=0;
@@ -45,7 +45,8 @@ int main(int argc, char *argv[])
 
   for (int n=0; n<params.number_steps; n++) {
 
-    printf("Rank %d Entering fluid step %d with %d particles\n",params.rank, n, params.number_fluid_particles_local);
+    DEBUG_PRINT("Rank %d Entering fluid step %d with %d particles\n",
+                params.rank, n, params.number_fluid_particles_local);
 
     ApplyGravity(fluid_particles, &params);
 
@@ -97,7 +98,8 @@ int main(int argc, char *argv[])
   }
 
   const double end_time = MPI_Wtime();
-  printf("Rank %d Elapsed seconds: %f, num particles: %d\n", params.rank, end_time-start_time, params.number_fluid_particles_local);
+  printf("Rank %d Elapsed seconds: %f, num particles: %d\n",
+         params.rank, end_time-start_time, params.number_fluid_particles_local);
 
   // Release memory
   free(fluid_particles);

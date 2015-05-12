@@ -6,7 +6,6 @@ typedef struct NEIGHBORS Neighbors;
 typedef struct NEIGHBOR Neighbor;
 
 #include <stdbool.h>
-
 #include "fluid.h"
 #include "geometry.h"
 #include "simulation.h"
