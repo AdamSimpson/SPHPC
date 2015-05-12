@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
   AABB water_volume_global;
   AABB boundary_global;
   Communication communication;
-  FluidParticle *fluid_particles = NULL;
+  FluidParticles *fluid_particles = NULL;
   Neighbors neighbors;
 
   SetParameters(&params, &neighbors, &boundary_global, &water_volume_global);

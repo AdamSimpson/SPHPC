@@ -39,7 +39,7 @@ static double DelW(const double r, const double h) {
 // Particle attribute computations
 ////////////////////////////////////////////////////////////////////////////
 
-void VorticityConfinement(FluidParticle *const fluid_particles,
+void VorticityConfinement(FluidParticles *const fluid_particles,
                            const Params *const params,
                            const Neighbors *const neighbors) {
 
@@ -48,7 +48,7 @@ void VorticityConfinement(FluidParticle *const fluid_particles,
 
   // Calculate vorticy at each particle
   for (int i=0; i<params->number_fluid_particles_local; i++) {
-    FluidParticle *const p = &fluid_particles[i];
+    FluidParticles *const p = &fluid_particles[i];
     const Neighbor *const n = &neighbors->particle_neighbors[i];
 
     double vort_x = 0.0;
@@ -56,7 +56,7 @@ void VorticityConfinement(FluidParticle *const fluid_particles,
     double vort_z = 0.0;
 
     for (int j=0; j<n->number_fluid_neighbors; j++) {
-      const FluidParticle *const q = &fluid_particles[n->neighbor_indices[j]];
+      const FluidParticles *const q = &fluid_particles[n->neighbor_indices[j]];
 
       const double x_diff = p->x_star - q->x_star;
       const double y_diff = p->y_star - q->y_star;
@@ -88,7 +88,7 @@ void VorticityConfinement(FluidParticle *const fluid_particles,
 
   // Apply vorticity confinement
   for (int i=0; i<params->number_fluid_particles_local; i++) {
-    FluidParticle *const p = &fluid_particles[i];
+    FluidParticles *const p = &fluid_particles[i];
     const Neighbor *const n = &neighbors->particle_neighbors[i];
 
     double eta_x  = 0.0;
@@ -96,7 +96,7 @@ void VorticityConfinement(FluidParticle *const fluid_particles,
     double eta_z  = 0.0;
 
     for (int j=0; j<n->number_fluid_neighbors; j++) {
-      const FluidParticle *const q = &fluid_particles[n->neighbor_indices[j]];
+      const FluidParticles *const q = &fluid_particles[n->neighbor_indices[j]];
 
       const double x_diff = p->x_star - q->x_star;
       const double y_diff = p->y_star - q->y_star;
@@ -133,7 +133,7 @@ void VorticityConfinement(FluidParticle *const fluid_particles,
   }
 }
 
-void XSPHViscosity(FluidParticle *const fluid_particles,
+void XSPHViscosity(FluidParticles *const fluid_particles,
                    const Params *const params,
                    const Neighbors *const neighbors) {
 
@@ -184,7 +184,7 @@ void XSPHViscosity(FluidParticle *const fluid_particles,
   }
 }
 
-void ComputeDensities(FluidParticle *const fluid_particles,
+void ComputeDensities(FluidParticles *const fluid_particles,
                        const Params *const params,
                        const Neighbors *const neighbors) {
 
@@ -215,7 +215,7 @@ void ComputeDensities(FluidParticle *const fluid_particles,
   }
 }
 
-void ApplyGravity(FluidParticle *const fluid_particles,
+void ApplyGravity(FluidParticles *const fluid_particles,
                   const Params *const params) {
   const double dt = params->time_step;
   const double g = -params->g;
@@ -225,7 +225,7 @@ void ApplyGravity(FluidParticle *const fluid_particles,
   }
 }
 
-void UpdatePositionStars(FluidParticle *const fluid_particles,
+void UpdatePositionStars(FluidParticles *const fluid_particles,
                          const Params *const params,
                          const AABB *const boundary_global) {
 
@@ -240,7 +240,7 @@ void UpdatePositionStars(FluidParticle *const fluid_particles,
 
 }
 
-void UpdatePositions(FluidParticle *const fluid_particles,
+void UpdatePositions(FluidParticles *const fluid_particles,
                       const Params *const params) {
 
   for (int i=0; i<(params->number_fluid_particles_local); i++) {
@@ -251,7 +251,7 @@ void UpdatePositions(FluidParticle *const fluid_particles,
 
 }
 
-void CalculateLambda(FluidParticle *const fluid_particles,
+void CalculateLambda(FluidParticles *const fluid_particles,
                       const Params *const params,
                       const Neighbors *const neighbors) {
 
@@ -300,7 +300,7 @@ void CalculateLambda(FluidParticle *const fluid_particles,
   }
 }
 
-void UpdateDPs(FluidParticle *const fluid_particles,
+void UpdateDPs(FluidParticles *const fluid_particles,
                const Params *const params,
                const Neighbors *const neighbors) {
 
@@ -348,7 +348,7 @@ void UpdateDPs(FluidParticle *const fluid_particles,
 }
 
 // Identify out of bounds particles and send them to appropriate rank
-void IdentifyOOBParticles(FluidParticle *const fluid_particles,
+void IdentifyOOBParticles(FluidParticles *const fluid_particles,
                             Params *const params,
                             Communication *const communication) {
 
@@ -370,7 +370,7 @@ void IdentifyOOBParticles(FluidParticle *const fluid_particles,
   TransferOOBParticles(communication, fluid_particles, params);
 }
 
-void PredictPositions(FluidParticle *const fluid_particles,
+void PredictPositions(FluidParticles *const fluid_particles,
                        const Params *const params,
                        const AABB *const boundary_global) {
   const double dt = params->time_step;
@@ -410,7 +410,7 @@ void CheckVelocity(double *const v_x, double *const v_y, double *const v_z) {
 }
 
 // Update particle position and check boundary
-void UpdateVelocities(FluidParticle *const fluid_particles,
+void UpdateVelocities(FluidParticles *const fluid_particles,
                        const Params *const params) {
 
   const double dt = params->time_step;
@@ -433,7 +433,7 @@ void UpdateVelocities(FluidParticle *const fluid_particles,
 }
 
 // Assume AABB with min point being axis origin
-void BoundaryConditions(FluidParticle *const fluid_particles,
+void BoundaryConditions(FluidParticles *const fluid_particles,
                         const unsigned int i,
                         const AABB *const boundary) {
 
@@ -457,7 +457,7 @@ void BoundaryConditions(FluidParticle *const fluid_particles,
 
 }
 
-void InitParticles(FluidParticle *const fluid_particles,
+void InitParticles(FluidParticles *const fluid_particles,
                    Params *const params,
                    const AABB *const water) {
 
@@ -483,11 +483,11 @@ void InitParticles(FluidParticle *const fluid_particles,
   }
 }
 
-void AllocateFluid(FluidParticle **fluid_particles,
+void AllocateFluid(FluidParticles **fluid_particles,
                     const Params *const params)
 {
   *fluid_particles = calloc(params->max_fluid_particles_local,
-                            sizeof(FluidParticle));
+                            sizeof(FluidParticles));
   if (*fluid_particles == NULL)
     DEBUG_PRINT("Could not allocate fluid_particles\n");
 }

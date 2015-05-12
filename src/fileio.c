@@ -7,7 +7,7 @@
 #include <inttypes.h>
 
 // Write boundary in MPI
-void WriteMPI(const FluidParticle *const particles,
+void WriteMPI(const FluidParticles *const particles,
               const Params *const params,
               const int fileNum) {
 

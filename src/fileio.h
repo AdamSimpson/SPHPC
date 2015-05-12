@@ -4,7 +4,7 @@
 #include "fluid.h"
 #include "simulation.h"
 
-void WriteMPI(const FluidParticle *const particles,
+void WriteMPI(const FluidParticles *const particles,
               const Params *const params,
               const int fileNum);
 
