@@ -54,6 +54,52 @@ int get_num_procs() {
   return num_procs;
 }
 
+void PackParticleToBuffer(const FluidParticles *const fluid_particles,
+                          const int from_index,
+                          double *const to_buffer,
+                          const int to_index) {
+  to_buffer[to_index]      = fluid_particles->x_star[from_index];
+  to_buffer[to_index + 1]  = fluid_particles->y_star[from_index];
+  to_buffer[to_index + 2]  = fluid_particles->z_star[from_index];
+  to_buffer[to_index + 3]  = fluid_particles->x[from_index];
+  to_buffer[to_index + 4]  = fluid_particles->y[from_index];
+  to_buffer[to_index + 5]  = fluid_particles->z[from_index];
+  to_buffer[to_index + 6]  = fluid_particles->v_x[from_index];
+  to_buffer[to_index + 7]  = fluid_particles->v_y[from_index];
+  to_buffer[to_index + 8]  = fluid_particles->v_z[from_index];
+  to_buffer[to_index + 9]  = fluid_particles->dp_x[from_index];
+  to_buffer[to_index + 10] = fluid_particles->dp_y[from_index];
+  to_buffer[to_index + 11] = fluid_particles->dp_z[from_index];
+  to_buffer[to_index + 12] = fluid_particles->w_x[from_index];
+  to_buffer[to_index + 13] = fluid_particles->w_y[from_index];
+  to_buffer[to_index + 14] = fluid_particles->w_z[from_index];
+  to_buffer[to_index + 15] = fluid_particles->density[from_index];
+  to_buffer[to_index + 16] = fluid_particles->lambda[from_index];           ]
+}
+
+void UnpackBufferToParticle(const double *const from_buffer,
+                            const int from_index,
+                            FluidParticles *const fluid_particles,
+                            const int to_index) {
+  fluid_particles->x_star[to_index]  = from_buffer[from_index];
+  fluid_particles->y_star[to_index]  = from_buffer[from_index + 1];
+  fluid_particles->z_star[to_index]  = from_buffer[from_index + 2];
+  fluid_particles->x[to_index]       = from_buffer[from_index + 3];
+  fluid_particles->y[to_index]       = from_buffer[from_index + 4];
+  fluid_particles->z[to_index]       = from_buffer[from_index + 5];
+  fluid_particles->v_x[to_index]     = from_buffer[from_index + 6];
+  fluid_particles->v_y[to_index]     = from_buffer[from_index + 7];
+  fluid_particles->v_z[to_index]     = from_buffer[from_index + 8];
+  fluid_particles->dp_x[to_index]    = from_buffer[from_index + 9];
+  fluid_particles->dp_y[to_index]    = from_buffer[from_index + 10];
+  fluid_particles->dp_z[to_index]    = from_buffer[from_index + 11];
+  fluid_particles->w_x[to_index]     = from_buffer[from_index + 12];
+  fluid_particles->w_y[to_index]     = from_buffer[from_index + 13];
+  fluid_particles->w_z[to_index]     = from_buffer[from_index + 14];
+  fluid_particles->density[to_index] = from_buffer[from_index + 15];
+  fluid_particles->lambda[to_index]  = from_buffer[from_index + 16];
+}
+
 // Pack particle struct float components into contiguous memory
 void PackHaloComponents(const Communication *const communication,
                         const FluidParticles *const fluid_particles,
@@ -64,102 +110,35 @@ void PackHaloComponents(const Communication *const communication,
 
   for (int i=0; i<edges->number_edge_particles_left; i++) {
     const int p_index = edges->edge_indices_left[i];
-    packed_send_left[i*17]      = fluid_particles->x_star[p_index];
-    packed_send_left[i*17 + 1]  = fluid_particles->y_star[p_index];
-    packed_send_left[i*17 + 2]  = fluid_particles->z_star[p_index];
-    packed_send_left[i*17 + 3]  = fluid_particles->x[p_index];
-    packed_send_left[i*17 + 4]  = fluid_particles->y[p_index];
-    packed_send_left[i*17 + 5]  = fluid_particles->z[p_index];
-    packed_send_left[i*17 + 6]  = fluid_particles->v_x[p_index];
-    packed_send_left[i*17 + 7]  = fluid_particles->v_y[p_index];
-    packed_send_left[i*17 + 8]  = fluid_particles->v_z[p_index];
-    packed_send_left[i*17 + 9]  = fluid_particles->dp_x[p_index];
-    packed_send_left[i*17 + 10] = fluid_particles->dp_y[p_index];
-    packed_send_left[i*17 + 11] = fluid_particles->dp_z[p_index];
-    packed_send_left[i*17 + 12] = fluid_particles->w_x[p_index];
-    packed_send_left[i*17 + 13] = fluid_particles->w_y[p_index];
-    packed_send_left[i*17 + 14] = fluid_particles->w_z[p_index];
-    packed_send_left[i*17 + 15] = fluid_particles->density[p_index];
-    packed_send_left[i*17 + 16] = fluid_particles->lambda[p_index];
+    PackParticleToBuffer(fluid_particles, p_index, packed_send_left, i*17);
   }
 
   for (int i=0; i<edges->number_edge_particles_right; i++) {
     const int p_index = edges->edge_indices_right[i];
-    packed_send_right[i*17]      = fluid_particles->x_star[p_index];
-    packed_send_right[i*17 + 1]  = fluid_particles->y_star[p_index];
-    packed_send_right[i*17 + 2]  = fluid_particles->z_star[p_index];
-    packed_send_right[i*17 + 3]  = fluid_particles->x[p_index];
-    packed_send_right[i*17 + 4]  = fluid_particles->y[p_index];
-    packed_send_right[i*17 + 5]  = fluid_particles->z[p_index];
-    packed_send_right[i*17 + 6]  = fluid_particles->v_x[p_index];
-    packed_send_right[i*17 + 7]  = fluid_particles->v_y[p_index];
-    packed_send_right[i*17 + 8]  = fluid_particles->v_z[p_index];
-    packed_send_right[i*17 + 9]  = fluid_particles->dp_x[p_index];
-    packed_send_right[i*17 + 10] = fluid_particles->dp_y[p_index];
-    packed_send_right[i*17 + 11] = fluid_particles->dp_z[p_index];
-    packed_send_right[i*17 + 12] = fluid_particles->w_x[p_index];
-    packed_send_right[i*17 + 13] = fluid_particles->w_y[p_index];
-    packed_send_right[i*17 + 14] = fluid_particles->w_z[p_index];
-    packed_send_right[i*17 + 12] = fluid_particles->density[p_index];
-    packed_send_right[i*17 + 13] = fluid_particles->lambda[p_index];
+    PackParticleToBuffer(fluid_particles, p_index, packed_send_right, i*17);
   }
 }
 
-void UnpackHaloComponents(const Communication *const communication,
-                          const Params *const params,
-                          FluidParticles *const fluid_particles,
-                          double *const packed_send_left,
-                          double *const packed_send_right) {
+void UnpackHaloComponents(const Params *const params,
+                          const double *const packed_send_left,
+                          const double *const packed_send_right,
+                          FluidParticles *const fluid_particles) {
 
-  const Edges *const edges = &communication->edges;
   const int num_local = params->number_fluid_particles_local;
 
   // Unpack halo particles from left rank first
   for (int i=0; i<params->number_halo_particles_left; i++) {
-    p_index = params->number_fluid_particles_local + i; // "Global" index
-    fluid_particles->x_star[p_index]  = packed_recv_left[i*17];
-    fluid_particles->y_star[p_index]  = packed_recv_left[i*17 + 1];
-    fluid_particles->z_star[p_index]  = packed_recv_left[i*17 + 2];
-    fluid_particles->x[p_index]       = packed_recv_left[i*17 + 3];
-    fluid_particles->y[p_index]       = packed_recv_left[i*17 + 4];
-    fluid_particles->z[p_index]       = packed_recv_left[i*17 + 5];
-    fluid_particles->v_x[p_index]     = packed_recv_left[i*17 + 6];
-    fluid_particles->v_y[p_index]     = packed_recv_left[i*17 + 7];
-    fluid_particles->v_z[p_index]     = packed_recv_left[i*17 + 8];
-    fluid_particles->dp_x[p_index]    = packed_recv_left[i*17 + 9];
-    fluid_particles->dp_y[p_index]    = packed_recv_left[i*17 + 10];
-    fluid_particles->dp_z[p_index]    = packed_recv_left[i*17 + 11];
-    fluid_particles->w_x[p_index]     = packed_recv_left[i*17 + 12];
-    fluid_particles->w_y[p_index]     = packed_recv_left[i*17 + 13];
-    fluid_particles->w_z[p_index]     = packed_recv_left[i*17 + 14];
-    fluid_particles->density[p_index] = packed_recv_left[i*17 + 15];
-    fluid_particles->lambda[p_index]  = packed_recv_left[i*17 + 16];
-    fluid_particles->id[p_index]      = params->number_fluid_particles_local + i;
+    const int p_index = params->number_fluid_particles_local + i; // "Global" index
+    UnpackBufferToParticle(packed_recv_left, i*17, fluid_particles, p_index);
+    fluid_particles->id[p_index] = p_index;
   }
 
   // Unpack halo particles from right rank second
   for (int i=0; i<params->number_halo_particles_right; i++) {
-    p_index = params->number_fluid_particles local
+    const int p_index = params->number_fluid_particles local
             + params->number_halo_particles_left + i; // "Global" index
-    fluid_particles->x_star[p_index]  = packed_recv_right[i*17];
-    fluid_particles->y_star[p_index]  = packed_recv_right[i*17 + 1];
-    fluid_particles->z_star[p_index]  = packed_recv_right[i*17 + 2];
-    fluid_particles->x[p_index]       = packed_recv_right[i*17 + 3];
-    fluid_particles->y[p_index]       = packed_recv_right[i*17 + 4];
-    fluid_particles->z[p_index]       = packed_recv_right[i*17 + 5];
-    fluid_particles->v_x[p_index]     = packed_recv_right[i*17 + 6];
-    fluid_particles->v_y[p_index]     = packed_recv_right[i*17 + 7];
-    fluid_particles->v_z[p_index]     = packed_recv_right[i*17 + 8];
-    fluid_particles->dp_x[p_index]    = packed_recv_right[i*17 + 9];
-    fluid_particles->dp_y[p_index]    = packed_recv_right[i*17 + 10];
-    fluid_particles->dp_z[p_index]    = packed_recv_right[i*17 + 11];
-    fluid_particles->w_x[p_index]     = packed_recv_right[i*17 + 12];
-    fluid_particles->w_y[p_index]     = packed_recv_right[i*17 + 13];
-    fluid_particles->w_z[p_index]     = packed_recv_right[i*17 + 14];
-    fluid_particles->density[p_index] = packed_recv_right[i*17 + 15];
-    fluid_particles->lambda[p_index]  = packed_recv_right[i*17 + 16];
-    fluid_particles->id[p_index]      = num_local
-                                      + params->number_halo_particles_left + i;
+    UnpackBufferToParticle(packed_recv_right, i*17, fluid_particles, p_index);
+    fluid_particles->id[p_index] = p_index;
   }
 }
 
@@ -211,7 +190,7 @@ void HaloExchange(Communication *const communication,
                &num_from_right,  1, MPI_INT, proc_to_right,tag,
                MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-  DEBUG_PRINT("total moving: %d\n", num_moving_right + num_moving_left);
+  DEBUG_PRINT("total halo moving: %d\n", num_moving_right + num_moving_left);
 
   // Set send/recv buffer points
   double *const packed_send_left  = communication->particle_send_buffer;
@@ -253,8 +232,8 @@ void HaloExchange(Communication *const communication,
   int num_received_left = 0;
   MPI_Get_count(&statuses[0], MPI_DOUBLE, &num_received_left);
   MPI_Get_count(&statuses[1], MPI_DOUBLE, &num_received_right);
-  num_received_left  /= 17;
-  num_received_right /= 17;
+  num_received_left  /= num_components;
+  num_received_right /= num_components;
 
   params->number_halo_particles_left  = num_received_left;
   params->number_halo_particles_right = num_received_right;
@@ -271,52 +250,44 @@ void HaloExchange(Communication *const communication,
 
 // Pack out of bounds particle components
 void PackOOBComponents(const Communication *const communication,
-                        const Params *const params,
-                        const FluidParticles *const fluid_particles,
-                        double *const packed_send_left,
-                        double *const packed_send_right) {
+                       const FluidParticles *const fluid_particles,
+                       double *const packed_send_left,
+                       double *const packed_send_right) {
 
-  const OOB *const oob = fluid_sim->out_of_bounds;
+  const OOB *const oob = communication->out_of_bounds;
 
   for (int i=0; i<oob->number_oob_particles_left; i++) {
     const int p_index = fluid_particles[oob->oob_index_indices_left[i]];
-    packed_send_left[i*14]      = fluid_particles->x_star[p_index];
-    packed_send_left[i*14 + 1]  = fluid_particles->y_star[p_index];
-    packed_send_left[i*14 + 2]  = fluid_particles->z_star[p_index];
-    packed_send_left[i*14 + 3]  = fluid_particles->x[p_index];
-    packed_send_left[i*14 + 4]  = fluid_particles->y[p_index];
-    packed_send_left[i*14 + 5]  = fluid_particles->z[p_index];
-    packed_send_left[i*14 + 6]  = fluid_particles->v_x[p_index];
-    packed_send_left[i*14 + 7]  = fluid_particles->v_y[p_index];
-    packed_send_left[i*14 + 8]  = fluid_particles->v_z[p_index];
-    packed_send_left[i*14 + 9]  = fluid_particles->dp_x[p_index];
-    packed_send_left[i*14 + 10] = fluid_particles->dp_y[p_index];
-    packed_send_left[i*14 + 11] = fluid_particles->dp_z[p_index];
-    packed_send_left[i*14 + 12] = fluid_particles->density[p_index];
-    packed_send_left[i*14 + 13] = fluid_particles->lambda[p_index];
+    PackParticleToBuffer(fluid_particles, p_index, packed_send_left, i*17);
   }
 
   for (int i=0; i<oob->number_oob_particles_right; i++) {
     const int p_index = fluid_particles[oob->oob_index_indices_right[i]];
-    packed_send_right[i*14]      = fluid_particles->x_star[p_index];
-    packed_send_right[i*14 + 1]  = fluid_particles->y_star[p_index];
-    packed_send_right[i*14 + 2]  = fluid_particles->z_star[p_index];
-    packed_send_right[i*14 + 3]  = fluid_particles->x[p_index];
-    packed_send_right[i*14 + 4]  = fluid_particles->y[p_index];
-    packed_send_right[i*14 + 5]  = fluid_particles->z[p_index];
-    packed_send_right[i*14 + 6]  = fluid_particles->v_x[p_index];
-    packed_send_right[i*14 + 7]  = fluid_particles->v_y[p_index];
-    packed_send_right[i*14 + 8]  = fluid_particles->v_z[p_index];
-    packed_send_right[i*14 + 9]  = fluid_particles->dp_x[p_index];
-    packed_send_right[i*14 + 10] = fluid_particles->dp_y[p_index];
-    packed_send_right[i*14 + 11] = fluid_particles->dp_z[p_index];
-    packed_send_right[i*14 + 12] = fluid_particles->density[p_index];
-    packed_send_right[i*14 + 13] = fluid_particles->lambda[p_index];
+    PackParticleToBuffer(fluid_particles, p_index, packed_send_right, i*17);
+  }
+}
+
+void UnpackOOBComponents(const int num_from_left, const int num_from_right,
+                         const Params *const params,
+                         const double *const packed_recv_left,
+                         const double *const packed_recv_right,
+                         FluidParticles *const fluid_particles) {
+
+  for (int i=0; i<num_from_left; ++i) {
+    const int p_index = params->number-fluid_particles_local;
+    UnpackBufferToParticle(packed_recv_left, i*17, fluid_particles, p_index);
+    ++params->number_fluid_particles_local;
+  }
+
+  for (int i=0; i<num_from_right; ++i) {
+    const int p_index = params->number-fluid_particles_local + num_from_left + i;
+    UnpackBufferToParticle(packed_recv_left, i*17, fluid_particles, p_index);
+    ++params->number_fluid_particles_local;
   }
 }
 
 // Transfer particles that are out of node bounds
-void TransferOOBParticles(const Communication *const communication,
+void TransferOOBParticles(Communication *const communication,
                           FluidParticles *const fluid_particles,
                           Params *const params) {
 
@@ -324,25 +295,30 @@ void TransferOOBParticles(const Communication *const communication,
   const int rank = params->rank;
   const int num_procs = params->num_procs;
   OOB *oob = &communication->out_of_bounds;
-
-  int num_moving_left = 0;
-  int num_moving_right = 0;
+  const int num_components = 17;
 
   // Identify out of bound particles
-  out_of_bounds->number_oob_particles_left = 0;
+  out_of_bounds->number_oob_particles_left  = 0;
   out_of_bounds->number_oob_particles_right = 0;
-  for (int i=0; i<params->number_fluid_particles_local; i++) {
+  for (int i=0; i<params->number_fluid_particles_local; ++i) {
     p = &fluid_particles[i];
     if (p->x_star < params->node_start_x && params->rank != 0) {
       oob->oob_index_indices_left[i] = i;
-      ++out_of_bounds->number_oob_particles_left;
+      ++oob->number_oob_particles_left;
     }
     else if (p->x_star > params->node_end_x &&
              params->rank != params->num_procs-1) {
       oob->oob_index_indices_right[i] = i;
-      ++out_of_bounds->number_oob_particles_right;
+      ++oob->number_oob_particles_right;
     }
   }
+
+  const int num_moving_right = oob->number_oob_particles_right;
+  const int num_moving_left = oob->number_oob_particles_left;
+
+  // Set send buffer points
+  double *const packed_send_left  = communication->particle_send_buffer;
+  double *const packed_send_right = packed_send_left + num_moving_left;
 
   PackOOBComponents(communication,
                     params,
@@ -350,24 +326,16 @@ void TransferOOBParticles(const Communication *const communication,
                     packed_send_left,
                     packed_send_right);
 
-  for (int i=0; i<params->number_fluid_particles_local; i++) {
-    p = &fluid_particles[i];
-
-    // Set OOB particle indices and update number
-    // remove particle from end of array to fill vacancy
-    if (p->x_star < params->node_start_x && params->rank != 0) {
-      sendl_buffer[num_moving_left++] = *p;
-      fluid_particles[i] = fluid_particles[params->number_fluid_particles_local-1];
-      fluid_particles[i].id = i;
-      params->number_fluid_particles_local--;
-    }
-    else if (p->x_star > params->node_end_x &&
-             params->rank != params->num_procs-1) {
-      sendr_buffer[num_moving_right++] = *p;
-      fluid_particles[i] = fluid_particles[params->number_fluid_particles_local-1];
-      fluid_particles[i].id = i;
-      params->number_fluid_particles_local--;
-    }
+  // Move particles from end to fill leaving particles
+  for (int i=0; i<oob->number_oob_particles_left; ++i) {
+      const int removed_index = oob->indices_left[i];
+      MoveParticle(params->number_fluid_particles_local-1, i);
+      --params->number_fluid_particles_local;
+  }
+  for (int i=0; i<oob->number_oob_particles_right; ++i) {
+      const int removed_index = oob->indices_right[i];
+      MoveParticle(params->number_fluid_particles_local-1, i);
+      --params->number_fluid_particles_local;
   }
 
   // Setup nodes to left and right of self
@@ -375,7 +343,7 @@ void TransferOOBParticles(const Communication *const communication,
   const int proc_to_right = (rank == num_procs-1 ? MPI_PROC_NULL : rank+1);
 
   // Get number of particles from right and left
-  int num_from_left = 0;
+  int num_from_left  = 0;
   int num_from_right = 0;
   int tag = 7006;
   // Send number to right and receive from left
@@ -388,10 +356,11 @@ void TransferOOBParticles(const Communication *const communication,
                &num_from_right,  1, MPI_INT, proc_to_right, tag,
                MPI_COMM_WORLD,MPI_STATUS_IGNORE);
 
-  // Allocate recieve buffers
-  const int num_local = params->number_fluid_particles_local;
-  FluidParticles *const recvl_buffer = &fluid_particles[num_local];
-  FluidParticles *const recvr_buffer = &fluid_particles[num_local + num_from_left];
+  DEBUG_PRINT("total OOB moving: %d\n", num_moving_right + num_moving_left);
+
+  // Set recv buffer points
+  double *const packed_recv_left  = communication->particle_recv_buffer;
+  double *const packed_recv_right = packed_recv_left + num_from_left;
 
   MPI_Status status;
 
@@ -401,28 +370,21 @@ void TransferOOBParticles(const Communication *const communication,
 
   // Sending to right, recv from left
   tag = 2522;
-  MPI_Sendrecv(sendr_buffer, num_moving_right, Particletype,proc_to_right, tag,
-               recvl_buffer, num_from_left, Particletype, proc_to_left, tag,
+  MPI_Sendrecv(packed_send_right, num_components*num_moving_right, MPI_DOUBLE, proc_to_right, tag,
+               packed_recv_left, num_components*num_from_left, MPI_DOUBLE, proc_to_left, tag,
                MPI_COMM_WORLD, &status);
-  MPI_Get_count(&status, Particletype, &num_received_left);
+  MPI_Get_count(&status, MPI_DOUBLE, &num_received_left);
+  num_received_left /= num_components;
 
   // Sending to left, recv from right
   tag = 1165;
-  MPI_Sendrecv(sendl_buffer, num_moving_left, Particletype, proc_to_left, tag,
-               recvr_buffer, num_from_right, Particletype, proc_to_right, tag,
+  MPI_Sendrecv(packed_send_left, num_components*num_moving_left, MPI_DOUBLE, proc_to_left, tag,
+               packed_recv_right, num_components*num_from_right, MPI_DOUBLE, proc_to_right, tag,
                MPI_COMM_WORLD, &status);
-  MPI_Get_count(&status, Particletype, &num_received_right);
+  MPI_Get_count(&status, MPI_DOUBLE, &num_received_right);
+  num_received_right /= num_components;
 
-  const int total_received = num_received_right + num_received_left;
-
-  // Update received particle ID
-  for (int i=num_local; i<num_local+total_received; i++)
-  {
-    fluid_particles[i].id = i;
-  }
-
-  // Update number of particles
-  params->number_fluid_particles_local += total_received;
+  UnpackOOBComponents();
 
   DEBUG_PRINT("rank %d OOB: sent left %d, right: %d recv left:%d, right: %d\n",
               rank, num_moving_left, num_moving_right, num_received_left, num_received_right);

@@ -41,6 +41,8 @@ struct FLUID_PARTICLES {
 ////////////////////////////////////////////////
 // Function prototypes
 ////////////////////////////////////////////////
+void MoveParticle(const int from_index, const int to_index);
+
 void VorticityConfinement(FluidParticles *const fluid_particles,
                           const Params *const params,
                           const Neighbors *const neighbors);

@@ -35,6 +35,28 @@ static double DelW(const double r, const double h) {
   return DelW;
 }
 
+void MoveParticle(const int from_index, const int to_index)
+{
+  fluid_particles->x_star[to_index]  = fluid_particles->x_star[from_index];
+  fluid_particles->y_star[to_index]  = fluid_particles->y_star[from_index];
+  fluid_particles->z_star[to_index]  = fluid_particles->z_star[from_index];
+  fluid_particles->x[to_index]       = fluid_particles->x[from_index];
+  fluid_particles->y[to_index]       = fluid_particles->y[from_index];
+  fluid_particles->z[to_index]       = fluid_particles->z[from_index];
+  fluid_particles->v_x[to_index]     = fluid_particles->v_x[from_index];
+  fluid_particles->v_y[to_index]     = fluid_particles->v_y[from_index];
+  fluid_particles->v_z[to_index]     = fluid_particles->v_z[from_index];
+  fluid_particles->dp_x[to_index]    = fluid_particles->dp_x[from_index];
+  fluid_particles->dp_y[to_index]    = fluid_particles->dp_y[from_index];
+  fluid_particles->dp_z[to_index]    = fluid_particles->dp_z[from_index];
+  fluid_particles->w_x[to_index]     = fluid_particles->w_x[from_index];
+  fluid_particles->w_y[to_index]     = fluid_particles->w_y[from_index];
+  fluid_particles->w_z[to_index]     = fluid_particles->w_z[from_index];
+  fluid_particles->density[to_index] = fluid_particles->density[from_index];
+  fluid_particles->lambda[to_index]  = fluid_particles->lambda[from_index];
+  fluid_particle->id[to_index]       = to_index;
+}
+
 ////////////////////////////////////////////////////////////////////////////
 // Particle attribute computations
 ////////////////////////////////////////////////////////////////////////////

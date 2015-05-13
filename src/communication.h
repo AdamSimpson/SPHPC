@@ -13,18 +13,18 @@ MPI_Datatype Particletype;
 
 // Particles that are within halo width of node edge
 struct EDGES {
-  int *edge_indices_left;
-  int *edge_indices_right;
-  int number_edge_particles_left;
-  int number_edge_particles_right;
+  int *indices_left;
+  int *indices_right;
+  int number_particles_left;
+  int number_particles_right;
 };
 
 // Particles that have left the node
 struct OOB {
-  int *oob_indices_left; // Indicies in particle pointer array for particles traveling left
-  int *oob_indices_right;
-  int number_oob_particles_left;
-  int number_oob_particles_right;
+  int *indices_left; // Indicies in particle pointer array for particles traveling left
+  int *indices_right;
+  int number_particles_left;
+  int number_particles_right;
 };
 
 struct COMMUNICATION {
