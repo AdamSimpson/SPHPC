@@ -1,7 +1,7 @@
 #ifndef SPH_SRC_FLUID_H_
 #define SPH_SRC_FLUID_H_
 
-typedef struct FLUID_PARTICLES FluidParticless;
+typedef struct FLUID_PARTICLES FluidParticles;
 
 #include <stdbool.h>
 #include <stdio.h>
