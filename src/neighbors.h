@@ -11,25 +11,21 @@ typedef struct NEIGHBOR Neighbor;
 #include "simulation.h"
 
 struct NEIGHBORS {
-  Neighbor *particle_neighbors;
-  HashBucket *hash;
-  double hash_spacing;
+  uint *start_indices; // Start index for hash values
+  uint *end_indices;   // End index for hash values
+  uint *hash_values;   // Array of hash values
+  uint *particle_ids;  // Array of particle id's
   int max_neighbors;
   int hash_size_x;
   int hash_size_y;
   int hash_size_z;
+  Neighbor *particle_neighbors;
+  double hash_spacing;
 };
 
 struct NEIGHBOR {
     unsigned int neighbor_indices[60];
     int number_fluid_neighbors;
-};
-
-// hash 'bucket' for hash value
-struct BUCKET {
-    const FluidParticles *fluid_particles[200];
-    unsigned int number_fluid;
-    bool hashed;
 };
 
 void AllocateNeighbors(Neighbors *const neighbors,

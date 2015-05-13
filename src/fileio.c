@@ -35,9 +35,9 @@ void WriteMPI(const FluidParticles *const particles,
 
   int index=0;
   for (int i=0; i<num_particles; i++) {
-    send_buffer[index]   = particles[i].x;
-    send_buffer[index+1] = particles[i].y;
-    send_buffer[index+2] = particles[i].z;
+    send_buffer[index]   = particles->x[i];
+    send_buffer[index+1] = particles->y[i];
+    send_buffer[index+2] = particles->z[i];
     index+=3;
   }
 

@@ -12,7 +12,7 @@ static double min(const double a, const double b) {
   return min;
 }
 
-void ConstructFluidVolume(FluidParticles *const fluid_particles,
+void ConstructFluidVolume(FluidParticles *const particles,
                           Params *const params,
                           const AABB *const fluid) {
 
@@ -41,11 +41,10 @@ void ConstructFluidVolume(FluidParticles *const fluid_particles,
       const double y = fluid->min_y + ny*spacing + spacing/2.0;
       for(int nx=0; nx<num_x; nx++) {
         const double x = min_x + nx*spacing + spacing/2.0;
-        FluidParticles *const p = &fluid_particles[i];
-        p->x = x;
-        p->y = y;
-        p->z = z;
-        p->id = i;
+        particles->x[i] = x;
+        particles->y[i] = y;
+        particles->z[i] = z;
+        particles->id[i] = i;
         i++;
       }
     }

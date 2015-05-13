@@ -159,10 +159,9 @@ void HaloExchange(Communication *const communication,
   edges->number_edge_particles_left = 0;
   edges->number_edge_particles_right = 0;
   for (int i=0; i<params->number_fluid_particles_local; ++i) {
-    p = &fluid_particles[i];
-    if (p->x_star - params->node_start_x <= h)
+    if (fluid_particles->x_star[i] - params->node_start_x <= h)
       edges->edge_indices_left[edges->number_edge_particles_left++] = i;
-    else if (params->node_end_x - p->x_star <= h)
+    else if (params->node_end_x - fluid_particles->x_star[i] <= h)
       edges->edge_indices_right[edges->number_edge_particles_right++] = i;
   }
 
@@ -257,12 +256,12 @@ void PackOOBComponents(const Communication *const communication,
   const OOB *const oob = communication->out_of_bounds;
 
   for (int i=0; i<oob->number_oob_particles_left; i++) {
-    const int p_index = fluid_particles[oob->oob_index_indices_left[i]];
+    const int p_index = oob->oob_index_indices_left[i];
     PackParticleToBuffer(fluid_particles, p_index, packed_send_left, i*17);
   }
 
   for (int i=0; i<oob->number_oob_particles_right; i++) {
-    const int p_index = fluid_particles[oob->oob_index_indices_right[i]];
+    const int p_index = oob->oob_index_indices_right[i];
     PackParticleToBuffer(fluid_particles, p_index, packed_send_right, i*17);
   }
 }
@@ -294,20 +293,19 @@ void TransferOOBParticles(Communication *const communication,
   const FluidParticles *p;
   const int rank = params->rank;
   const int num_procs = params->num_procs;
-  OOB *oob = &communication->out_of_bounds;
+  OOB *const oob = &communication->out_of_bounds;
   const int num_components = 17;
 
   // Identify out of bound particles
   out_of_bounds->number_oob_particles_left  = 0;
   out_of_bounds->number_oob_particles_right = 0;
   for (int i=0; i<params->number_fluid_particles_local; ++i) {
-    p = &fluid_particles[i];
-    if (p->x_star < params->node_start_x && params->rank != 0) {
+    if (fluid_particles->x_star[i] < params->node_start_x && params->rank != 0) {
       oob->oob_index_indices_left[i] = i;
       ++oob->number_oob_particles_left;
     }
-    else if (p->x_star > params->node_end_x &&
-             params->rank != params->num_procs-1) {
+    else if (fluid_particles->x_star[i] > params->node_end_x &&
+       params->rank != params->num_procs-1) {
       oob->oob_index_indices_right[i] = i;
       ++oob->number_oob_particles_right;
     }
@@ -384,7 +382,11 @@ void TransferOOBParticles(Communication *const communication,
   MPI_Get_count(&status, MPI_DOUBLE, &num_received_right);
   num_received_right /= num_components;
 
-  UnpackOOBComponents();
+  UnpackOOBComponents(num_from_left,num_from_right,
+                      params,
+                      packed_recv_left,
+                      packed_recv_right,
+                      fluid_particles);
 
   DEBUG_PRINT("rank %d OOB: sent left %d, right: %d recv left:%d, right: %d\n",
               rank, num_moving_left, num_moving_right, num_received_left, num_received_right);
@@ -406,20 +408,20 @@ void UpdateHaloLambdas(const Communication *const communication,
   const int num_from_right = params->number_halo_particles_right;
 
   // Allocate send/recv buffers
-  double *const send_lambdas_left  = communication->halo_components_send_buffer;
+  double *const send_lambdas_left  = communication->particle_send_buffer;
   double *const send_lambdas_right = send_lambdas_left + num_moving_left;
 
-  double *const recv_lambdas_left  = communication->halo_components_recv_buffer;
+  double *const recv_lambdas_left  = communication->particle_recv_buffer;
   double *const recv_lambdas_right = recv_lambdas_left + num_from_left;
 
   // Pack local halo lambdas
   for (int i=0; i<num_moving_left; i++) {
-    p = &fluid_particles[edges->edge_indices_left[i]];
-    send_lambdas_left[i] = p->lambda;
+    const int p_index = edges->edge_indices_left[i];
+    send_lambdas_left[i] = fluid_particles->lambda[i];
   }
   for (int i=0; i<num_moving_right; i++) {
-    p = &fluid_particles[edges->edge_indices_right[i]];
-    send_lambdas_right[i] = p->lambda;
+    const int p_index = edges->edge_indices_right[i];
+    send_lambdas_right[i] = fluid_particles->lambda[i];
   }
 
   // Setup nodes to left and right of self
@@ -441,12 +443,12 @@ void UpdateHaloLambdas(const Communication *const communication,
 
   // Unpack halo particle lambdas
   for (int i=0; i<num_from_left; i++) {
-    p = &fluid_particles[params->number_fluid_particles_local + i];
-    p->lambda = recv_lambdas_left[i];
+    const int p_index = params->number_fluid_particles_local + i;
+    fluid_particles->lambda[p_index] = recv_lambdas_left[i];
   }
   for (int i=0; i<num_from_right; i++) {
-    p = &fluid_particles[ params->number_fluid_particles_local + num_from_left + i];
-    p->lambda = recv_lambdas_right[i];
+    const int p_index = params->number_fluid_particles_local + num_from_left + i;
+    fluid_particles->lambda[p_index] = recv_lambdas_right[i];
   }
 }
 
@@ -467,26 +469,25 @@ void UpdateHaloPositions(const Communication *const communication,
   const int num_from_left  = num_components*params->number_halo_particles_left;
   const int num_from_right = num_components*params->number_halo_particles_right;
 
-  // Allocate send/recv buffers
-  // Could combine left/right into single malloc...
-  double *const send_positions_left  = communication->halo_components_send_buffer;
+  // Set send/recv buffers
+  double *const send_positions_left  = communication->particle_send_buffer;
   double *const send_positions_right = send_positions_left + num_moving_left;
 
-  double *const recv_positions_left  = communication->halo_components_recv_buffer;
+  double *const recv_positions_left  = communication->particle_recv_buffer;
   double *const recv_positions_right = recv_positions_left + num_from_left;
 
   // Pack local edge positions
   for (int i=0; i<num_moving_left; i+=3) {
-    p = &fluid_particles[edges->edge_indices_left[i/3]];
-    send_positions_left[i]   = p->x_star;
-    send_positions_left[i+1] = p->y_star;
-    send_positions_left[i+2] = p->z_star;
+    const int p_index = edges->edge_indices_left[i/3];
+    send_positions_left[i]   = fluid_particles->x_star[p_index];
+    send_positions_left[i+1] = fluid_particles->y_star[p_index];
+    send_positions_left[i+2] = fluid_particles->z_star[p_index];
   }
   for (int i=0; i<num_moving_right; i+=3) {
-    p = &fluid_particles[edges->edge_indices_right[i/3]];
-    send_positions_right[i]   = p->x_star;
-    send_positions_right[i+1] = p->y_star;
-    send_positions_right[i+2] = p->z_star;
+    const int p_index = edges->edge_indices_right[i/3];
+    send_positions_right[i]   = fluid_particles->x_star[p_index];
+    send_positions_right[i+1] = fluid_particles->y_star[p_index];
+    send_positions_right[i+2] = fluid_particles->z_star[p_index];
   }
 
   // Setup nodes to left and right of self
@@ -508,16 +509,16 @@ void UpdateHaloPositions(const Communication *const communication,
 
     // Unpack halo particle positions
     for (int i=0; i<num_from_left; i+=3) {
-        p = &fluid_particles[params->number_fluid_particles_local + i/3];;
-        p->x_star = recv_positions_left[i];
-        p->y_star = recv_positions_left[i+1];
-        p->z_star = recv_positions_left[i+2];
+        const int p_index = params->number_fluid_particles_local + i/3;
+        fluid_particles->x_star[p_index] = recv_positions_left[i];
+        fluid_particles->y_star[p_index] = recv_positions_left[i+1];
+        fluid_particles->z_star[p_index] = recv_positions_left[i+2];
     }
     for (int i=0; i<num_from_right; i+=3) {
-        p = &fluid_particles[ params->number_fluid_particles_local
-                            + num_from_left/3 + i/3];
-        p->x_star = recv_positions_right[i];
-        p->y_star = recv_positions_right[i+1];
-        p->z_star = recv_positions_right[i+2];
+        const int p_index = params->number_fluid_particles_local
+                          + num_from_left/3 + i/3];
+        fluid_particles->x_star[p_index] = recv_positions_right[i];
+        fluid_particles->y_star[p_index] = recv_positions_right[i+1];
+        fluid_particles->z_star[p_index] = recv_positions_right[i+2];
     }
 }
