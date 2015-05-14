@@ -8,8 +8,7 @@
 #include "geometry.h"
 #include "fileio.h"
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
   InitCommunication(argc, argv);
 
   Params params;
@@ -62,7 +61,6 @@ int main(int argc, char *argv[])
     HaloExchange(&communication,
                  &params,
                  &fluid_particles);
-
 
     FindAllNeighbors(&params,
                      &fluid_particles,

@@ -196,7 +196,7 @@ void HaloExchange(Communication *const communication,
                      packed_send_left, packed_send_right);
 
   DEBUG_PRINT("rank %d, prams->max_fluid_particle_index: %d\n",
-              rank, params->max_fluid_particle_index);
+              rank, params->max_fluid_particles_local);
 
   int tagl = 4312;
   int tagr = 5177;
@@ -352,8 +352,6 @@ void TransferOOBParticles(Communication *const communication,
   double *const packed_recv_right = packed_recv_left + num_from_left;
 
   MPI_Status status;
-
-  // Send oob particles to right processor receive oob particles from right processor
   int num_received_left = 0;
   int num_received_right = 0;
 
