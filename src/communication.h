@@ -42,10 +42,13 @@ void FreeCommunication(Communication *const communication);
 int get_rank();
 int get_num_procs();
 void PackHaloComponents(const Communication *const communication,
-                        const FluidParticles *const fluid_particles);
+                        const FluidParticles *const fluid_particles,
+                        double *const packed_send_left,
+                        double *const packed_send_right);
 
-void UnpackHaloComponents(const Communication *const communication,
-                          const Params *const params;
+void UnpackHaloComponents(const Params *const params,
+                          const double *const packed_recv_left,
+                          const double *const packed_recv_right,
                           FluidParticles *const fluid_particles);
 
 void TransferOOBParticles(const Communication *const communication,

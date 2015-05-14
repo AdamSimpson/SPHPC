@@ -9,11 +9,11 @@ void AllocateCommunication(Communication *const communication) {
   // Allocate index arrays
   const size_t index_bytes = communication->max_comm_particles*sizeof(int);
 
-  communication->edges.edge_indices_left  = malloc(index_bytes);
-  communication->edges.edge_indices_right = malloc(index_bytes);
+  communication->edges.indices_left  = malloc(index_bytes);
+  communication->edges.indices_right = malloc(index_bytes);
 
-  communication->out_of_bounds.oob_indices_left  = malloc(index_bytes);
-  communication->out_of_bounds.oob_indices_right = malloc(index_bytes);
+  communication->out_of_bounds.indices_left  = malloc(index_bytes);
+  communication->out_of_bounds.indices_right = malloc(index_bytes);
 
   // Allocate send and receive buffers
   const size_t particle_size = 17*sizeof(double);
@@ -23,22 +23,19 @@ void AllocateCommunication(Communication *const communication) {
 }
 
 void FreeCommunication(Communication *const communication) {
-  free(communication->edges.edge_indices_left);
-  free(communication->edges.edge_indices_right);
-  free(communication->out_of_bounds.oob_indices_left);
-  free(communication->out_of_bounds.oob_indices_right);
+  free(communication->edges.indices_left);
+  free(communication->edges.indices_right);
+  free(communication->out_of_bounds.indices_left);
+  free(communication->out_of_bounds.indices_right);
   free(communication->particle_send_buffer);
-  free(communication->halo_components_send_buffer);
-  free(communication->halo_components_recv_buffer);
+  free(communication->particle_recv_buffer);
 }
 
 void InitCommunication(int argc, char *argv[]) {
   MPI_Init(&argc, &argv);
-  CreateMPITypes();
 }
 
 void FinalizeCommunication() {
-  FreeMPITypes();
   MPI_Finalize();
 }
 
@@ -74,7 +71,7 @@ void PackParticleToBuffer(const FluidParticles *const fluid_particles,
   to_buffer[to_index + 13] = fluid_particles->w_y[from_index];
   to_buffer[to_index + 14] = fluid_particles->w_z[from_index];
   to_buffer[to_index + 15] = fluid_particles->density[from_index];
-  to_buffer[to_index + 16] = fluid_particles->lambda[from_index];           ]
+  to_buffer[to_index + 16] = fluid_particles->lambda[from_index];
 }
 
 void UnpackBufferToParticle(const double *const from_buffer,
@@ -108,35 +105,35 @@ void PackHaloComponents(const Communication *const communication,
 
   const Edges *const edges = &communication->edges;
 
-  for (int i=0; i<edges->number_edge_particles_left; i++) {
-    const int p_index = edges->edge_indices_left[i];
+  for (int i=0; i<edges->number_particles_left; i++) {
+    const int p_index = edges->indices_left[i];
     PackParticleToBuffer(fluid_particles, p_index, packed_send_left, i*17);
   }
 
-  for (int i=0; i<edges->number_edge_particles_right; i++) {
-    const int p_index = edges->edge_indices_right[i];
+  for (int i=0; i<edges->number_particles_right; i++) {
+    const int p_index = edges->indices_right[i];
     PackParticleToBuffer(fluid_particles, p_index, packed_send_right, i*17);
   }
 }
 
 void UnpackHaloComponents(const Params *const params,
-                          const double *const packed_send_left,
-                          const double *const packed_send_right,
+                          const double *const packed_recv_left,
+                          const double *const packed_recv_right,
                           FluidParticles *const fluid_particles) {
 
   const int num_local = params->number_fluid_particles_local;
 
   // Unpack halo particles from left rank first
   for (int i=0; i<params->number_halo_particles_left; i++) {
-    const int p_index = params->number_fluid_particles_local + i; // "Global" index
+    const int p_index = num_local + i; // "Global" index
     UnpackBufferToParticle(packed_recv_left, i*17, fluid_particles, p_index);
     fluid_particles->id[p_index] = p_index;
   }
 
   // Unpack halo particles from right rank second
   for (int i=0; i<params->number_halo_particles_right; i++) {
-    const int p_index = params->number_fluid_particles local
-            + params->number_halo_particles_left + i; // "Global" index
+    const int p_index = num_local
+                      + params->number_halo_particles_left + i; // "Global" index
     UnpackBufferToParticle(packed_recv_right, i*17, fluid_particles, p_index);
     fluid_particles->id[p_index] = p_index;
   }
