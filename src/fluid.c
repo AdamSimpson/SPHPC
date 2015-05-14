@@ -35,26 +35,27 @@ static double DelW(const double r, const double h) {
   return DelW;
 }
 
-void MoveParticle(const int from_index, const int to_index)
+void MoveParticle(FluidParticles *const particles,
+                  const int from_index, const int to_index)
 {
-  fluid_particles->x_star[to_index]  = fluid_particles->x_star[from_index];
-  fluid_particles->y_star[to_index]  = fluid_particles->y_star[from_index];
-  fluid_particles->z_star[to_index]  = fluid_particles->z_star[from_index];
-  fluid_particles->x[to_index]       = fluid_particles->x[from_index];
-  fluid_particles->y[to_index]       = fluid_particles->y[from_index];
-  fluid_particles->z[to_index]       = fluid_particles->z[from_index];
-  fluid_particles->v_x[to_index]     = fluid_particles->v_x[from_index];
-  fluid_particles->v_y[to_index]     = fluid_particles->v_y[from_index];
-  fluid_particles->v_z[to_index]     = fluid_particles->v_z[from_index];
-  fluid_particles->dp_x[to_index]    = fluid_particles->dp_x[from_index];
-  fluid_particles->dp_y[to_index]    = fluid_particles->dp_y[from_index];
-  fluid_particles->dp_z[to_index]    = fluid_particles->dp_z[from_index];
-  fluid_particles->w_x[to_index]     = fluid_particles->w_x[from_index];
-  fluid_particles->w_y[to_index]     = fluid_particles->w_y[from_index];
-  fluid_particles->w_z[to_index]     = fluid_particles->w_z[from_index];
-  fluid_particles->density[to_index] = fluid_particles->density[from_index];
-  fluid_particles->lambda[to_index]  = fluid_particles->lambda[from_index];
-  fluid_particle->id[to_index]       = to_index;
+  particles->x_star[to_index]  = particles->x_star[from_index];
+  particles->y_star[to_index]  = particles->y_star[from_index];
+  particles->z_star[to_index]  = particles->z_star[from_index];
+  particles->x[to_index]       = particles->x[from_index];
+  particles->y[to_index]       = particles->y[from_index];
+  particles->z[to_index]       = particles->z[from_index];
+  particles->v_x[to_index]     = particles->v_x[from_index];
+  particles->v_y[to_index]     = particles->v_y[from_index];
+  particles->v_z[to_index]     = particles->v_z[from_index];
+  particles->dp_x[to_index]    = particles->dp_x[from_index];
+  particles->dp_y[to_index]    = particles->dp_y[from_index];
+  particles->dp_z[to_index]    = particles->dp_z[from_index];
+  particles->w_x[to_index]     = particles->w_x[from_index];
+  particles->w_y[to_index]     = particles->w_y[from_index];
+  particles->w_z[to_index]     = particles->w_z[from_index];
+  particles->density[to_index] = particles->density[from_index];
+  particles->lambda[to_index]  = particles->lambda[from_index];
+  particles->id[to_index]      = to_index;
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -139,7 +140,9 @@ void VorticityConfinement(FluidParticles *const particles,
       const double dw_y = dw*y_diff/r_mag;
       const double dw_z = dw*z_diff/r_mag;
 
-      const double vort_mag = sqrt(q->w_x*q->w_x + q->w_y*q->w_y + q->w_z*q->w_z);
+      const double vort_mag = sqrt(particles->w_x[q_index]*particles->w_x[q_index]
+                                 + particles->w_y[q_index]*particles->w_y[q_index]
+                                 + particles->w_z[q_index]*particles->w_z[q_index]);
 
       eta_x += vort_mag*dw_x;
       eta_y += vort_mag*dw_y;
@@ -154,9 +157,13 @@ void VorticityConfinement(FluidParticles *const particles,
     const double N_y = eta_y/eta_mag;
     const double N_z = eta_z/eta_mag;
 
-    particles->v_x[p_index] += dt*eps * (N_y*p->w_z - N_z*p->w_y);
-    particles->v_y[p_index] += dt*eps * (N_z*p->w_x - N_x*p->w_z);
-    particles->v_z[p_index] += dt*eps * (N_x*p->w_y - N_y*p->w_x);
+    const double w_x = particles->w_x[p_index];
+    const double w_y = particles->w_y[p_index];
+    const double w_z = particles->w_z[p_index];
+
+    particles->v_x[p_index] += dt*eps * (N_y*w_z - N_z*w_y);
+    particles->v_y[p_index] += dt*eps * (N_z*w_x - N_x*w_z);
+    particles->v_z[p_index] += dt*eps * (N_x*w_y - N_y*w_x);
   }
 }
 
@@ -269,7 +276,7 @@ void UpdatePositionStars(FluidParticles *const particles,
 
 }
 
-void UpdatePositions(FluidParticles *const fluid_particles,
+void UpdatePositions(FluidParticles *const particles,
                       const Params *const params) {
 
   for (int i=0; i<(params->number_fluid_particles_local); i++) {
@@ -387,20 +394,20 @@ void IdentifyOOBParticles(FluidParticles *const particles,
   OOB *const out_of_bounds = &communication->out_of_bounds;
 
   // Reset OOB numbers
-  out_of_bounds->number_oob_particles_left = 0;
-  out_of_bounds->number_oob_particles_right = 0;
+  out_of_bounds->number_particles_left = 0;
+  out_of_bounds->number_particles_right = 0;
 
   for (int i=0; i<params->number_fluid_particles_local; i++) {
     const double x_star = particles->x_star[i];
     // Set OOB particle indices and update number
     if (x_star < params->node_start_x)
-      out_of_bounds->oob_indices_left[out_of_bounds->number_oob_particles_left++] = i;
+      out_of_bounds->indices_left[out_of_bounds->number_particles_left++] = i;
     else if (x_star > params->node_end_x)
-      out_of_bounds->oob_indices_right[out_of_bounds->number_oob_particles_right++] = i;
+      out_of_bounds->indices_right[out_of_bounds->number_particles_right++] = i;
   }
 
   // Transfer particles that have left the processor bounds
-  TransferOOBParticles(communication, fluid_particles, params);
+  TransferOOBParticles(communication, particles, params);
 }
 
 void PredictPositions(FluidParticles *const particles,
@@ -495,20 +502,19 @@ void InitParticles(FluidParticles *const particles,
                    const AABB *const water) {
 
   // Create fluid volume
-  ConstructFluidVolume(fluid_particles, params, water);
+  ConstructFluidVolume(particles, params, water);
 
   // Initialize particle values
   for (int i=0; i<params->number_fluid_particles_local; i++) {
-    particles->x_star[i] = fluid_particles->x[i];
-    particles->y_star[i] = fluid_particles->y[i];
-    particles->z_star[i] = fluid_particles->z[i];
+    particles->x_star[i] = particles->x[i];
+    particles->y_star[i] = particles->y[i];
+    particles->z_star[i] = particles->z[i];
     particles->density[i] = params->rest_density;
   }
 }
 
 void AllocateFluid(FluidParticles *particles,
-                    const Params *const params)
-{
+                   const Params *const params) {
   const size_t num_particles = params->max_fluid_particles_local;
 
   particles->x_star = calloc(num_particles, sizeof(double));
@@ -569,6 +575,27 @@ void AllocateFluid(FluidParticles *particles,
     printf("Could not allocate particles->lambda\n");
 
   particles->id = calloc(num_particles, sizeof(int));
-  if (particles->lambda == NULL)
+  if (particles->id == NULL)
     printf("Could not allocate particles->id\n");
+}
+
+void FreeFluid(FluidParticles *particles) {
+    free(particles->x_star);
+    free(particles->y_star);
+    free(particles->z_star);
+    free(particles->x);
+    free(particles->y);
+    free(particles->z);
+    free(particles->v_x);
+    free(particles->v_y);
+    free(particles->v_z);
+    free(particles->dp_x);
+    free(particles->dp_y);
+    free(particles->dp_z);
+    free(particles->w_x);
+    free(particles->w_y);
+    free(particles->w_z);
+    free(particles->lambda);
+    free(particles->lambda);
+    free(particles->id);
 }

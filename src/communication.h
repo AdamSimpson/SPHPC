@@ -51,12 +51,24 @@ void UnpackHaloComponents(const Params *const params,
                           const double *const packed_recv_right,
                           FluidParticles *const fluid_particles);
 
-void TransferOOBParticles(const Communication *const communication,
+void PackOOBComponents(const Communication *const communication,
+                       const FluidParticles *const fluid_particles,
+                       double *const packed_send_left,
+                       double *const packed_send_right);
+
+void UnpackOOBComponents(const int num_from_left, const int num_from_right,
+                         const double *const packed_recv_left,
+                         const double *const packed_recv_right,
+                         Params *const params,
+                         FluidParticles *const fluid_particles);
+
+void TransferOOBParticles(Communication *const communication,
                           FluidParticles *const fluid_particles,
                           Params *const params);
+
 void HaloExchange(Communication *const communication,
-                       const Params *const params,
-                       FluidParticles *const fluid_particles);
+                  Params *const params,
+                  FluidParticles *const fluid_particles);
 
 void UpdateHaloLambdas(const Communication *const communication,
                        const Params *const params,

@@ -41,7 +41,7 @@ struct FLUID_PARTICLES {
 ////////////////////////////////////////////////
 // Function prototypes
 ////////////////////////////////////////////////
-void MoveParticle(const int from_index, const int to_index);
+void MoveParticle(FluidParticles *const particles, const int from_index, const int to_index);
 
 void VorticityConfinement(FluidParticles *const fluid_particles,
                           const Params *const params,
@@ -94,7 +94,9 @@ void InitParticles(FluidParticles *const fluid_particles,
                    Params *const params,
                    const AABB *const water);
 
-void AllocateFluid(FluidParticles **fluid_particles,
-                   const Params *const params);
+void AllocateFluid(FluidParticles *particles,
+                    const Params *const params);
+
+void FreeFluid(FluidParticles *particles);
 
 #endif

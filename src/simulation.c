@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
   AABB water_volume_global;
   AABB boundary_global;
   Communication communication;
-  FluidParticles *fluid_particles = NULL;
+  FluidParticles fluid_particles;
   Neighbors neighbors;
 
   SetParameters(&params, &neighbors, &boundary_global, &water_volume_global);
@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
   AllocateCommunication(&communication);
 
   // Initialize particles
-  InitParticles(fluid_particles, &params, &water_volume_global);
+  InitParticles(&fluid_particles, &params, &water_volume_global);
 
   // Print some parameters
   printf("Rank: %d, fluid_particles: %d, smoothing radius: %f \n",
@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
 
   // Initial configuration
   int fileNum=0;
-  WriteMPI(fluid_particles, &params, fileNum++);
+  WriteMPI(&fluid_particles, &params, fileNum++);
 
   MPI_Barrier(MPI_COMM_WORLD);
   const double start_time = MPI_Wtime();
@@ -48,52 +48,53 @@ int main(int argc, char *argv[])
     DEBUG_PRINT("Rank %d Entering fluid step %d with %d particles\n",
                 params.rank, n, params.number_fluid_particles_local);
 
-    ApplyGravity(fluid_particles, &params);
+    ApplyGravity(&fluid_particles, &params);
 
     // Advance to predicted position
-    PredictPositions(fluid_particles, &params, &boundary_global);
+    PredictPositions(&fluid_particles, &params, &boundary_global);
 
     if (n % 10 == 0)
       CheckPartition(&params);
 
     // Identify out of bounds particles and send them to appropriate rank
-    IdentifyOOBParticles(fluid_particles, &params, &communication);
+    IdentifyOOBParticles(&fluid_particles, &params, &communication);
 
-    StartHaloExchange(&communication, &params, fluid_particles);
+    HaloExchange(&communication,
+                 &params,
+                 &fluid_particles);
 
-    HashFluid(fluid_particles, &params, &boundary_global, &neighbors);
 
-    FinishHaloExchange(&communication, fluid_particles, &params);
-
-    HashHalo(fluid_particles, &params, &boundary_global, &neighbors);
+    FindAllNeighbors(&params,
+                     &fluid_particles,
+                     &neighbors);
 
     const int solve_iterations = 4;
     int si;
     for (si=0; si<solve_iterations; si++) {
-      ComputeDensities(fluid_particles, &params, &neighbors);
+      ComputeDensities(&fluid_particles, &params, &neighbors);
 
-      CalculateLambda(fluid_particles, &params, &neighbors);
+      CalculateLambda(&fluid_particles, &params, &neighbors);
 
-      UpdateHaloLambdas(&communication, &params, fluid_particles);
+      UpdateHaloLambdas(&communication, &params, &fluid_particles);
 
-      UpdateDPs(fluid_particles, &params, &neighbors);
+      UpdateDPs(&fluid_particles, &params, &neighbors);
 
-      UpdatePositionStars(fluid_particles, &params, &boundary_global);
+      UpdatePositionStars(&fluid_particles, &params, &boundary_global);
 
-      UpdateHaloPositions(&communication, &params, fluid_particles);
+      UpdateHaloPositions(&communication, &params, &fluid_particles);
     }
 
-    UpdateVelocities(fluid_particles, &params);
+    UpdateVelocities(&fluid_particles, &params);
 
-    XSPHViscosity(fluid_particles, &params, &neighbors);
+    XSPHViscosity(&fluid_particles, &params, &neighbors);
 
-    VorticityConfinement(fluid_particles, &params, &neighbors);
+    VorticityConfinement(&fluid_particles, &params, &neighbors);
 
-    UpdatePositions(fluid_particles, &params);
+    UpdatePositions(&fluid_particles, &params);
 
     // Write file at 30 FPS
     if (n % (int)(1.0/(params.time_step*30.0)) )
-      WriteMPI(fluid_particles, &params, fileNum++);
+      WriteMPI(&fluid_particles, &params, fileNum++);
 
   }
 
@@ -102,7 +103,7 @@ int main(int argc, char *argv[])
          params.rank, end_time-start_time, params.number_fluid_particles_local);
 
   // Release memory
-  free(fluid_particles);
+  FreeFluid(&fluid_particles);
   FreeCommunication(&communication);
   FreeNeighbors(&neighbors);
 
