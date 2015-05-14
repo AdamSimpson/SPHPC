@@ -596,6 +596,6 @@ void FreeFluid(FluidParticles *particles) {
     free(particles->w_y);
     free(particles->w_z);
     free(particles->lambda);
-    free(particles->lambda);
+    free(particles->density);
     free(particles->id);
 }
