@@ -220,13 +220,13 @@ void FillParticleNeighbors(Neighbors *const neighbors,
 void FillNeighbors(const Params *const params,
                    const FluidParticles *particles,
                    Neighbors *const neighbors) {
-    const int total_particles = params->number_fluid_particles_local;
+  const int total_particles = params->number_fluid_particles_local;
 
-    // Fill neighbor bucket for all resident particles
-    for (int i=0; i<total_particles; ++i) {
-        FillParticleNeighbors(neighbors,
-                              params,
-                              particles,
-                              i);
-    }
+  // Fill neighbor bucket for all resident particles
+  for (int i=0; i<total_particles; ++i) {
+    FillParticleNeighbors(neighbors,
+                          params,
+                          particles,
+                          i);
+  }
 }
