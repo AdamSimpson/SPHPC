@@ -61,22 +61,23 @@ void FindAllNeighbors(const Params *const params,
 
 // Uniform grid hash
 // We don't check if the position is out of bounds so x,y,z must be valid
-uint HashVal(const Neighbors *const neighbors,
+unsigned int HashVal(const Neighbors *const neighbors,
                      const double x,
                      const double y,
                      const double z) {
   const double spacing = neighbors->hash_spacing;
 
   // Calculate grid coordinates
-  const uint grid_x = floor(x/spacing);
-  const uint grid_y = floor(y/spacing);
-  const uint grid_z = floor(z/spacing);
+  const unsigned int grid_x = floor(x/spacing);
+  const unsigned int grid_y = floor(y/spacing);
+  const unsigned int grid_z = floor(z/spacing);
 
   // If using glboal boundary size this can be static
-  const uint num_x = neighbors->hash_size_x;
-  const uint num_y = neighbors->hash_size_y;
+  const unsigned int num_x = neighbors->hash_size_x;
+  const unsigned int num_y = neighbors->hash_size_y;
 
-  const uint hash_val = (num_x * num_y * grid_z) + (grid_y * num_x + grid_x);
+  const unsigned int hash_val = (num_x * num_y * grid_z)
+                              + (grid_y * num_x + grid_x);
 
   return hash_val;
 }
@@ -94,9 +95,9 @@ void HashParticles(const Params *const params,
 
   for (int i=0; i<num_particles; i++) {
     hash_values[i] =  HashVal(neighbors,
-                              particles->x[i],
-                              particles->y[i],
-                              particles->z[i]);
+                              particles->x_star[i],
+                              particles->y_star[i],
+                              particles->z_star[i]);
     particle_ids[i] = i;
   }
 }
@@ -105,8 +106,8 @@ void HashParticles(const Params *const params,
 void SortHash(const Params *const params,
               const Neighbors *const neighbors) {
 
-  uint *const keys = neighbors->hash_values;
-  uint *const values = neighbors->particle_ids;
+  unsigned int *const keys = neighbors->hash_values;
+  unsigned int *const values = neighbors->particle_ids;
   const int total_particles = params->number_fluid_particles_local
                             + params->number_halo_particles_left
                             + params->number_halo_particles_right;
@@ -123,7 +124,7 @@ void FindCellBounds(const Params *const params,
   const int length_hash = neighbors->hash_size_x
                         * neighbors->hash_size_y
                         * neighbors->hash_size_z;
-  memset(neighbors->start_indices, ((uint)-1), length_hash*sizeof(uint));
+  memset(neighbors->start_indices, ((unsigned int)-1), length_hash*sizeof(unsigned int));
 
   const int num_particles = params->number_fluid_particles_local
                           + params->number_halo_particles_left
@@ -135,9 +136,9 @@ void FindCellBounds(const Params *const params,
   // As it isn't the first particle, it must also be the cell end of
   // the previous particle's cell
   for (int i=0; i<num_particles; i++) {
-    const uint hash = neighbors->hash_values[i];
-    const uint i_prev = (i-1)>=0?(i-1):0;
-    const uint hash_prev = neighbors->hash_values[i_prev];
+    const unsigned int hash = neighbors->hash_values[i];
+    const unsigned int i_prev = (i-1)>=0?(i-1):0;
+    const unsigned int hash_prev = neighbors->hash_values[i_prev];
 
     if (i==0 || hash!=hash_prev) {
       neighbors->start_indices[hash] = i;
@@ -165,9 +166,9 @@ void FillParticleNeighbors(Neighbors *const neighbors,
   neighbor->number_fluid_neighbors = 0;
 
   // Calculate coordinates within bucket grid
-  const int grid_x = floor(particles->x[p_index]/spacing);
-  const int grid_y = floor(particles->y[p_index]/spacing);
-  const int grid_z = floor(particles->z[p_index]/spacing);
+  const int grid_x = floor(particles->x_star[p_index]/spacing);
+  const int grid_y = floor(particles->y_star[p_index]/spacing);
+  const int grid_z = floor(particles->z_star[p_index]/spacing);
 
   // Go through neighboring grid buckets
   for (int dz=-1; dz<=1; ++dz) {
@@ -181,15 +182,15 @@ void FillParticleNeighbors(Neighbors *const neighbors,
                continue;
 
          // Linear hash index for grid bucket
-         const uint bucket_index = (grid_z+dz)
+         const unsigned int bucket_index = (grid_z+dz)
                                    *(neighbors->hash_size_x + neighbors->hash_size_y)
                                    +(grid_y+dy) *neighbors->hash_size_x + grid_x+dx;
 
          // Start index for hash value of current neighbor grid bucket
-         uint start_index = neighbors->start_indices[bucket_index];
+         unsigned int start_index = neighbors->start_indices[bucket_index];
 
          // If neighbor grid bucket is not empty
-         if (start_index != (uint)-1) {
+         if (start_index != (unsigned int)-1) {
            const unsigned int end_index = neighbors->end_indices[bucket_index];
 
            for (int j=start_index; j<end_index; ++j) {
@@ -200,12 +201,12 @@ void FillParticleNeighbors(Neighbors *const neighbors,
                continue;
 
              // Calculate distance squared
-             const double r2 = (particles->x[p_index] - particles->x[q_index])
-                              *(particles->x[p_index] - particles->x[q_index])
-                              +(particles->y[p_index] - particles->y[q_index])
-                              *(particles->y[p_index] - particles->y[q_index])
-                              +(particles->z[p_index] - particles->z[q_index])
-                              *(particles->z[p_index] - particles->z[q_index]);
+             const double r2 = (particles->x_star[p_index] - particles->x_star[q_index])
+                              *(particles->x_star[p_index] - particles->x_star[q_index])
+                              +(particles->y_star[p_index] - particles->y_star[q_index])
+                              *(particles->y_star[p_index] - particles->y_star[q_index])
+                              +(particles->z_star[p_index] - particles->z_star[q_index])
+                              *(particles->z_star[p_index] - particles->z_star[q_index]);
 
              // If inside smoothing radius and enough space in p's neighbor bucket add q
              if(r2<smoothing_radius2 && neighbor->number_fluid_neighbors < max_neighbors)

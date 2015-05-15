@@ -58,13 +58,9 @@ int main(int argc, char *argv[]) {
     // Identify out of bounds particles and send them to appropriate rank
     IdentifyOOBParticles(&fluid_particles, &params, &communication);
 
-    HaloExchange(&communication,
-                 &params,
-                 &fluid_particles);
+    HaloExchange(&communication, &params, &fluid_particles);
 
-    FindAllNeighbors(&params,
-                     &fluid_particles,
-                     &neighbors);
+    FindAllNeighbors(&params, &fluid_particles, &neighbors);
 
     const int solve_iterations = 4;
     int si;

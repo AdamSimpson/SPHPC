@@ -36,8 +36,7 @@ static double DelW(const double r, const double h) {
 }
 
 void MoveParticle(FluidParticles *const particles,
-                  const int from_index, const int to_index)
-{
+                  const int from_index, const int to_index) {
   particles->x_star[to_index]  = particles->x_star[from_index];
   particles->y_star[to_index]  = particles->y_star[from_index];
   particles->z_star[to_index]  = particles->z_star[from_index];

@@ -102,6 +102,7 @@ void UnpackBufferToParticle(const double *const from_buffer,
   fluid_particles->w_z[to_index]     = from_buffer[from_index + 14];
   fluid_particles->density[to_index] = from_buffer[from_index + 15];
   fluid_particles->lambda[to_index]  = from_buffer[from_index + 16];
+  fluid_particles->id[to_index] = to_index;
 }
 
 // Pack particle struct float components into contiguous memory
@@ -194,9 +195,9 @@ void HaloExchange(Communication *const communication,
 
   // Set send/recv buffer points
   double *const packed_send_left  = communication->particle_send_buffer;
-  double *const packed_send_right = packed_send_left + num_moving_left;
+  double *const packed_send_right = packed_send_left + num_moving_left*num_components;
   double *const packed_recv_left  = communication->particle_recv_buffer;
-  double *const packed_recv_right = packed_recv_left + num_from_left;
+  double *const packed_recv_right = packed_recv_left + num_from_left*num_components;
 
   // Pack halo particle struct components to send
   PackHaloComponents(communication, fluid_particles,
@@ -315,7 +316,7 @@ void TransferOOBParticles(Communication *const communication,
 
   // Set send buffer points
   double *const packed_send_left  = communication->particle_send_buffer;
-  double *const packed_send_right = packed_send_left + num_moving_left;
+  double *const packed_send_right = packed_send_left + (num_moving_left*17);
 
   PackOOBComponents(communication,
                     particles,
