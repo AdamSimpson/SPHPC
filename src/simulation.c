@@ -36,8 +36,8 @@ int main(int argc, char *argv[]) {
          params.rank, params.number_fluid_particles_local, params.smoothing_radius);
 
   // Initial configuration
-  int fileNum=0;
-  WriteMPI(&fluid_particles, &params, fileNum++);
+//  int fileNum=0;
+//  WriteMPI(&fluid_particles, &params, fileNum++);
 
   MPI_Barrier(MPI_COMM_WORLD);
   const double start_time = MPI_Wtime();
@@ -91,8 +91,8 @@ int main(int argc, char *argv[]) {
     UpdatePositions(&fluid_particles, &params);
 
     // Write file at 30 FPS
-    if (n % (int)(1.0/(params.time_step*30.0)) )
-      WriteMPI(&fluid_particles, &params, fileNum++);
+//    if (n % (int)(1.0/(params.time_step*30.0)) )
+//      WriteMPI(&fluid_particles, &params, fileNum++);
 
   }
 

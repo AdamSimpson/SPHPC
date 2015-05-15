@@ -4,6 +4,10 @@ project(sph)
 # Not ideal but works
 set(CMAKE_C_FLAGS "-std=c99")
 
+if(CMAKE_BUILD_TYPE MATCHES "Debug")
+  add_definitions(-DDEBUG=1)
+endif()
+
 file(GLOB SRC_FILES src/*.c src/*.cpp)
 
 add_executable(sph ${SRC_FILES})
@@ -19,4 +23,3 @@ find_library(M_LIB m)
 target_link_libraries(sph ${M_LIB})
 
 install(TARGETS sph DESTINATION bin)
-

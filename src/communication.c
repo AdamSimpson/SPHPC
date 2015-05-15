@@ -6,20 +6,27 @@
 #include <string.h>
 
 void AllocateCommunication(Communication *const communication) {
-  // Allocate index arrays
-  const size_t index_bytes = communication->max_comm_particles*sizeof(int);
+  communication->edges.indices_left  = calloc(communication->max_comm_particles, sizeof(int));
+  if(communication->edges.indices_left == NULL)
+    printf("Could not allocate edge indices left\n");
+  communication->edges.indices_right = calloc(communication->max_comm_particles, sizeof(int));
+  if(communication->edges.indices_right == NULL)
+    printf("Could not allocate edge indices right\n");
 
-  communication->edges.indices_left  = malloc(index_bytes);
-  communication->edges.indices_right = malloc(index_bytes);
-
-  communication->out_of_bounds.indices_left  = malloc(index_bytes);
-  communication->out_of_bounds.indices_right = malloc(index_bytes);
+  communication->out_of_bounds.indices_left  = calloc(communication->max_comm_particles, sizeof(int));
+  if(communication->out_of_bounds.indices_left == NULL)
+    printf("Could not allocate oob indices left\n");
+  communication->out_of_bounds.indices_right = calloc(communication->max_comm_particles, sizeof(int));
+  if(communication->out_of_bounds.indices_right == NULL)
+    printf("Could not allocate oob indices right\n");
 
   // Allocate send and receive buffers
-  const size_t particle_size = 17*sizeof(double);
-  const size_t particle_bytes = communication->max_comm_particles*particle_size;
-  communication->particle_send_buffer = malloc(particle_bytes);
-  communication->particle_recv_buffer = malloc(particle_bytes);
+  communication->particle_send_buffer = calloc(communication->max_comm_particles*17, sizeof(double));
+  if(communication->particle_send_buffer == NULL)
+    printf("Could not allocate send buffer\n");
+  communication->particle_recv_buffer = calloc(communication->max_comm_particles*17, sizeof(double));
+  if(communication->particle_recv_buffer == NULL)
+    printf("Could not allocate recv buffer\n");
 }
 
 void FreeCommunication(Communication *const communication) {

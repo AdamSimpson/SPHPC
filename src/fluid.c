@@ -505,7 +505,7 @@ void InitParticles(FluidParticles *const particles,
   ConstructFluidVolume(particles, params, water);
 
   // Initialize particle values
-  for (int i=0; i<params->number_fluid_particles_local; i++) {
+  for (int i=0; i<params->number_fluid_particles_local; ++i) {
     particles->x_star[i] = particles->x[i];
     particles->y_star[i] = particles->y[i];
     particles->z_star[i] = particles->z[i];
@@ -515,6 +515,7 @@ void InitParticles(FluidParticles *const particles,
 
 void AllocateFluid(FluidParticles *particles,
                    const Params *const params) {
+
   const size_t num_particles = params->max_fluid_particles_local;
 
   particles->x_star = calloc(num_particles, sizeof(double));
@@ -523,7 +524,7 @@ void AllocateFluid(FluidParticles *particles,
   particles->y_star = calloc(num_particles, sizeof(double));
   if (particles->y_star == NULL)
     printf("Could not allocate particles->y_star\n");
-  particles->z = calloc(num_particles, sizeof(double));
+  particles->z_star = calloc(num_particles, sizeof(double));
   if (particles->z_star == NULL)
     printf("Could not allocate particles->z_star\n");
 
