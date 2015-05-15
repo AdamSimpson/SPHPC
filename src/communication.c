@@ -135,7 +135,6 @@ void UnpackHaloComponents(const Params *const params,
   for (int i=0; i<params->number_halo_particles_left; i++) {
     const int p_index = num_local + i; // "Global" index
     UnpackBufferToParticle(packed_recv_left, i*17, fluid_particles, p_index);
-    fluid_particles->id[p_index] = p_index;
   }
 
   // Unpack halo particles from right rank second
@@ -143,7 +142,6 @@ void UnpackHaloComponents(const Params *const params,
     const int p_index = num_local
                       + params->number_halo_particles_left + i; // "Global" index
     UnpackBufferToParticle(packed_recv_right, i*17, fluid_particles, p_index);
-    fluid_particles->id[p_index] = p_index;
   }
 }
 
