@@ -300,12 +300,12 @@ void TransferOOBParticles(Communication *const communication,
   oob->number_particles_right = 0;
   for (int i=0; i<params->number_fluid_particles_local; ++i) {
     if (particles->x_star[i] < params->node_start_x && params->rank != 0) {
-      oob->indices_left[i] = i;
+      oob->indices_left[oob->number_particles_left] = i;
       ++oob->number_particles_left;
     }
     else if (particles->x_star[i] > params->node_end_x &&
        params->rank != params->num_procs-1) {
-      oob->indices_right[i] = i;
+      oob->indices_right[oob->number_particles_right] = i;
       ++oob->number_particles_right;
     }
   }

@@ -51,8 +51,8 @@ void FreeNeighbors(Neighbors *neighbors) {
 
 // Calculate and fill all neighbor particles
 void FindAllNeighbors(const Params *const params,
-                                 const FluidParticles *const particles,
-                                 Neighbors *const neighbors) {
+                      const FluidParticles *const particles,
+                      Neighbors *const neighbors) {
   HashParticles(params, particles, neighbors);
   SortHash(params, neighbors);
   FindCellBounds(params, neighbors);
