@@ -189,8 +189,6 @@ void HaloExchange(Communication *const communication,
                &num_from_right,  1, MPI_INT, proc_to_right,tag,
                MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-  DEBUG_PRINT("total halo moving: %d\n", num_moving_right + num_moving_left);
-
   // Set send/recv buffer points
   double *const packed_send_left  = communication->particle_send_buffer;
   double *const packed_send_right = packed_send_left + num_moving_left*num_components;
@@ -235,8 +233,8 @@ void HaloExchange(Communication *const communication,
   params->number_halo_particles_right = num_received_right;
 
   UnpackHaloComponents(params,
-                       packed_send_left,
-                       packed_send_right,
+                       packed_recv_left,
+                       packed_recv_right,
                        fluid_particles);
 
   DEBUG_PRINT("rank %d, halo: recv %d from left, %d from right\n",
@@ -348,11 +346,9 @@ void TransferOOBParticles(Communication *const communication,
                &num_from_right,  1, MPI_INT, proc_to_right, tag,
                MPI_COMM_WORLD,MPI_STATUS_IGNORE);
 
-  DEBUG_PRINT("total OOB moving: %d\n", num_moving_right + num_moving_left);
-
   // Set recv buffer points
   double *const packed_recv_left  = communication->particle_recv_buffer;
-  double *const packed_recv_right = packed_recv_left + num_from_left;
+  double *const packed_recv_right = packed_recv_left + (num_from_left*num_components);
 
   MPI_Status status;
   int num_received_left = 0;
