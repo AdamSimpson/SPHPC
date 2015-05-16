@@ -115,7 +115,7 @@ void SetParameters(Params *const params,
   params->rank = get_rank();
   params->num_procs = get_num_procs();
   params->g = 9.8;
-  params->number_steps = 200;
+  params->number_steps = 100;
   params->time_step = 1.0/60.0;
   params->c = 0.01;
   params->k = 0.05;
