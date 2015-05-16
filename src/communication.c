@@ -201,9 +201,6 @@ void HaloExchange(Communication *const communication,
   PackHaloComponents(communication, fluid_particles,
                      packed_send_left, packed_send_right);
 
-  DEBUG_PRINT("rank %d, prams->max_fluid_particle_index: %d\n",
-              rank, params->max_fluid_particles_local);
-
   int tagl = 4312;
   int tagr = 5177;
 

@@ -14,7 +14,7 @@ void WriteMPI(const FluidParticles *const particles,
   MPI_File file;
   MPI_Status status;
   char name[64];
-  sprintf(name, "/Users/atj/SPHPC/output/sim-%d.bin", fileNum);
+  sprintf(name, "/home/atj/OLCF/SPHPC/output/sim-%d.bin", fileNum);
 
   const int num_particles = params->number_fluid_particles_local;
 

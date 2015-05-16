@@ -255,7 +255,7 @@ void ApplyGravity(FluidParticles *const particles,
   const double dt = params->time_step;
   const double g = -params->g;
 
-  for (int i=0; i<(params->number_fluid_particles_local); i++) {
+  for (int i=0; i<(params->number_fluid_particles_local); ++i) {
     particles->v_y[i] += g*dt;
   }
 }
