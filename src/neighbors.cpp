@@ -112,6 +112,7 @@ void SortHash(const Params *const params,
                             + params->number_halo_particles_left
                             + params->number_halo_particles_right;
   thrust::sort_by_key(thrust::host, keys, keys+total_particles, values);
+
 }
 
 // Find start and end of hash cells
@@ -165,51 +166,51 @@ void FillParticleNeighbors(Neighbors *const neighbors,
   Neighbor *const neighbor = &neighbors->particle_neighbors[p_index];
   neighbor->number_fluid_neighbors = 0;
 
-  // Calculate coordinates within bucket grid
-  const int grid_x = floor(particles->x_star[p_index]/spacing);
-  const int grid_y = floor(particles->y_star[p_index]/spacing);
-  const int grid_z = floor(particles->z_star[p_index]/spacing);
+  const double px = particles->x_star[p_index];
+  const double py = particles->y_star[p_index];
+  const double pz = particles->z_star[p_index];
 
   // Go through neighboring grid buckets
   for (int dz=-1; dz<=1; ++dz) {
+    const double z = pz + dz*spacing;
     for (int dy=-1; dy<=1; ++dy) {
+      const double y = py + dy*spacing;
       for (int dx=-1; dx<=1; ++dx) {
-        // If the neighbor grid bucket is outside of the grid we don't process it
-        if (grid_y+dy < 0 || grid_x+dx < 0 || grid_z+dz < 0
-             || (grid_x+dx) >= neighbors->hash_size_x
-             || (grid_y+dy) >= neighbors->hash_size_y
-             || (grid_z+dz) >= neighbors->hash_size_z)
-               continue;
+        const double x = px + dx*spacing;
 
-         // Linear hash index for grid bucket
-         const unsigned int bucket_index = (grid_z+dz)
-                                   *(neighbors->hash_size_x + neighbors->hash_size_y)
-                                   +(grid_y+dy) *neighbors->hash_size_x + grid_x+dx;
+        // Make sure that the position is valid
+        if (floor(x/spacing) > neighbors->hash_size_x-1 || x < 0.0 ||
+            floor(y/spacing) > neighbors->hash_size_y-1 || y < 0.0 ||
+            floor(z/spacing) > neighbors->hash_size_z-1 || z < 0.0)
+          continue;
 
-         // Start index for hash value of current neighbor grid bucket
-         unsigned int start_index = neighbors->start_indices[bucket_index];
+        // Calculate hash index at neighbor point
+        const int neighbor_index = HashVal(neighbors, x, y, z);
 
-         // If neighbor grid bucket is not empty
-         if (start_index != (unsigned int)-1) {
-           const unsigned int end_index = neighbors->end_indices[bucket_index];
+        // Start index for hash value of current neighbor grid bucket
+        unsigned int start_index = neighbors->start_indices[neighbor_index];
 
-           for (int j=start_index; j<end_index; ++j) {
-             const int q_index = neighbors->particle_ids[j];
+        // If neighbor grid bucket is not empty
+        if (start_index != (unsigned int)-1) {
+          const unsigned int end_index = neighbors->end_indices[neighbor_index];
 
-             // Continue if same particle
-             if (p_index==q_index)
-               continue;
+          for (int j=start_index; j<end_index; ++j) {
+            const int q_index = neighbors->particle_ids[j];
 
-             // Calculate distance squared
-             const double r2 = (particles->x_star[p_index] - particles->x_star[q_index])
+            // Continue if same particle
+            if (p_index==q_index)
+              continue;
+
+            // Calculate distance squared
+            const double r2 = (particles->x_star[p_index] - particles->x_star[q_index])
                               *(particles->x_star[p_index] - particles->x_star[q_index])
                               +(particles->y_star[p_index] - particles->y_star[q_index])
                               *(particles->y_star[p_index] - particles->y_star[q_index])
                               +(particles->z_star[p_index] - particles->z_star[q_index])
                               *(particles->z_star[p_index] - particles->z_star[q_index]);
 
-             // If inside smoothing radius and enough space in p's neighbor bucket add q
-             if(r2<smoothing_radius2 && neighbor->number_fluid_neighbors < max_neighbors)
+            // If inside smoothing radius and enough space in p's neighbor bucket add q
+            if(r2<smoothing_radius2 && neighbor->number_fluid_neighbors < max_neighbors)
                 neighbor->neighbor_indices[neighbor->number_fluid_neighbors++] = q_index;
           }
         }
