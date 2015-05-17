@@ -2,7 +2,7 @@
 #define SPH_SRC_NEIGHBORS_H_
 
 typedef struct BUCKET HashBucket;
-typedef struct NEIGHBORS Neighbors;
+//typedef struct NEIGHBORS Neighbors;
 typedef struct NEIGHBOR Neighbor;
 
 #include <stdbool.h>
@@ -28,7 +28,7 @@ struct NEIGHBOR {
     int number_fluid_neighbors;
 };
 
-// These functions are to be visible to both
+// These functions are to be visible to both C and C++
 #ifdef __cplusplus
 extern "C" {
 #endif

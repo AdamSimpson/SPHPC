@@ -8,7 +8,7 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
   add_definitions(-DDEBUG=1)
 endif()
 
-file(GLOB SRC_FILES src/*.c src/*.cpp)
+file(GLOB SRC_FILES src/*.c src/*.cc)
 
 add_executable(sph ${SRC_FILES})
 
@@ -18,6 +18,9 @@ target_link_libraries(sph ${MPI_LIBRARIES})
 
 find_package(CUDA REQUIRED)
 include_directories(${CUDA_INCLUDE_DIRS})
+
+find_package(Boost REQUIRED)
+include_directories(${BOOST_INCLUDE_DIRS})
 
 find_library(M_LIB m)
 target_link_libraries(sph ${M_LIB})

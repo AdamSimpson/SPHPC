@@ -1,7 +1,7 @@
 #ifndef SPH_SRC_GEOMETRY_H_
 #define SPH_SRC_GEOMETRY_H_
 
-typedef struct AABB AABB;
+//typedef struct AABB AABB;
 
 #include "fluid.h"
 #include "communication.h"

@@ -3,7 +3,11 @@
 
 typedef struct PARAM Params;
 
-#include "geometry.h"
+typedef struct NEIGHBORS Neighbors;
+typedef struct AABB AABB;
+
+//#include "geometry.h"
+//#include "neighbors.h"
 
 struct PARAM {
   double rest_density;
