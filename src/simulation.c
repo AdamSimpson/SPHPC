@@ -8,6 +8,7 @@
 #include "fluid.h"
 #include "geometry.h"
 #include "fileio.h"
+#include "input_parser.h"
 #include "mpi.h"
 
 int main(int argc, char *argv[]) {
@@ -116,27 +117,8 @@ void SetParameters(struct Params *const params,
 {
   params->rank = get_rank();
   params->num_procs = get_num_procs();
-  params->g = 9.8;
-  params->number_steps = 100;
-  params->time_step = 1.0/60.0;
-  params->c = 0.01;
-  params->k = 0.05;
-  // Approximate
-  params->number_fluid_particles_global = 65536*2;
 
-  boundary_global->min_x = 0.0;
-  boundary_global->max_x = 100.0;
-  boundary_global->min_y = 0.0;
-  boundary_global->max_y = 80.0;
-  boundary_global->min_z = 0.0;
-  boundary_global->max_z = 30.0;
-
-  water_volume_global->min_x = 0.1;
-  water_volume_global->max_x = boundary_global->max_x - 20.0;
-  water_volume_global->min_y = 0.1;
-  water_volume_global->max_y = boundary_global->max_y - 30.0;
-  water_volume_global->min_z = 0.1;
-  water_volume_global->max_z = boundary_global->max_z - 10.0;
+  ReadParameters(params, boundary_global, water_volume_global);
 
   // Cubed volume
   const double volume = (water_volume_global->max_x - water_volume_global->min_x)

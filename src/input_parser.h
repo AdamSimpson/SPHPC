@@ -3,7 +3,18 @@
 
 // Forward Declaration
 struct Params;
+struct AABB;
 
-extern "C" void set_parameters(struct Params *const parameters);
+// These functions are to be visible to both C and C++
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void ReadParameters(struct Params *const parameters,
+                    struct AABB *boundary_volume,
+                    struct AABB *initial_fluid_volume);
+#ifdef __cplusplus
+}
+#endif
 
 #endif
