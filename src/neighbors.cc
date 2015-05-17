@@ -6,9 +6,9 @@
 #include <stdbool.h>
 #include <string.h>
 
-void AllocateNeighbors(Neighbors *const neighbors,
-                                  const Params *const params,
-                                  const AABB *const boundary_global) {
+void AllocateNeighbors(struct Neighbors *const neighbors,
+                       const struct Params *const params,
+                       const struct AABB *const boundary_global) {
 
   // Allocate neighbors array
   neighbors->particle_neighbors = (Neighbor*)calloc(params->max_fluid_particles_local,
@@ -41,7 +41,7 @@ void AllocateNeighbors(Neighbors *const neighbors,
     printf("Could not allocate particle_ids\n");
 }
 
-void FreeNeighbors(Neighbors *neighbors) {
+void FreeNeighbors(struct Neighbors *neighbors) {
   free(neighbors->particle_neighbors);
   free(neighbors->start_indices);
   free(neighbors->end_indices);
@@ -50,9 +50,9 @@ void FreeNeighbors(Neighbors *neighbors) {
 }
 
 // Calculate and fill all neighbor particles
-void FindAllNeighbors(const Params *const params,
-                      const FluidParticles *const particles,
-                      Neighbors *const neighbors) {
+void FindAllNeighbors(const struct Params *const params,
+                      const struct FluidParticles *const particles,
+                      struct Neighbors *const neighbors) {
   HashParticles(params, particles, neighbors);
   SortHash(params, neighbors);
   FindCellBounds(params, neighbors);
@@ -61,7 +61,7 @@ void FindAllNeighbors(const Params *const params,
 
 // Uniform grid hash
 // We don't check if the position is out of bounds so x,y,z must be valid
-unsigned int HashVal(const Neighbors *const neighbors,
+unsigned int HashVal(const struct Neighbors *const neighbors,
                      const double x,
                      const double y,
                      const double z) {
@@ -83,9 +83,9 @@ unsigned int HashVal(const Neighbors *const neighbors,
 }
 
 // Hash all particles
-void HashParticles(const Params *const params,
-                   const FluidParticles *const particles,
-                   Neighbors *const neighbors) {
+void HashParticles(const struct Params *const params,
+                   const struct FluidParticles *const particles,
+                   struct Neighbors *const neighbors) {
 
   unsigned int *const hash_values = neighbors->hash_values;
   unsigned int *const particle_ids = neighbors->particle_ids;
@@ -103,8 +103,8 @@ void HashParticles(const Params *const params,
 }
 
 // Sort list of particle id's based upon what their hash value is
-void SortHash(const Params *const params,
-              const Neighbors *const neighbors) {
+void SortHash(const struct Params *const params,
+              const struct Neighbors *const neighbors) {
 
   unsigned int *const keys = neighbors->hash_values;
   unsigned int *const values = neighbors->particle_ids;
@@ -119,8 +119,8 @@ void SortHash(const Params *const params,
 // Method taken from NVIDIA SDK:
 // http://docs.nvidia.com/cuda/samples/5_Simulations/particles/doc/particles.pdf
 // Note that end index is one past the "end"
-void FindCellBounds(const Params *const params,
-                    Neighbors *const neighbors) {
+void FindCellBounds(const struct Params *const params,
+                    struct Neighbors *const neighbors) {
   // Reset start indicies
   const int length_hash = neighbors->hash_size_x
                         * neighbors->hash_size_y
@@ -152,9 +152,9 @@ void FindCellBounds(const Params *const params,
 }
 
 // Neighbors are accessed multiple times per step so we keep them in buckets
-void FillParticleNeighbors(Neighbors *const neighbors,
-                           const Params *const params,
-                           const FluidParticles *particles,
+void FillParticleNeighbors(struct Neighbors *const neighbors,
+                           const struct Params *const params,
+                           const struct FluidParticles *particles,
                            const unsigned int p_index) {
 
   const int max_neighbors = neighbors->max_neighbors;
@@ -219,9 +219,9 @@ void FillParticleNeighbors(Neighbors *const neighbors,
   } //dz
 }
 
-void FillNeighbors(const Params *const params,
-                   const FluidParticles *particles,
-                   Neighbors *const neighbors) {
+void FillNeighbors(const struct Params *const params,
+                   const struct FluidParticles *particles,
+                   struct Neighbors *const neighbors) {
   const int total_particles = params->number_fluid_particles_local;
 
   // Fill neighbor bucket for all resident particles

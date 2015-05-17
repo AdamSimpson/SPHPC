@@ -1,8 +1,9 @@
 #ifndef SPH_SRC_INPUT_PARSER_H_
 #define SPH_SRC_INPUT_PARSER_H_
 
-#include "simulation.h"
+// Forward Declaration
+struct Params;
 
-extern "C" void set_parameters(Params *const parameters);
+extern "C" void set_parameters(struct Params *const parameters);
 
 #endif

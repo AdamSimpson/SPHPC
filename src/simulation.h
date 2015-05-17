@@ -1,15 +1,11 @@
 #ifndef SPH_SRC_SIMULATION_H_
 #define SPH_SRC_SIMULATION_H_
 
-typedef struct PARAM Params;
+// Forward Declarations
+struct Neighbors;
+struct AABB;
 
-typedef struct NEIGHBORS Neighbors;
-typedef struct AABB AABB;
-
-//#include "geometry.h"
-//#include "neighbors.h"
-
-struct PARAM {
+struct Params {
   double rest_density;
   double smoothing_radius;
   double g;
@@ -29,9 +25,9 @@ struct PARAM {
   int num_procs;
 }; // Simulation paramaters
 
-void SetParameters(Params *const params,
-                   Neighbors *const neighbors,
-                   AABB *const boundary_global,
-                   AABB *const water_volume_global);
+void SetParameters(struct Params *const params,
+                   struct Neighbors *const neighbors,
+                   struct AABB *const boundary_global,
+                   struct AABB *const water_volume_global);
 
 #endif

@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "debug.h"
 #include "communication.h"
+#include "mpi.h"
 
 ////////////////////////////////////////////////
 // Utility Functions
@@ -12,9 +13,9 @@ static double min(const double a, const double b) {
   return min;
 }
 
-void ConstructFluidVolume(FluidParticles *const particles,
-                          Params *const params,
-                          const AABB *const fluid) {
+void ConstructFluidVolume(struct FluidParticles *const particles,
+                          struct Params *const params,
+                          const struct AABB *const fluid) {
 
   const double spacing = params->smoothing_radius/2.0;
 
@@ -56,9 +57,9 @@ void ConstructFluidVolume(FluidParticles *const particles,
 }
 
 // Sets upper bound on number of particles, used for memory allocation
-void SetParticleNumbers(const AABB *const fluid_global,
-                         Params *const params,
-                         Communication *const communication) {
+void SetParticleNumbers(const struct AABB *const fluid_global,
+                        struct Params *const params,
+                        struct Communication *const communication) {
 
   const double spacing = params->smoothing_radius/2.0;
 
@@ -81,7 +82,7 @@ void SetParticleNumbers(const AABB *const fluid_global,
 }
 
 // Test if boundaries need to be adjusted
-void CheckPartition(Params *const params)
+void CheckPartition(struct Params *const params)
 {
   const int num_rank = params->number_fluid_particles_local;
   const int rank = params->rank;

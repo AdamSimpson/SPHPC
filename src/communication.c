@@ -1,11 +1,13 @@
-//#include "communication.h"
+#include "communication.h"
+#include "simulation.h"
 #include "fluid.h"
 #include "debug.h"
 #include <stdio.h>
 #include <stddef.h>
 #include <string.h>
+#include "mpi.h"
 
-void AllocateCommunication(Communication *const communication) {
+void AllocateCommunication(struct Communication *const communication) {
   communication->edges.indices_left  = calloc(communication->max_comm_particles, sizeof(int));
   if(communication->edges.indices_left == NULL)
     printf("Could not allocate edge indices left\n");
@@ -29,7 +31,7 @@ void AllocateCommunication(Communication *const communication) {
     printf("Could not allocate recv buffer\n");
 }
 
-void FreeCommunication(Communication *const communication) {
+void FreeCommunication(struct Communication *const communication) {
   free(communication->edges.indices_left);
   free(communication->edges.indices_right);
   free(communication->out_of_bounds.indices_left);
@@ -58,7 +60,7 @@ int get_num_procs() {
   return num_procs;
 }
 
-void PackParticleToBuffer(const FluidParticles *const fluid_particles,
+void PackParticleToBuffer(const struct FluidParticles *const fluid_particles,
                           const int from_index,
                           double *const to_buffer,
                           const int to_index) {
@@ -83,7 +85,7 @@ void PackParticleToBuffer(const FluidParticles *const fluid_particles,
 
 void UnpackBufferToParticle(const double *const from_buffer,
                             const int from_index,
-                            FluidParticles *const fluid_particles,
+                            struct FluidParticles *const fluid_particles,
                             const int to_index) {
   fluid_particles->x_star[to_index]  = from_buffer[from_index];
   fluid_particles->y_star[to_index]  = from_buffer[from_index + 1];
@@ -106,12 +108,12 @@ void UnpackBufferToParticle(const double *const from_buffer,
 }
 
 // Pack particle struct float components into contiguous memory
-void PackHaloComponents(const Communication *const communication,
-                        const FluidParticles *const fluid_particles,
+void PackHaloComponents(const struct Communication *const communication,
+                        const struct FluidParticles *const fluid_particles,
                         double *const packed_send_left,
                         double *const packed_send_right) {
 
-  const Edges *const edges = &communication->edges;
+  const struct Edges *const edges = &communication->edges;
 
   for (int i=0; i<edges->number_particles_left; i++) {
     const int p_index = edges->indices_left[i];
@@ -124,10 +126,10 @@ void PackHaloComponents(const Communication *const communication,
   }
 }
 
-void UnpackHaloComponents(const Params *const params,
+void UnpackHaloComponents(const struct Params *const params,
                           const double *const packed_recv_left,
                           const double *const packed_recv_right,
-                          FluidParticles *const fluid_particles) {
+                          struct FluidParticles *const fluid_particles) {
 
   const int num_local = params->number_fluid_particles_local;
 
@@ -145,13 +147,13 @@ void UnpackHaloComponents(const Params *const params,
   }
 }
 
-void HaloExchange(Communication *const communication,
-                  Params *const params,
-                  FluidParticles *const fluid_particles) {
+void HaloExchange(struct Communication *const communication,
+                  struct Params *const params,
+                  struct FluidParticles *const fluid_particles) {
 
   const int rank = params->rank;
   const int num_procs = params->num_procs;
-  Edges *const edges = &communication->edges;
+  struct Edges *const edges = &communication->edges;
   double h = params->smoothing_radius;
   const int num_components = 17;
 
@@ -242,12 +244,12 @@ void HaloExchange(Communication *const communication,
 }
 
 // Pack out of bounds particle components
-void PackOOBComponents(const Communication *const communication,
-                       const FluidParticles *const fluid_particles,
+void PackOOBComponents(const struct Communication *const communication,
+                       const struct FluidParticles *const fluid_particles,
                        double *const packed_send_left,
                        double *const packed_send_right) {
 
-  const OOB *const oob = &communication->out_of_bounds;
+  const struct OOB *const oob = &communication->out_of_bounds;
 
   for (int i=0; i<oob->number_particles_left; i++) {
     const int p_index = oob->indices_left[i];
@@ -263,8 +265,8 @@ void PackOOBComponents(const Communication *const communication,
 void UnpackOOBComponents(const int num_from_left, const int num_from_right,
                          const double *const packed_recv_left,
                          const double *const packed_recv_right,
-                         Params *const params,
-                         FluidParticles *const fluid_particles) {
+                         struct Params *const params,
+                         struct FluidParticles *const fluid_particles) {
 
   for (int i=0; i<num_from_left; ++i) {
     const int p_index = params->number_fluid_particles_local;
@@ -280,13 +282,13 @@ void UnpackOOBComponents(const int num_from_left, const int num_from_right,
 }
 
 // Transfer particles that are out of node bounds
-void TransferOOBParticles(Communication *const communication,
-                          FluidParticles *const particles,
-                          Params *const params) {
+void TransferOOBParticles(struct Communication *const communication,
+                          struct FluidParticles *const particles,
+                          struct Params *const params) {
 
   const int rank = params->rank;
   const int num_procs = params->num_procs;
-  OOB *const oob = &communication->out_of_bounds;
+  struct OOB *const oob = &communication->out_of_bounds;
   const int num_components = 17;
 
   // Identify out of bound particles
@@ -380,10 +382,10 @@ void TransferOOBParticles(Communication *const communication,
               rank, num_moving_left, num_moving_right, num_received_left, num_received_right);
 }
 
-void UpdateHaloLambdas(const Communication *const communication,
-                         const Params *const params,
-                         FluidParticles *const fluid_particles) {
-  const Edges *const edges = &communication->edges;
+void UpdateHaloLambdas(const struct Communication *const communication,
+                       const struct  Params *const params,
+                       struct FluidParticles *const fluid_particles) {
+  const struct Edges *const edges = &communication->edges;
 
   const int rank = params->rank;
   const int num_procs = params->num_procs;
@@ -439,10 +441,10 @@ void UpdateHaloLambdas(const Communication *const communication,
   }
 }
 
-void UpdateHaloPositions(const Communication *const communication,
-                         const Params *const params,
-                         FluidParticles *const fluid_particles) {
-  const Edges *const edges = &communication->edges;
+void UpdateHaloPositions(const struct Communication *const communication,
+                         const struct Params *const params,
+                         struct FluidParticles *const fluid_particles) {
+  const struct Edges *const edges = &communication->edges;
 
   const int rank = params->rank;
   const int num_procs = params->num_procs;

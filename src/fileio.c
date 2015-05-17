@@ -2,13 +2,17 @@
 // Utility Functions
 ////////////////////////////////////////////////
 #include "fileio.h"
+#include "simulation.h"
 #include "debug.h"
+#include "mpi.h"
 #include <stdio.h>
 #include <inttypes.h>
+#include "stdlib.h"
+#include "fluid.h"
 
 // Write boundary in MPI
-void WriteMPI(const FluidParticles *const particles,
-              const Params *const params,
+void WriteMPI(const struct FluidParticles *const particles,
+              const struct Params *const params,
               const int fileNum) {
 
   MPI_File file;

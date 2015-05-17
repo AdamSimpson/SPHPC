@@ -1,16 +1,17 @@
 #ifndef SPH_SRC_NEIGHBORS_H_
 #define SPH_SRC_NEIGHBORS_H_
 
-typedef struct BUCKET HashBucket;
-//typedef struct NEIGHBORS Neighbors;
-typedef struct NEIGHBOR Neighbor;
-
 #include <stdbool.h>
 #include "fluid.h"
 #include "geometry.h"
 #include "simulation.h"
 
-struct NEIGHBORS {
+// Forward Declaration
+struct FluidParticles;
+struct Params;
+struct AABB;
+
+struct Neighbors {
   unsigned int *start_indices; // Start index for hash values
   unsigned int *end_indices;   // End index for hash values
   unsigned int *hash_values;   // Array of hash values
@@ -19,11 +20,11 @@ struct NEIGHBORS {
   int hash_size_x;
   int hash_size_y;
   int hash_size_z;
-  Neighbor *particle_neighbors;
+  struct Neighbor *particle_neighbors;
   double hash_spacing;
 };
 
-struct NEIGHBOR {
+struct Neighbor {
     unsigned int neighbor_indices[60];
     int number_fluid_neighbors;
 };
@@ -32,41 +33,41 @@ struct NEIGHBOR {
 #ifdef __cplusplus
 extern "C" {
 #endif
-void AllocateNeighbors(Neighbors *const neighbors,
-                       const Params *const params,
-                       const AABB *const boundary_global);
+void AllocateNeighbors(struct Neighbors *const neighbors,
+                       const struct Params *const params,
+                       const struct AABB *const boundary_global);
 
-void FreeNeighbors(Neighbors *neighbors);
+void FreeNeighbors(struct Neighbors *neighbors);
 
-void FindAllNeighbors(const Params *const params,
-                      const FluidParticles *const particles,
-                      Neighbors *const neighbors);
+void FindAllNeighbors(const struct Params *const params,
+                      const struct FluidParticles *const particles,
+                      struct Neighbors *const neighbors);
 #ifdef __cplusplus
 }
 #endif
 
-unsigned int HashVal(const Neighbors *const neighbors,
+unsigned int HashVal(const struct Neighbors *const neighbors,
                      const double x,
                      const double y,
                      const double z);
 
-void HashParticles(const Params *const params,
-                   const FluidParticles *const particles,
-                   Neighbors *const neighbors);
+void HashParticles(const struct Params *const params,
+                   const struct FluidParticles *const particles,
+                   struct Neighbors *const neighbors);
 
-void SortHash(const Params *const params,
-              const Neighbors *const neighbors);
+void SortHash(const struct Params *const params,
+              const struct Neighbors *const neighbors);
 
-void FindCellBounds(const Params *const params,
-                    Neighbors *const neighbors);
+void FindCellBounds(const struct Params *const params,
+                    struct Neighbors *const neighbors);
 
-void FillParticleNeighbors(Neighbors *const neighbors,
-                           const Params *const params,
-                           const FluidParticles *particles,
+void FillParticleNeighbors(struct Neighbors *const neighbors,
+                           const struct Params *const params,
+                           const struct FluidParticles *particles,
                            const unsigned int p_index);
 
-void FillNeighbors(const Params *const params,
-                   const FluidParticles *particles,
-                   Neighbors *const neighbors);
+void FillNeighbors(const struct Params *const params,
+                   const struct FluidParticles *particles,
+                   struct Neighbors *const neighbors);
 
 #endif

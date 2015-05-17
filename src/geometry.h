@@ -1,11 +1,15 @@
 #ifndef SPH_SRC_GEOMETRY_H_
 #define SPH_SRC_GEOMETRY_H_
 
-//typedef struct AABB AABB;
-
 #include "fluid.h"
 #include "communication.h"
 #include "simulation.h"
+
+// Forward Declaration
+struct FluidParticles;
+struct Params;
+struct AABB;
+struct Communication;
 
 struct AABB {
   double min_x;
@@ -16,14 +20,14 @@ struct AABB {
   double max_z;
 };//Axis aligned bounding box
 
-void ConstructFluidVolume(FluidParticles *const particles,
-                          Params *const params,
-                          const AABB *const fluid);
+void ConstructFluidVolume(struct FluidParticles *const particles,
+                          struct Params *const params,
+                          const struct AABB *const fluid);
 
-void SetParticleNumbers(const AABB *const fluid_global,
-                        Params *const params,
-                        Communication *const communication);
+void SetParticleNumbers(const struct AABB *const fluid_global,
+                        struct Params *const params,
+                        struct Communication *const communication);
 
-void CheckPartition(Params *const params);
+void CheckPartition(struct Params *const params);
 
 #endif

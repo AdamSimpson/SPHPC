@@ -1,23 +1,22 @@
 #ifndef SPH_SRC_FLUID_H_
 #define SPH_SRC_FLUID_H_
 
-typedef struct FLUID_PARTICLES FluidParticles;
-
 #include <stdbool.h>
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
-#include "neighbors.h"
-#include "fileio.h"
-#include "geometry.h"
-#include "communication.h"
-#include "simulation.h"
+
+// Forward Declaration
+struct Params;
+struct Neighbors;
+struct AABB;
+struct Communication;
 
 ////////////////////////////////////////////////
 // Structures
 ////////////////////////////////////////////////
 
-struct FLUID_PARTICLES {
+struct FluidParticles {
   double *x_star;
   double *y_star;
   double *z_star;
@@ -41,62 +40,62 @@ struct FLUID_PARTICLES {
 ////////////////////////////////////////////////
 // Function prototypes
 ////////////////////////////////////////////////
-void MoveParticle(FluidParticles *const particles, const int from_index, const int to_index);
+void MoveParticle(struct FluidParticles *const particles, const int from_index, const int to_index);
 
-void VorticityConfinement(FluidParticles *const fluid_particles,
-                          const Params *const params,
-                          const Neighbors *const neighbors);
+void VorticityConfinement(struct FluidParticles *const fluid_particles,
+                          const struct Params *const params,
+                          const struct Neighbors *const neighbors);
 
-void XSPHViscosity(FluidParticles *const fluid_particles,
-                   const Params *const params,
-                   const Neighbors *const neighbors);
+void XSPHViscosity(struct FluidParticles *const fluid_particles,
+                   const struct Params *const params,
+                   const struct Neighbors *const neighbors);
 
-void ComputeDensities(FluidParticles *const fluid_particles,
-                      const Params *const params,
-                      const Neighbors *const neighbors);
+void ComputeDensities(struct FluidParticles *const fluid_particles,
+                      const struct Params *const params,
+                      const struct Neighbors *const neighbors);
 
-void ApplyGravity(FluidParticles *const fluid_particles,
-                  const Params *const params);
+void ApplyGravity(struct FluidParticles *const fluid_particles,
+                  const struct Params *const params);
 
-void UpdatePositionStars(FluidParticles *const fluid_particles,
-                         const Params *const params,
-                         const AABB *const boundary_global);
+void UpdatePositionStars(struct FluidParticles *const fluid_particles,
+                         const struct Params *const params,
+                         const struct AABB *const boundary_global);
 
-void UpdatePositions(FluidParticles *const fluid_particles,
-                     const Params *const params);
+void UpdatePositions(struct FluidParticles *const fluid_particles,
+                     const struct Params *const params);
 
-void CalculateLambda(FluidParticles *const fluid_particles,
-                     const Params *const params,
-                     const Neighbors *const neighbors);
+void CalculateLambda(struct FluidParticles *const fluid_particles,
+                     const struct Params *const params,
+                     const struct Neighbors *const neighbors);
 
-void UpdateDPs(FluidParticles *const fluid_particles,
-               const Params *const params,
-               const Neighbors *const neighbors);
+void UpdateDPs(struct FluidParticles *const fluid_particles,
+               const struct Params *const params,
+               const struct Neighbors *const neighbors);
 
-void IdentifyOOBParticles(FluidParticles *const fluid_particles,
-                          Params *const params,
-                          Communication *const communication);
+void IdentifyOOBParticles(struct FluidParticles *const fluid_particles,
+                          struct Params *const params,
+                          struct Communication *const communication);
 
-void PredictPositions(FluidParticles *const fluid_particles,
-                      const Params *const params,
-                      const AABB *const boundary_global);
+void PredictPositions(struct FluidParticles *const fluid_particles,
+                      const struct Params *const params,
+                      const struct AABB *const boundary_global);
 
 void CheckVelocity(double *const v_x, double *const v_y, double *const v_z);
 
-void UpdateVelocities(FluidParticles *const fluid_particles,
-                      const Params *const params);
+void UpdateVelocities(struct FluidParticles *const fluid_particles,
+                      const struct Params *const params);
 
-void BoundaryConditions(FluidParticles *const fluid_particles,
+void BoundaryConditions(struct FluidParticles *const fluid_particles,
                         const unsigned int i,
-                        const AABB *const boundary);
+                        const struct AABB *const boundary);
 
-void InitParticles(FluidParticles *const fluid_particles,
-                   Params *const params,
-                   const AABB *const water);
+void InitParticles(struct FluidParticles *const fluid_particles,
+                   struct Params *const params,
+                   const struct AABB *const water);
 
-void AllocateFluid(FluidParticles *particles,
-                    const Params *const params);
+void AllocateFluid(struct FluidParticles *particles,
+                  const struct Params *const params);
 
-void FreeFluid(FluidParticles *particles);
+void FreeFluid(struct FluidParticles *particles);
 
 #endif

@@ -4,19 +4,21 @@
 #include <math.h>
 #include "debug.h"
 #include "communication.h"
+#include "neighbors.h"
 #include "fluid.h"
 #include "geometry.h"
 #include "fileio.h"
+#include "mpi.h"
 
 int main(int argc, char *argv[]) {
   InitCommunication(argc, argv);
 
-  Params params;
-  AABB water_volume_global;
-  AABB boundary_global;
-  Communication communication;
-  FluidParticles fluid_particles;
-  Neighbors neighbors;
+  struct Params params;
+  struct AABB water_volume_global;
+  struct AABB boundary_global;
+  struct Communication communication;
+  struct FluidParticles fluid_particles;
+  struct Neighbors neighbors;
 
   SetParameters(&params, &neighbors, &boundary_global, &water_volume_global);
 
@@ -107,10 +109,10 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 
-void SetParameters(Params *const params,
-                   Neighbors *const neighbors,
-                   AABB *const boundary_global,
-                   AABB *const water_volume_global)
+void SetParameters(struct Params *const params,
+                   struct Neighbors *const neighbors,
+                   struct AABB *const boundary_global,
+                   struct AABB *const water_volume_global)
 {
   params->rank = get_rank();
   params->num_procs = get_num_procs();
