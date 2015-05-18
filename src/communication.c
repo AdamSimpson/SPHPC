@@ -2,33 +2,21 @@
 #include "simulation.h"
 #include "fluid.h"
 #include "debug.h"
+#include "safe_alloc.h"
 #include <stdio.h>
 #include <stddef.h>
 #include <string.h>
 #include "mpi.h"
 
 void AllocateCommunication(struct Communication *const communication) {
-  communication->edges.indices_left  = calloc(communication->max_comm_particles, sizeof(int));
-  if(communication->edges.indices_left == NULL)
-    printf("Could not allocate edge indices left\n");
-  communication->edges.indices_right = calloc(communication->max_comm_particles, sizeof(int));
-  if(communication->edges.indices_right == NULL)
-    printf("Could not allocate edge indices right\n");
-
-  communication->out_of_bounds.indices_left  = calloc(communication->max_comm_particles, sizeof(int));
-  if(communication->out_of_bounds.indices_left == NULL)
-    printf("Could not allocate oob indices left\n");
-  communication->out_of_bounds.indices_right = calloc(communication->max_comm_particles, sizeof(int));
-  if(communication->out_of_bounds.indices_right == NULL)
-    printf("Could not allocate oob indices right\n");
+  communication->edges.indices_left  = SAFE_ALLOC(communication->max_comm_particles, sizeof(int));
+  communication->edges.indices_right = SAFE_ALLOC(communication->max_comm_particles, sizeof(int));
+  communication->out_of_bounds.indices_left  = SAFE_ALLOC(communication->max_comm_particles, sizeof(int));
+  communication->out_of_bounds.indices_right = SAFE_ALLOC(communication->max_comm_particles, sizeof(int));
 
   // Allocate send and receive buffers
-  communication->particle_send_buffer = calloc(communication->max_comm_particles*17, sizeof(double));
-  if(communication->particle_send_buffer == NULL)
-    printf("Could not allocate send buffer\n");
-  communication->particle_recv_buffer = calloc(communication->max_comm_particles*17, sizeof(double));
-  if(communication->particle_recv_buffer == NULL)
-    printf("Could not allocate recv buffer\n");
+  communication->particle_send_buffer = SAFE_ALLOC(communication->max_comm_particles*17, sizeof(double));
+  communication->particle_recv_buffer = SAFE_ALLOC(communication->max_comm_particles*17, sizeof(double));
 }
 
 void FreeCommunication(struct Communication *const communication) {

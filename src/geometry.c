@@ -1,7 +1,7 @@
 #include "geometry.h"
 #include <stdio.h>
-#include "debug.h"
 #include "communication.h"
+#include "debug.h"
 #include "mpi.h"
 
 ////////////////////////////////////////////////

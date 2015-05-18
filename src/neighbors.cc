@@ -1,5 +1,6 @@
 #include "neighbors.h"
 #include "debug.h"
+#include "safe_alloc.h"
 #include <thrust/sort.h>
 #include <thrust/execution_policy.h>
 #include <math.h>
@@ -11,10 +12,8 @@ void AllocateNeighbors(struct Neighbors *const neighbors,
                        const struct AABB *const boundary_global) {
 
   // Allocate neighbors array
-  neighbors->particle_neighbors = (Neighbor*)calloc(params->max_fluid_particles_local,
+  neighbors->particle_neighbors = (Neighbor*)SAFE_ALLOC(params->max_fluid_particles_local,
                                          sizeof(Neighbor));
-  if(neighbors->particle_neighbors == NULL)
-    printf("Could not allocate neighbors\n");
 
   // +1 added because range begins at 0
   neighbors->hash_size_x = ceil((boundary_global->max_x - boundary_global->min_x)
@@ -27,18 +26,11 @@ void AllocateNeighbors(struct Neighbors *const neighbors,
                    * neighbors->hash_size_y
                    * neighbors->hash_size_z;
 
-  neighbors->start_indices = (unsigned int*)calloc(hash_size, sizeof(unsigned int));
-  if(neighbors->start_indices == NULL)
-    printf("Could not allocate start_indices\n");
-  neighbors->end_indices = (unsigned int*)calloc(hash_size, sizeof(unsigned int));
-  if(neighbors->end_indices == NULL)
-    printf("Could not allocate end_indices\n");
-  neighbors->hash_values = (unsigned int*)calloc(params->max_fluid_particles_local, sizeof(unsigned int));
-  if(neighbors->hash_values == NULL)
-    printf("Could not allocate hash_values\n");
-  neighbors->particle_ids = (unsigned int*)calloc(params->max_fluid_particles_local, sizeof(unsigned int));
-  if(neighbors->particle_ids == NULL)
-    printf("Could not allocate particle_ids\n");
+  neighbors->start_indices = (unsigned int*)SAFE_ALLOC(hash_size, sizeof(unsigned int));
+  neighbors->end_indices = (unsigned int*)SAFE_ALLOC(hash_size, sizeof(unsigned int));
+  neighbors->hash_values = (unsigned int*)SAFE_ALLOC(params->max_fluid_particles_local, sizeof(unsigned int));
+  neighbors->particle_ids = (unsigned int*)SAFE_ALLOC(params->max_fluid_particles_local, sizeof(unsigned int));
+
 }
 
 void FreeNeighbors(struct Neighbors *neighbors) {

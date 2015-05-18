@@ -3,6 +3,7 @@
 #include "communication.h"
 #include "neighbors.h"
 #include "debug.h"
+#include "safe_alloc.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -519,66 +520,32 @@ void AllocateFluid(struct FluidParticles *particles,
 
   const size_t num_particles = params->max_fluid_particles_local;
 
-  particles->x_star = calloc(num_particles, sizeof(double));
-  if (particles->x_star == NULL)
-    printf("Could not allocate particles->x_star\n");
-  particles->y_star = calloc(num_particles, sizeof(double));
-  if (particles->y_star == NULL)
-    printf("Could not allocate particles->y_star\n");
-  particles->z_star = calloc(num_particles, sizeof(double));
-  if (particles->z_star == NULL)
-    printf("Could not allocate particles->z_star\n");
+  particles->x_star = SAFE_ALLOC(num_particles, sizeof(double));
+  particles->y_star = SAFE_ALLOC(num_particles, sizeof(double));
+  particles->z_star = SAFE_ALLOC(num_particles, sizeof(double));
 
-  particles->x = calloc(num_particles, sizeof(double));
-  if (particles->x == NULL)
-    printf("Could not allocate particles->x\n");
-  particles->y = calloc(num_particles, sizeof(double));
-  if (particles->y == NULL)
-    printf("Could not allocate particles->y\n");
-  particles->z = calloc(num_particles, sizeof(double));
-  if (particles->z == NULL)
-    printf("Could not allocate particles->z\n");
+  particles->x = SAFE_ALLOC(num_particles, sizeof(double));
+  particles->y = SAFE_ALLOC(num_particles, sizeof(double));
+  particles->z = SAFE_ALLOC(num_particles, sizeof(double));
 
-  particles->v_x = calloc(num_particles, sizeof(double));
-  if (particles->v_x == NULL)
-    printf("Could not allocate particles->v_x\n");
-  particles->v_y = calloc(num_particles, sizeof(double));
-  if (particles->v_y == NULL)
-    printf("Could not allocate particles->v_y\n");
-  particles->v_z = calloc(num_particles, sizeof(double));
-  if (particles->v_z == NULL)
-    printf("Could not allocate particles->v_z\n");
+  particles->v_x = SAFE_ALLOC(num_particles, sizeof(double));
+  particles->v_y = SAFE_ALLOC(num_particles, sizeof(double));
+  particles->v_z = SAFE_ALLOC(num_particles, sizeof(double));
 
-  particles->dp_x = calloc(num_particles, sizeof(double));
-  if (particles->dp_x == NULL)
-    printf("Could not allocate particles->dp_x\n");
-  particles->dp_y = calloc(num_particles, sizeof(double));
-  if (particles->dp_y == NULL)
-    printf("Could not allocate particles->dp_y\n");
-  particles->dp_z = calloc(num_particles, sizeof(double));
-  if (particles->dp_z == NULL)
-    printf("Could not allocate particles->dp_z\n");
+  particles->dp_x = SAFE_ALLOC(num_particles, sizeof(double));
+  particles->dp_y = SAFE_ALLOC(num_particles, sizeof(double));
+  particles->dp_z = SAFE_ALLOC(num_particles, sizeof(double));
 
-  particles->w_x = calloc(num_particles, sizeof(double));
-  if (particles->w_x == NULL)
-    printf("Could not allocate particles->w_x\n");
-  particles->w_y = calloc(num_particles, sizeof(double));
-  if (particles->w_y == NULL)
-    printf("Could not allocate particles->w_y\n");
-  particles->w_z = calloc(num_particles, sizeof(double));
-  if (particles->w_z == NULL)
-    printf("Could not allocate particles->w_z\n");
+  particles->w_x = SAFE_ALLOC(num_particles, sizeof(double));
+  particles->w_y = SAFE_ALLOC(num_particles, sizeof(double));
+  particles->w_z = SAFE_ALLOC(num_particles, sizeof(double));
 
-  particles->density = calloc(num_particles, sizeof(double));
-  if (particles->density == NULL)
-    printf("Could not allocate particles->density\n");
-  particles->lambda = calloc(num_particles, sizeof(double));
-  if (particles->lambda == NULL)
-    printf("Could not allocate particles->lambda\n");
 
-  particles->id = calloc(num_particles, sizeof(int));
-  if (particles->id == NULL)
-    printf("Could not allocate particles->id\n");
+  particles->density = SAFE_ALLOC(num_particles, sizeof(double));
+  particles->lambda = SAFE_ALLOC(num_particles, sizeof(double));
+
+  particles->id = SAFE_ALLOC(num_particles, sizeof(int));
+
 }
 
 void FreeFluid(struct FluidParticles *particles) {

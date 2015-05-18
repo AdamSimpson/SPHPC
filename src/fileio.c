@@ -4,6 +4,7 @@
 #include "fileio.h"
 #include "simulation.h"
 #include "debug.h"
+#include "safe_alloc.h"
 #include "mpi.h"
 #include <stdio.h>
 #include <inttypes.h>
@@ -35,7 +36,7 @@ void WriteMPI(const struct FluidParticles *const particles,
   displacement*=sizeof(double);
 
   // Write x,y,z data to memory
-  double *const send_buffer = malloc(num_doubles_to_send*sizeof(double));
+  double *const send_buffer = SAFE_ALLOC(num_doubles_to_send, sizeof(double));
 
   int index=0;
   for (int i=0; i<num_particles; i++) {
