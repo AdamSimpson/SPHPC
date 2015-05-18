@@ -15,9 +15,9 @@ struct Params {
   double c;
   double node_start_x; // left x position of node partition
   double node_end_x;   // right x position of node partition
-  int number_fluid_particles_global;
-  int number_fluid_particles_local;  // Number of non vacant particles
-  int max_fluid_particles_local;     // Maximum number for max_fluid_particle_index + halo particles
+  int number_particles_global;
+  int number_particles_local;  // Number of non vacant particles
+  int max_particles_local;     // Maximum number for max_fluid_particle_index + halo particles
   int number_halo_particles_left;    // Starting at max_fluid_particle_index
   int number_halo_particles_right;
   int number_steps;

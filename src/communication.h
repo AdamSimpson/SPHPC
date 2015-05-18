@@ -36,17 +36,17 @@ void FreeCommunication(struct Communication *const communication);
 int get_rank();
 int get_num_procs();
 void PackHaloComponents(const struct Communication *const communication,
-                        const struct FluidParticles *const fluid_particles,
+                        const struct FluidParticles *const particles,
                         double *const packed_send_left,
                         double *const packed_send_right);
 
 void UnpackHaloComponents(const struct Params *const params,
                           const double *const packed_recv_left,
                           const double *const packed_recv_right,
-                          struct FluidParticles *const fluid_particles);
+                          struct FluidParticles *const particles);
 
 void PackOOBComponents(const struct Communication *const communication,
-                       const struct FluidParticles *const fluid_particles,
+                       const struct FluidParticles *const particles,
                        double *const packed_send_left,
                        double *const packed_send_right);
 
@@ -54,20 +54,20 @@ void UnpackOOBComponents(const int num_from_left, const int num_from_right,
                          const double *const packed_recv_left,
                          const double *const packed_recv_right,
                          struct Params *const params,
-                         struct FluidParticles *const fluid_particles);
+                         struct FluidParticles *const particles);
 
 void TransferOOBParticles(struct Communication *const communication,
-                          struct FluidParticles *const fluid_particles,
+                          struct FluidParticles *const particles,
                           struct Params *const params);
 
 void HaloExchange(struct Communication *const communication,
                   struct Params *const params,
-                  struct FluidParticles *const fluid_particles);
+                  struct FluidParticles *const particles);
 
 void UpdateHaloLambdas(const struct Communication *const communication,
                        const struct Params *const params,
-                       struct FluidParticles *const fluid_particles);
+                       struct FluidParticles *const particles);
 void UpdateHaloPositions(const struct Communication *const communication,
                          const struct Params *const params,
-                         struct FluidParticles *const fluid_particles);
+                         struct FluidParticles *const particles);
 #endif

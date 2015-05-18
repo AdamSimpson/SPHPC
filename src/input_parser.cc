@@ -1,10 +1,10 @@
 #include "input_parser.h"
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/ini_parser.hpp>
 extern "C" {
 #include "simulation.h"
 #include "geometry.h"
 }
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/ini_parser.hpp>
 #include <iostream>
 
 void ReadParameters(struct Params *const parameters,
@@ -17,7 +17,7 @@ void ReadParameters(struct Params *const parameters,
 
     parameters->number_steps = property_tree.get<int>("SimParameters.number_steps");
     parameters->time_step = property_tree.get<double>("SimParameters.time_step");
-    parameters->number_fluid_particles_global = property_tree.get<int>("SimParameters.number_particles");
+    parameters->number_particles_global = property_tree.get<int>("SimParameters.number_particles");
     parameters->g = property_tree.get<double>("PhysicalParameters.g");
     parameters->c = property_tree.get<double>("PhysicalParameters.c");
     parameters->k = property_tree.get<double>("PhysicalParameters.k");

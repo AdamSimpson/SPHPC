@@ -51,7 +51,7 @@ void ConstructFluidVolume(struct FluidParticles *const particles,
     }
   }
 
-  params->number_fluid_particles_local = i;
+  params->number_particles_local = i;
   DEBUG_PRINT("rank %d: min fluid: %f max fluid x: %f\n",
               params->rank, min_x + spacing/2.0, min_x + num_x*spacing + spacing/2.0);
 }
@@ -75,16 +75,16 @@ void SetParticleNumbers(const struct AABB *const fluid_global,
   communication->max_comm_particles = num_initial/10;
 
   // Add initial space and left/right out of bounds/halo particles
-  params->max_fluid_particles_local = num_initial + 4*communication->max_comm_particles;
+  params->max_particles_local = num_initial + 4*communication->max_comm_particles;
 
   DEBUG_PRINT("initial number of particles %d\n", num_initial);
-  DEBUG_PRINT("Max fluid particles local: %d\n", params->max_fluid_particles_local);
+  DEBUG_PRINT("Max fluid particles local: %d\n", params->max_particles_local);
 }
 
 // Test if boundaries need to be adjusted
 void CheckPartition(struct Params *const params)
 {
-  const int num_rank = params->number_fluid_particles_local;
+  const int num_rank = params->number_particles_local;
   const int rank = params->rank;
   const int num_procs = params->num_procs;
   const double h = params->smoothing_radius;
@@ -116,7 +116,7 @@ void CheckPartition(struct Params *const params)
   const double length_left = left[1];
   const double length_right = right[1];
 
-  const int even_particles = params->number_fluid_particles_global
+  const int even_particles = params->number_particles_global
                             / (double)params->num_procs;
   const int max_diff = even_particles/10.0f;
 

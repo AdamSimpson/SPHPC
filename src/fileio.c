@@ -21,7 +21,7 @@ void WriteMPI(const struct FluidParticles *const particles,
   char name[64];
   sprintf(name, "/home/atj/OLCF/SPHPC/output/sim-%d.bin", fileNum);
 
-  const int num_particles = params->number_fluid_particles_local;
+  const int num_particles = params->number_particles_local;
 
   // How many bytes each process will write
   int rank_write_counts[params->num_procs];

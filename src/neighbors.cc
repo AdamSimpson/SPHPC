@@ -12,7 +12,7 @@ void AllocateNeighbors(struct Neighbors *const neighbors,
                        const struct AABB *const boundary_global) {
 
   // Allocate neighbors array
-  neighbors->particle_neighbors = (Neighbor*)SAFE_ALLOC(params->max_fluid_particles_local,
+  neighbors->particle_neighbors = (Neighbor*)SAFE_ALLOC(params->max_particles_local,
                                          sizeof(Neighbor));
 
   // +1 added because range begins at 0
@@ -28,8 +28,8 @@ void AllocateNeighbors(struct Neighbors *const neighbors,
 
   neighbors->start_indices = (unsigned int*)SAFE_ALLOC(hash_size, sizeof(unsigned int));
   neighbors->end_indices = (unsigned int*)SAFE_ALLOC(hash_size, sizeof(unsigned int));
-  neighbors->hash_values = (unsigned int*)SAFE_ALLOC(params->max_fluid_particles_local, sizeof(unsigned int));
-  neighbors->particle_ids = (unsigned int*)SAFE_ALLOC(params->max_fluid_particles_local, sizeof(unsigned int));
+  neighbors->hash_values = (unsigned int*)SAFE_ALLOC(params->max_particles_local, sizeof(unsigned int));
+  neighbors->particle_ids = (unsigned int*)SAFE_ALLOC(params->max_particles_local, sizeof(unsigned int));
 
 }
 
@@ -81,7 +81,7 @@ void HashParticles(const struct Params *const params,
 
   unsigned int *const hash_values = neighbors->hash_values;
   unsigned int *const particle_ids = neighbors->particle_ids;
-  int num_particles = params->number_fluid_particles_local
+  int num_particles = params->number_particles_local
                     + params->number_halo_particles_left
                     + params->number_halo_particles_right;
 
@@ -100,7 +100,7 @@ void SortHash(const struct Params *const params,
 
   unsigned int *const keys = neighbors->hash_values;
   unsigned int *const values = neighbors->particle_ids;
-  const int total_particles = params->number_fluid_particles_local
+  const int total_particles = params->number_particles_local
                             + params->number_halo_particles_left
                             + params->number_halo_particles_right;
   thrust::sort_by_key(thrust::host, keys, keys+total_particles, values);
@@ -119,7 +119,7 @@ void FindCellBounds(const struct Params *const params,
                         * neighbors->hash_size_z;
   memset(neighbors->start_indices, ((unsigned int)-1), length_hash*sizeof(unsigned int));
 
-  const int num_particles = params->number_fluid_particles_local
+  const int num_particles = params->number_particles_local
                           + params->number_halo_particles_left
                           + params->number_halo_particles_right;
 
@@ -214,7 +214,7 @@ void FillParticleNeighbors(struct Neighbors *const neighbors,
 void FillNeighbors(const struct Params *const params,
                    const struct FluidParticles *particles,
                    struct Neighbors *const neighbors) {
-  const int total_particles = params->number_fluid_particles_local;
+  const int total_particles = params->number_particles_local;
 
   // Fill neighbor bucket for all resident particles
   for (int i=0; i<total_particles; ++i) {

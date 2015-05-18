@@ -48,56 +48,56 @@ int get_num_procs() {
   return num_procs;
 }
 
-void PackParticleToBuffer(const struct FluidParticles *const fluid_particles,
+void PackParticleToBuffer(const struct FluidParticles *const particles,
                           const int from_index,
                           double *const to_buffer,
                           const int to_index) {
-  to_buffer[to_index]      = fluid_particles->x_star[from_index];
-  to_buffer[to_index + 1]  = fluid_particles->y_star[from_index];
-  to_buffer[to_index + 2]  = fluid_particles->z_star[from_index];
-  to_buffer[to_index + 3]  = fluid_particles->x[from_index];
-  to_buffer[to_index + 4]  = fluid_particles->y[from_index];
-  to_buffer[to_index + 5]  = fluid_particles->z[from_index];
-  to_buffer[to_index + 6]  = fluid_particles->v_x[from_index];
-  to_buffer[to_index + 7]  = fluid_particles->v_y[from_index];
-  to_buffer[to_index + 8]  = fluid_particles->v_z[from_index];
-  to_buffer[to_index + 9]  = fluid_particles->dp_x[from_index];
-  to_buffer[to_index + 10] = fluid_particles->dp_y[from_index];
-  to_buffer[to_index + 11] = fluid_particles->dp_z[from_index];
-  to_buffer[to_index + 12] = fluid_particles->w_x[from_index];
-  to_buffer[to_index + 13] = fluid_particles->w_y[from_index];
-  to_buffer[to_index + 14] = fluid_particles->w_z[from_index];
-  to_buffer[to_index + 15] = fluid_particles->density[from_index];
-  to_buffer[to_index + 16] = fluid_particles->lambda[from_index];
+  to_buffer[to_index]      = particles->x_star[from_index];
+  to_buffer[to_index + 1]  = particles->y_star[from_index];
+  to_buffer[to_index + 2]  = particles->z_star[from_index];
+  to_buffer[to_index + 3]  = particles->x[from_index];
+  to_buffer[to_index + 4]  = particles->y[from_index];
+  to_buffer[to_index + 5]  = particles->z[from_index];
+  to_buffer[to_index + 6]  = particles->v_x[from_index];
+  to_buffer[to_index + 7]  = particles->v_y[from_index];
+  to_buffer[to_index + 8]  = particles->v_z[from_index];
+  to_buffer[to_index + 9]  = particles->dp_x[from_index];
+  to_buffer[to_index + 10] = particles->dp_y[from_index];
+  to_buffer[to_index + 11] = particles->dp_z[from_index];
+  to_buffer[to_index + 12] = particles->w_x[from_index];
+  to_buffer[to_index + 13] = particles->w_y[from_index];
+  to_buffer[to_index + 14] = particles->w_z[from_index];
+  to_buffer[to_index + 15] = particles->density[from_index];
+  to_buffer[to_index + 16] = particles->lambda[from_index];
 }
 
 void UnpackBufferToParticle(const double *const from_buffer,
                             const int from_index,
-                            struct FluidParticles *const fluid_particles,
+                            struct FluidParticles *const particles,
                             const int to_index) {
-  fluid_particles->x_star[to_index]  = from_buffer[from_index];
-  fluid_particles->y_star[to_index]  = from_buffer[from_index + 1];
-  fluid_particles->z_star[to_index]  = from_buffer[from_index + 2];
-  fluid_particles->x[to_index]       = from_buffer[from_index + 3];
-  fluid_particles->y[to_index]       = from_buffer[from_index + 4];
-  fluid_particles->z[to_index]       = from_buffer[from_index + 5];
-  fluid_particles->v_x[to_index]     = from_buffer[from_index + 6];
-  fluid_particles->v_y[to_index]     = from_buffer[from_index + 7];
-  fluid_particles->v_z[to_index]     = from_buffer[from_index + 8];
-  fluid_particles->dp_x[to_index]    = from_buffer[from_index + 9];
-  fluid_particles->dp_y[to_index]    = from_buffer[from_index + 10];
-  fluid_particles->dp_z[to_index]    = from_buffer[from_index + 11];
-  fluid_particles->w_x[to_index]     = from_buffer[from_index + 12];
-  fluid_particles->w_y[to_index]     = from_buffer[from_index + 13];
-  fluid_particles->w_z[to_index]     = from_buffer[from_index + 14];
-  fluid_particles->density[to_index] = from_buffer[from_index + 15];
-  fluid_particles->lambda[to_index]  = from_buffer[from_index + 16];
-  fluid_particles->id[to_index] = to_index;
+  particles->x_star[to_index]  = from_buffer[from_index];
+  particles->y_star[to_index]  = from_buffer[from_index + 1];
+  particles->z_star[to_index]  = from_buffer[from_index + 2];
+  particles->x[to_index]       = from_buffer[from_index + 3];
+  particles->y[to_index]       = from_buffer[from_index + 4];
+  particles->z[to_index]       = from_buffer[from_index + 5];
+  particles->v_x[to_index]     = from_buffer[from_index + 6];
+  particles->v_y[to_index]     = from_buffer[from_index + 7];
+  particles->v_z[to_index]     = from_buffer[from_index + 8];
+  particles->dp_x[to_index]    = from_buffer[from_index + 9];
+  particles->dp_y[to_index]    = from_buffer[from_index + 10];
+  particles->dp_z[to_index]    = from_buffer[from_index + 11];
+  particles->w_x[to_index]     = from_buffer[from_index + 12];
+  particles->w_y[to_index]     = from_buffer[from_index + 13];
+  particles->w_z[to_index]     = from_buffer[from_index + 14];
+  particles->density[to_index] = from_buffer[from_index + 15];
+  particles->lambda[to_index]  = from_buffer[from_index + 16];
+  particles->id[to_index] = to_index;
 }
 
 // Pack particle struct float components into contiguous memory
 void PackHaloComponents(const struct Communication *const communication,
-                        const struct FluidParticles *const fluid_particles,
+                        const struct FluidParticles *const particles,
                         double *const packed_send_left,
                         double *const packed_send_right) {
 
@@ -105,39 +105,39 @@ void PackHaloComponents(const struct Communication *const communication,
 
   for (int i=0; i<edges->number_particles_left; i++) {
     const int p_index = edges->indices_left[i];
-    PackParticleToBuffer(fluid_particles, p_index, packed_send_left, i*17);
+    PackParticleToBuffer(particles, p_index, packed_send_left, i*17);
   }
 
   for (int i=0; i<edges->number_particles_right; i++) {
     const int p_index = edges->indices_right[i];
-    PackParticleToBuffer(fluid_particles, p_index, packed_send_right, i*17);
+    PackParticleToBuffer(particles, p_index, packed_send_right, i*17);
   }
 }
 
 void UnpackHaloComponents(const struct Params *const params,
                           const double *const packed_recv_left,
                           const double *const packed_recv_right,
-                          struct FluidParticles *const fluid_particles) {
+                          struct FluidParticles *const particles) {
 
-  const int num_local = params->number_fluid_particles_local;
+  const int num_local = params->number_particles_local;
 
   // Unpack halo particles from left rank first
   for (int i=0; i<params->number_halo_particles_left; i++) {
     const int p_index = num_local + i; // "Global" index
-    UnpackBufferToParticle(packed_recv_left, i*17, fluid_particles, p_index);
+    UnpackBufferToParticle(packed_recv_left, i*17, particles, p_index);
   }
 
   // Unpack halo particles from right rank second
   for (int i=0; i<params->number_halo_particles_right; i++) {
     const int p_index = num_local
                       + params->number_halo_particles_left + i; // "Global" index
-    UnpackBufferToParticle(packed_recv_right, i*17, fluid_particles, p_index);
+    UnpackBufferToParticle(packed_recv_right, i*17, particles, p_index);
   }
 }
 
 void HaloExchange(struct Communication *const communication,
                   struct Params *const params,
-                  struct FluidParticles *const fluid_particles) {
+                  struct FluidParticles *const particles) {
 
   const int rank = params->rank;
   const int num_procs = params->num_procs;
@@ -148,10 +148,10 @@ void HaloExchange(struct Communication *const communication,
   // Set edge particle indices and update number
   edges->number_particles_left = 0;
   edges->number_particles_right = 0;
-  for (int i=0; i<params->number_fluid_particles_local; ++i) {
-    if (fluid_particles->x_star[i] - params->node_start_x <= h)
+  for (int i=0; i<params->number_particles_local; ++i) {
+    if (particles->x_star[i] - params->node_start_x <= h)
       edges->indices_left[edges->number_particles_left++] = i;
-    else if (params->node_end_x - fluid_particles->x_star[i] <= h)
+    else if (params->node_end_x - particles->x_star[i] <= h)
       edges->indices_right[edges->number_particles_right++] = i;
   }
 
@@ -186,7 +186,7 @@ void HaloExchange(struct Communication *const communication,
   double *const packed_recv_right = packed_recv_left + num_from_left*num_components;
 
   // Pack halo particle struct components to send
-  PackHaloComponents(communication, fluid_particles,
+  PackHaloComponents(communication, particles,
                      packed_send_left, packed_send_right);
 
   int tagl = 4312;
@@ -225,7 +225,7 @@ void HaloExchange(struct Communication *const communication,
   UnpackHaloComponents(params,
                        packed_recv_left,
                        packed_recv_right,
-                       fluid_particles);
+                       particles);
 
   DEBUG_PRINT("rank %d, halo: recv %d from left, %d from right\n",
               params->rank,num_received_left,num_received_right);
@@ -233,7 +233,7 @@ void HaloExchange(struct Communication *const communication,
 
 // Pack out of bounds particle components
 void PackOOBComponents(const struct Communication *const communication,
-                       const struct FluidParticles *const fluid_particles,
+                       const struct FluidParticles *const particles,
                        double *const packed_send_left,
                        double *const packed_send_right) {
 
@@ -241,12 +241,12 @@ void PackOOBComponents(const struct Communication *const communication,
 
   for (int i=0; i<oob->number_particles_left; i++) {
     const int p_index = oob->indices_left[i];
-    PackParticleToBuffer(fluid_particles, p_index, packed_send_left, i*17);
+    PackParticleToBuffer(particles, p_index, packed_send_left, i*17);
   }
 
   for (int i=0; i<oob->number_particles_right; i++) {
     const int p_index = oob->indices_right[i];
-    PackParticleToBuffer(fluid_particles, p_index, packed_send_right, i*17);
+    PackParticleToBuffer(particles, p_index, packed_send_right, i*17);
   }
 }
 
@@ -254,18 +254,18 @@ void UnpackOOBComponents(const int num_from_left, const int num_from_right,
                          const double *const packed_recv_left,
                          const double *const packed_recv_right,
                          struct Params *const params,
-                         struct FluidParticles *const fluid_particles) {
+                         struct FluidParticles *const particles) {
 
   for (int i=0; i<num_from_left; ++i) {
-    const int p_index = params->number_fluid_particles_local;
-    UnpackBufferToParticle(packed_recv_left, i*17, fluid_particles, p_index);
-    ++params->number_fluid_particles_local;
+    const int p_index = params->number_particles_local;
+    UnpackBufferToParticle(packed_recv_left, i*17, particles, p_index);
+    ++params->number_particles_local;
   }
 
   for (int i=0; i<num_from_right; ++i) {
-    const int p_index = params->number_fluid_particles_local + num_from_left + i;
-    UnpackBufferToParticle(packed_recv_left, i*17, fluid_particles, p_index);
-    ++params->number_fluid_particles_local;
+    const int p_index = params->number_particles_local + num_from_left + i;
+    UnpackBufferToParticle(packed_recv_left, i*17, particles, p_index);
+    ++params->number_particles_local;
   }
 }
 
@@ -282,7 +282,7 @@ void TransferOOBParticles(struct Communication *const communication,
   // Identify out of bound particles
   oob->number_particles_left  = 0;
   oob->number_particles_right = 0;
-  for (int i=0; i<params->number_fluid_particles_local; ++i) {
+  for (int i=0; i<params->number_particles_local; ++i) {
     if (particles->x_star[i] < params->node_start_x && params->rank != 0) {
       oob->indices_left[oob->number_particles_left] = i;
       ++oob->number_particles_left;
@@ -309,13 +309,13 @@ void TransferOOBParticles(struct Communication *const communication,
   // Move particles from end to fill leaving particles
   for (int i=0; i<oob->number_particles_left; ++i) {
       const int removed_index = oob->indices_left[i];
-      MoveParticle(particles, params->number_fluid_particles_local-1, removed_index);
-      --params->number_fluid_particles_local;
+      MoveParticle(particles, params->number_particles_local-1, removed_index);
+      --params->number_particles_local;
   }
   for (int i=0; i<oob->number_particles_right; ++i) {
       const int removed_index = oob->indices_right[i];
-      MoveParticle(particles, params->number_fluid_particles_local-1, removed_index);
-      --params->number_fluid_particles_local;
+      MoveParticle(particles, params->number_particles_local-1, removed_index);
+      --params->number_particles_local;
   }
 
   // Setup nodes to left and right of self
@@ -372,7 +372,7 @@ void TransferOOBParticles(struct Communication *const communication,
 
 void UpdateHaloLambdas(const struct Communication *const communication,
                        const struct  Params *const params,
-                       struct FluidParticles *const fluid_particles) {
+                       struct FluidParticles *const particles) {
   const struct Edges *const edges = &communication->edges;
 
   const int rank = params->rank;
@@ -394,11 +394,11 @@ void UpdateHaloLambdas(const struct Communication *const communication,
   // Pack local halo lambdas
   for (int i=0; i<num_moving_left; i++) {
     const int p_index = edges->indices_left[i];
-    send_lambdas_left[i] = fluid_particles->lambda[p_index];
+    send_lambdas_left[i] = particles->lambda[p_index];
   }
   for (int i=0; i<num_moving_right; i++) {
     const int p_index = edges->indices_right[i];
-    send_lambdas_right[i] = fluid_particles->lambda[p_index];
+    send_lambdas_right[i] = particles->lambda[p_index];
   }
 
   // Setup nodes to left and right of self
@@ -420,18 +420,18 @@ void UpdateHaloLambdas(const struct Communication *const communication,
 
   // Unpack halo particle lambdas
   for (int i=0; i<num_from_left; i++) {
-    const int p_index = params->number_fluid_particles_local + i;
-    fluid_particles->lambda[p_index] = recv_lambdas_left[i];
+    const int p_index = params->number_particles_local + i;
+    particles->lambda[p_index] = recv_lambdas_left[i];
   }
   for (int i=0; i<num_from_right; i++) {
-    const int p_index = params->number_fluid_particles_local + num_from_left + i;
-    fluid_particles->lambda[p_index] = recv_lambdas_right[i];
+    const int p_index = params->number_particles_local + num_from_left + i;
+    particles->lambda[p_index] = recv_lambdas_right[i];
   }
 }
 
 void UpdateHaloPositions(const struct Communication *const communication,
                          const struct Params *const params,
-                         struct FluidParticles *const fluid_particles) {
+                         struct FluidParticles *const particles) {
   const struct Edges *const edges = &communication->edges;
 
   const int rank = params->rank;
@@ -455,15 +455,15 @@ void UpdateHaloPositions(const struct Communication *const communication,
   // Pack local edge positions
   for (int i=0; i<num_moving_left; i+=3) {
     const int p_index = edges->indices_left[i/3];
-    send_positions_left[i]   = fluid_particles->x_star[p_index];
-    send_positions_left[i+1] = fluid_particles->y_star[p_index];
-    send_positions_left[i+2] = fluid_particles->z_star[p_index];
+    send_positions_left[i]   = particles->x_star[p_index];
+    send_positions_left[i+1] = particles->y_star[p_index];
+    send_positions_left[i+2] = particles->z_star[p_index];
   }
   for (int i=0; i<num_moving_right; i+=3) {
     const int p_index = edges->indices_right[i/3];
-    send_positions_right[i]   = fluid_particles->x_star[p_index];
-    send_positions_right[i+1] = fluid_particles->y_star[p_index];
-    send_positions_right[i+2] = fluid_particles->z_star[p_index];
+    send_positions_right[i]   = particles->x_star[p_index];
+    send_positions_right[i+1] = particles->y_star[p_index];
+    send_positions_right[i+2] = particles->z_star[p_index];
   }
 
   // Setup nodes to left and right of self
@@ -485,16 +485,16 @@ void UpdateHaloPositions(const struct Communication *const communication,
 
     // Unpack halo particle positions
     for (int i=0; i<num_from_left; i+=3) {
-        const int p_index = params->number_fluid_particles_local + i/3;
-        fluid_particles->x_star[p_index] = recv_positions_left[i];
-        fluid_particles->y_star[p_index] = recv_positions_left[i+1];
-        fluid_particles->z_star[p_index] = recv_positions_left[i+2];
+        const int p_index = params->number_particles_local + i/3;
+        particles->x_star[p_index] = recv_positions_left[i];
+        particles->y_star[p_index] = recv_positions_left[i+1];
+        particles->z_star[p_index] = recv_positions_left[i+2];
     }
     for (int i=0; i<num_from_right; i+=3) {
-        const int p_index = params->number_fluid_particles_local
+        const int p_index = params->number_particles_local
                           + num_from_left/3 + i/3;
-        fluid_particles->x_star[p_index] = recv_positions_right[i];
-        fluid_particles->y_star[p_index] = recv_positions_right[i+1];
-        fluid_particles->z_star[p_index] = recv_positions_right[i+2];
+        particles->x_star[p_index] = recv_positions_right[i];
+        particles->y_star[p_index] = recv_positions_right[i+1];
+        particles->z_star[p_index] = recv_positions_right[i+2];
     }
 }

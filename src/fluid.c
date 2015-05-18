@@ -72,7 +72,7 @@ void VorticityConfinement(struct FluidParticles *const particles,
   const double eps = 5.0;
 
   // Calculate vorticy at each particle
-  for (int i=0; i<params->number_fluid_particles_local; i++) {
+  for (int i=0; i<params->number_particles_local; i++) {
     const int p_index = i;
     const struct Neighbor *const n = &neighbors->particle_neighbors[i];
 
@@ -114,7 +114,7 @@ void VorticityConfinement(struct FluidParticles *const particles,
   }
 
   // Apply vorticity confinement
-  for (int i=0; i<params->number_fluid_particles_local; i++) {
+  for (int i=0; i<params->number_particles_local; i++) {
     const int p_index = i;
     const struct Neighbor *const n = &neighbors->particle_neighbors[i];
 
@@ -176,7 +176,7 @@ void XSPHViscosity(struct FluidParticles *const particles,
   const double c = params->c;
   const double h = params->smoothing_radius;
 
-  for (int i=0; i<params->number_fluid_particles_local; i++) {
+  for (int i=0; i<params->number_particles_local; i++) {
     const int p_index = i;
     const struct Neighbor *const n = &neighbors->particle_neighbors[i];
 
@@ -227,7 +227,7 @@ void ComputeDensities(struct FluidParticles *const particles,
 
   const double h = params->smoothing_radius;
 
-  for (int i=0; i<params->number_fluid_particles_local; i++) {
+  for (int i=0; i<params->number_particles_local; i++) {
     const int p_index = i;
     const struct Neighbor *const n = &neighbors->particle_neighbors[i];
 
@@ -258,7 +258,7 @@ void ApplyGravity(struct FluidParticles *const particles,
   const double dt = params->time_step;
   const double g = -params->g;
 
-  for (int i=0; i<(params->number_fluid_particles_local); ++i) {
+  for (int i=0; i<(params->number_particles_local); ++i) {
     particles->v_y[i] += g*dt;
   }
 }
@@ -267,7 +267,7 @@ void UpdatePositionStars(struct FluidParticles *const particles,
                          const struct Params *const params,
                          const struct AABB *const boundary_global) {
 
-  for (int i=0; i<(params->number_fluid_particles_local); i++) {
+  for (int i=0; i<(params->number_particles_local); i++) {
     particles->x_star[i] += particles->dp_x[i];
     particles->y_star[i] += particles->dp_y[i];
     particles->z_star[i] += particles->dp_z[i];
@@ -281,7 +281,7 @@ void UpdatePositionStars(struct FluidParticles *const particles,
 void UpdatePositions(struct FluidParticles *const particles,
                      const struct Params *const params) {
 
-  for (int i=0; i<(params->number_fluid_particles_local); i++) {
+  for (int i=0; i<(params->number_particles_local); i++) {
     particles->x[i] = particles->x_star[i];
     particles->y[i] = particles->y_star[i];
     particles->z[i] = particles->z_star[i];
@@ -293,7 +293,7 @@ void CalculateLambda(struct FluidParticles *const particles,
                      const struct Params *const params,
                      const struct Neighbors *const neighbors) {
 
-  for (int i=0; i<params->number_fluid_particles_local; i++) {
+  for (int i=0; i<params->number_particles_local; i++) {
     const int p_index = i;
     const struct Neighbor *const n = &neighbors->particle_neighbors[i];
     const double Ci = particles->density[p_index]
@@ -349,7 +349,7 @@ void UpdateDPs(struct FluidParticles *const particles,
   const double dq = params->dq;
   const double Wdq = W(dq, h);
 
-  for (int i=0; i<params->number_fluid_particles_local; i++) {
+  for (int i=0; i<params->number_particles_local; i++) {
     const int p_index = i;
     const struct Neighbor *const n = &neighbors->particle_neighbors[i];
 
@@ -399,7 +399,7 @@ void IdentifyOOBParticles(struct FluidParticles *const particles,
   out_of_bounds->number_particles_left = 0;
   out_of_bounds->number_particles_right = 0;
 
-  for (int i=0; i<params->number_fluid_particles_local; i++) {
+  for (int i=0; i<params->number_particles_local; i++) {
     const double x_star = particles->x_star[i];
     // Set OOB particle indices and update number
     if (x_star < params->node_start_x)
@@ -417,7 +417,7 @@ void PredictPositions(struct FluidParticles *const particles,
                       const struct AABB *const boundary_global) {
   const double dt = params->time_step;
 
-  for (int i=0; i<params->number_fluid_particles_local; i++) {
+  for (int i=0; i<params->number_particles_local; i++) {
     particles->x_star[i] = particles->x[i]
                          +(particles->v_x[i] * dt);
     particles->y_star[i] = particles->y[i]
@@ -458,7 +458,7 @@ void UpdateVelocities(struct FluidParticles *const particles,
   const double dt = params->time_step;
 
   // Update local and halo particles, update halo so that XSPH visc. is correct
-  int total_particles = params->number_fluid_particles_local
+  int total_particles = params->number_particles_local
                       + params->number_halo_particles_left
                       + params->number_halo_particles_right;
   for(int i=0; i<total_particles; i++) {
@@ -507,7 +507,7 @@ void InitParticles(struct FluidParticles *const particles,
   ConstructFluidVolume(particles, params, water);
 
   // Initialize particle values
-  for (int i=0; i<params->number_fluid_particles_local; ++i) {
+  for (int i=0; i<params->number_particles_local; ++i) {
     particles->x_star[i] = particles->x[i];
     particles->y_star[i] = particles->y[i];
     particles->z_star[i] = particles->z[i];
@@ -518,7 +518,7 @@ void InitParticles(struct FluidParticles *const particles,
 void AllocateFluid(struct FluidParticles *particles,
                    const struct Params *const params) {
 
-  const size_t num_particles = params->max_fluid_particles_local;
+  const size_t num_particles = params->max_particles_local;
 
   particles->x_star = SAFE_ALLOC(num_particles, sizeof(double));
   particles->y_star = SAFE_ALLOC(num_particles, sizeof(double));
