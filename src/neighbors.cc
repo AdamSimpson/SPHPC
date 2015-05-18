@@ -12,8 +12,9 @@ void AllocateNeighbors(struct Neighbors *const neighbors,
                        const struct AABB *const boundary_global) {
 
   // Allocate neighbors array
-  neighbors->particle_neighbors = (Neighbor*)SAFE_ALLOC(params->max_particles_local,
-                                         sizeof(Neighbor));
+  neighbors->particle_neighbors = (struct Neighbor*)
+                                  SAFE_ALLOC(params->max_particles_local,
+                                             sizeof(struct Neighbor));
 
   // +1 added because range begins at 0
   neighbors->hash_size_x = ceil((boundary_global->max_x - boundary_global->min_x)
@@ -26,10 +27,14 @@ void AllocateNeighbors(struct Neighbors *const neighbors,
                    * neighbors->hash_size_y
                    * neighbors->hash_size_z;
 
-  neighbors->start_indices = (unsigned int*)SAFE_ALLOC(hash_size, sizeof(unsigned int));
-  neighbors->end_indices = (unsigned int*)SAFE_ALLOC(hash_size, sizeof(unsigned int));
-  neighbors->hash_values = (unsigned int*)SAFE_ALLOC(params->max_particles_local, sizeof(unsigned int));
-  neighbors->particle_ids = (unsigned int*)SAFE_ALLOC(params->max_particles_local, sizeof(unsigned int));
+  neighbors->start_indices = (unsigned int*)SAFE_ALLOC(hash_size,
+                                                       sizeof(unsigned int));
+  neighbors->end_indices = (unsigned int*)SAFE_ALLOC(hash_size,
+                                                     sizeof(unsigned int));
+  neighbors->hash_values = (unsigned int*)SAFE_ALLOC(params->max_particles_local,
+                                                     sizeof(unsigned int));
+  neighbors->particle_ids = (unsigned int*)SAFE_ALLOC(params->max_particles_local,
+                                                      sizeof(unsigned int));
 
 }
 
@@ -117,7 +122,8 @@ void FindCellBounds(const struct Params *const params,
   const int length_hash = neighbors->hash_size_x
                         * neighbors->hash_size_y
                         * neighbors->hash_size_z;
-  memset(neighbors->start_indices, ((unsigned int)-1), length_hash*sizeof(unsigned int));
+  memset(neighbors->start_indices, ((unsigned int)-1),
+                                    length_hash*sizeof(unsigned int));
 
   const int num_particles = params->number_particles_local
                           + params->number_halo_particles_left
@@ -194,16 +200,22 @@ void FillParticleNeighbors(struct Neighbors *const neighbors,
               continue;
 
             // Calculate distance squared
-            const double r2 = (particles->x_star[p_index] - particles->x_star[q_index])
-                              *(particles->x_star[p_index] - particles->x_star[q_index])
-                              +(particles->y_star[p_index] - particles->y_star[q_index])
-                              *(particles->y_star[p_index] - particles->y_star[q_index])
-                              +(particles->z_star[p_index] - particles->z_star[q_index])
-                              *(particles->z_star[p_index] - particles->z_star[q_index]);
+            const double x_diff = particles->x_star[p_index]
+                                - particles->x_star[q_index];
+            const double y_diff = particles->y_star[p_index]
+                                - particles->y_star[q_index];
+            const double z_diff = particles->z_star[p_index]
+                                - particles->z_star[q_index];
+            const double r2 = x_diff*x_diff + y_diff*y_diff + z_diff*z_diff;
 
-            // If inside smoothing radius and enough space in p's neighbor bucket add q
-            if(r2<smoothing_radius2 && neighbor->number_fluid_neighbors < max_neighbors)
-                neighbor->neighbor_indices[neighbor->number_fluid_neighbors++] = q_index;
+            // If inside smoothing radius and enough space
+            // in p's neighbor bucket add q
+            if(r2<smoothing_radius2 &&
+               neighbor->number_fluid_neighbors < max_neighbors) {
+                const int num_neighbors = neighbor->number_fluid_neighbors;
+                neighbor->neighbor_indices[num_neighbors] = q_index;
+                ++neighbor->number_fluid_neighbors;
+            }
           }
         }
       } //dx

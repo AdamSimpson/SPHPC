@@ -8,15 +8,28 @@
 #include <string.h>
 #include "mpi.h"
 
+// Number of double variables that represent particle
+static const int num_components = 17;
+
 void AllocateCommunication(struct Communication *const communication) {
-  communication->edges.indices_left  = SAFE_ALLOC(communication->max_comm_particles, sizeof(int));
-  communication->edges.indices_right = SAFE_ALLOC(communication->max_comm_particles, sizeof(int));
-  communication->out_of_bounds.indices_left  = SAFE_ALLOC(communication->max_comm_particles, sizeof(int));
-  communication->out_of_bounds.indices_right = SAFE_ALLOC(communication->max_comm_particles, sizeof(int));
+
+  const int num_buffer_indices = communication->max_particles;
+  communication->edges.indices_left  = SAFE_ALLOC(num_buffer_indices,
+                                                  sizeof(int));
+  communication->edges.indices_right = SAFE_ALLOC(num_buffer_indices,
+                                                  sizeof(int));
+  communication->out_of_bounds.indices_left  = SAFE_ALLOC(num_buffer_indices,
+                                                          sizeof(int));
+  communication->out_of_bounds.indices_right = SAFE_ALLOC(num_buffer_indices,
+                                                          sizeof(int));
 
   // Allocate send and receive buffers
-  communication->particle_send_buffer = SAFE_ALLOC(communication->max_comm_particles*17, sizeof(double));
-  communication->particle_recv_buffer = SAFE_ALLOC(communication->max_comm_particles*17, sizeof(double));
+  const int num_buffer_doubles = communication->max_particles*num_components;
+  communication->particle_send_buffer = SAFE_ALLOC(num_buffer_doubles,
+                                                   sizeof(double));
+  communication->particle_recv_buffer = SAFE_ALLOC(num_buffer_doubles,
+                                                   sizeof(double));
+
 }
 
 void FreeCommunication(struct Communication *const communication) {
@@ -143,7 +156,6 @@ void HaloExchange(struct Communication *const communication,
   const int num_procs = params->num_procs;
   struct Edges *const edges = &communication->edges;
   double h = params->smoothing_radius;
-  const int num_components = 17;
 
   // Set edge particle indices and update number
   edges->number_particles_left = 0;
@@ -181,9 +193,11 @@ void HaloExchange(struct Communication *const communication,
 
   // Set send/recv buffer points
   double *const packed_send_left  = communication->particle_send_buffer;
-  double *const packed_send_right = packed_send_left + num_moving_left*num_components;
+  double *const packed_send_right = packed_send_left
+                                  + num_moving_left*num_components;
   double *const packed_recv_left  = communication->particle_recv_buffer;
-  double *const packed_recv_right = packed_recv_left + num_from_left*num_components;
+  double *const packed_recv_right = packed_recv_left
+                                  + num_from_left*num_components;
 
   // Pack halo particle struct components to send
   PackHaloComponents(communication, particles,
@@ -277,7 +291,6 @@ void TransferOOBParticles(struct Communication *const communication,
   const int rank = params->rank;
   const int num_procs = params->num_procs;
   struct OOB *const oob = &communication->out_of_bounds;
-  const int num_components = 17;
 
   // Identify out of bound particles
   oob->number_particles_left  = 0;
@@ -294,12 +307,16 @@ void TransferOOBParticles(struct Communication *const communication,
     }
   }
 
-  int num_moving_right = oob->number_particles_right;
   int num_moving_left = oob->number_particles_left;
+  int num_moving_right = oob->number_particles_right;
+
+  DEBUG_PRINT("rank %d, OOB: will send %d to left, %d to right\n",
+              rank, num_moving_left, num_moving_right);
 
   // Set send buffer points
   double *const packed_send_left  = communication->particle_send_buffer;
-  double *const packed_send_right = packed_send_left + (num_moving_left*17);
+  double *const packed_send_right = packed_send_left
+                                  + num_moving_left*num_components;
 
   PackOOBComponents(communication,
                     particles,
@@ -338,7 +355,8 @@ void TransferOOBParticles(struct Communication *const communication,
 
   // Set recv buffer points
   double *const packed_recv_left  = communication->particle_recv_buffer;
-  double *const packed_recv_right = packed_recv_left + (num_from_left*num_components);
+  double *const packed_recv_right = packed_recv_left
+                                  + num_from_left*num_components;
 
   MPI_Status status;
   int num_received_left = 0;
@@ -366,8 +384,8 @@ void TransferOOBParticles(struct Communication *const communication,
                       params,
                       particles);
 
-  DEBUG_PRINT("rank %d OOB: sent left %d, right: %d recv left:%d, right: %d\n",
-              rank, num_moving_left, num_moving_right, num_received_left, num_received_right);
+  DEBUG_PRINT("rank %d, OOB: recv %d from left, %d from right\n",
+              num_received_left, num_received_right);
 }
 
 void UpdateHaloLambdas(const struct Communication *const communication,
@@ -438,9 +456,9 @@ void UpdateHaloPositions(const struct Communication *const communication,
   const int num_procs = params->num_procs;
 
   // x,y,z components required
-  const int num_components = 3;
-  const int num_moving_left  = num_components*edges->number_particles_left;
-  const int num_moving_right = num_components*edges->number_particles_right;
+  const int double_components = 3;
+  const int num_moving_left  = double_components*edges->number_particles_left;
+  const int num_moving_right = double_components*edges->number_particles_right;
 
   const int num_from_left  = num_components*params->number_halo_particles_left;
   const int num_from_right = num_components*params->number_halo_particles_right;

@@ -24,7 +24,7 @@ struct OOB {
 struct Communication {
   struct Edges edges;
   struct OOB out_of_bounds;
-  int max_comm_particles;
+  int max_particles;
   double *particle_send_buffer;
   double *particle_recv_buffer;
 };

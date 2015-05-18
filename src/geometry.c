@@ -53,7 +53,8 @@ void ConstructFluidVolume(struct FluidParticles *const particles,
 
   params->number_particles_local = i;
   DEBUG_PRINT("rank %d: min fluid: %f max fluid x: %f\n",
-              params->rank, min_x + spacing/2.0, min_x + num_x*spacing + spacing/2.0);
+              params->rank, min_x + spacing/2.0,
+              min_x + num_x*spacing + spacing/2.0);
 }
 
 // Sets upper bound on number of particles, used for memory allocation
@@ -72,10 +73,10 @@ void SetParticleNumbers(const struct AABB *const fluid_global,
   const int num_initial = (num_x * num_y * num_z)/get_num_procs();
 
   // Set max communication particles to a 10th of node start number
-  communication->max_comm_particles = num_initial/10;
+  communication->max_particles = num_initial/10;
 
   // Add initial space and left/right out of bounds/halo particles
-  params->max_particles_local = num_initial + 4*communication->max_comm_particles;
+  params->max_particles_local = num_initial + 4*communication->max_particles;
 
   DEBUG_PRINT("initial number of particles %d\n", num_initial);
   DEBUG_PRINT("Max fluid particles local: %d\n", params->max_particles_local);

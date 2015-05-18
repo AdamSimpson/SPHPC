@@ -480,7 +480,8 @@ void BoundaryConditions(struct FluidParticles *const particles,
                         const struct AABB *const boundary) {
 
   // Make sure object is not outside boundary
-  // The particle must not be equal to boundary max or hash potentially won't pick it up
+  // The particle must not be equal to boundary max or
+  // hash potentially won't pick it up
   // as the particle will in the 'next' after last bin
   if (particles->x_star[i]  < boundary->min_x)
     particles->x_star[i] = boundary->min_x;

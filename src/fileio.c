@@ -27,7 +27,9 @@ void WriteMPI(const struct FluidParticles *const particles,
   int rank_write_counts[params->num_procs];
   // alltoall of write counts
   int num_doubles_to_send = 3 * num_particles;
-  MPI_Allgather(&num_doubles_to_send, 1, MPI_INT, rank_write_counts, 1, MPI_INT, MPI_COMM_WORLD);
+  MPI_Allgather(&num_doubles_to_send, 1, MPI_INT, rank_write_counts,
+                1, MPI_INT, MPI_COMM_WORLD);
+
   // Displacement can overflow with int, max size = 8*3*(global num particles)
   uint64_t displacement=0;
   for (int i=0; i<params->rank; i++)
@@ -47,10 +49,12 @@ void WriteMPI(const struct FluidParticles *const particles,
   }
 
   // Open file
-  MPI_File_open(MPI_COMM_WORLD, name, MPI_MODE_CREATE | MPI_MODE_WRONLY, MPI_INFO_NULL, &file);
+  MPI_File_open(MPI_COMM_WORLD, name, MPI_MODE_CREATE | MPI_MODE_WRONLY,
+                MPI_INFO_NULL, &file);
 
   // write coordinates to file
-  MPI_File_write_at(file, displacement, send_buffer , num_doubles_to_send, MPI_DOUBLE, &status);
+  MPI_File_write_at(file, displacement, send_buffer , num_doubles_to_send,
+                    MPI_DOUBLE, &status);
 
   int num_bytes;
   MPI_Get_elements(&status, MPI_CHAR, &num_bytes);
