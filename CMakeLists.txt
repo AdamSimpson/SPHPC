@@ -21,6 +21,7 @@ include_directories(${CUDA_INCLUDE_DIRS})
 
 find_package(Boost REQUIRED)
 include_directories(${BOOST_INCLUDE_DIRS})
+include_directories(${Boost_INCLUDE_DIR})
 
 find_library(M_LIB m)
 target_link_libraries(sph ${M_LIB})
