@@ -1,11 +1,11 @@
 #include "input_parser.h"
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
-
 extern "C" {
 #include "simulation.h"
 #include "geometry.h"
 }
+#include <iostream>
 
 void ReadParameters(struct Params *const parameters,
                     struct AABB *boundary_volume,
