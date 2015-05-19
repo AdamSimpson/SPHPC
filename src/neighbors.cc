@@ -8,7 +8,6 @@ extern "C" {
   #include "simulation.h"
 }
 #undef restrict
-
 #include <thrust/sort.h>
 #include <thrust/execution_policy.h>
 #include <math.h>

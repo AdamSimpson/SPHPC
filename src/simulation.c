@@ -20,6 +20,7 @@ int main(int argc, char *argv[]) {
   struct Communication communication;
   struct FluidParticles particles;
   struct Neighbors neighbors;
+  struct FileIO file_io;
 
   SetParameters(&params, &neighbors, &boundary_global, &water_volume_global);
 
@@ -31,6 +32,8 @@ int main(int argc, char *argv[]) {
 
   AllocateCommunication(&communication);
 
+  FileIOInit(&file_io, &params);
+
   // Initialize particles
   InitParticles(&particles, &params, &water_volume_global);
 
@@ -39,8 +42,7 @@ int main(int argc, char *argv[]) {
          params.rank, params.number_particles_local, params.smoothing_radius);
 
   // Initial configuration
-  int fileNum=0;
-  WriteMPI(&particles, &params, fileNum++);
+  WriteMPI(&particles, &params, &file_io);
 
   MPI_Barrier(MPI_COMM_WORLD);
   const double start_time = MPI_Wtime();
@@ -91,7 +93,7 @@ int main(int argc, char *argv[]) {
 
     // Write file at 30 FPS
     if (n % (int)(1.0/(params.time_step*30.0)) )
-      WriteMPI(&particles, &params, fileNum++);
+      WriteMPI(&particles, &params, &file_io);
 
   }
 
@@ -103,6 +105,8 @@ int main(int argc, char *argv[]) {
   FreeFluid(&particles);
   FreeCommunication(&communication);
   FreeNeighbors(&neighbors);
+
+  FileIOFinalize(&file_io);
 
   // Close MPI
   FinalizeCommunication();
