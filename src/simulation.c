@@ -126,7 +126,8 @@ void SetParameters(struct Params *const params,
                       * (water_volume_global->max_z - water_volume_global->min_z);
 
   // Initial spacing between particles
-  const float spacing_particle = pow(volume/params->number_particles_global,1.0/3.0);
+  const float spacing_particle = pow(volume/params->number_particles_global,
+                                     1.0/3.0);
 
   // Let mass of each particle equal 1
   params->rest_density = params->number_particles_global/volume;
@@ -140,10 +141,10 @@ void SetParameters(struct Params *const params,
 
   // Set initial node boundaries
   // Equally divide water volume between all ranks
-  double water_length = (water_volume_global->max_x - water_volume_global->min_x);
+  double water_length = water_volume_global->max_x - water_volume_global->min_x;
   double equal_spacing =  water_length / params->num_procs;
   params->node_start_x = water_volume_global->min_x
-                      + params->rank * equal_spacing;
+                       + params->rank * equal_spacing;
 
   params->node_end_x = params->node_start_x + equal_spacing;
 

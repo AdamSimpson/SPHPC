@@ -18,7 +18,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 // (h^2 - r^2)^3 normalized in 3D (poly6)
-static double W(const double r, const double h) {
+static inline double W(const double r, const double h) {
   if(r > h)
     return 0.0;
 
@@ -29,7 +29,7 @@ static double W(const double r, const double h) {
 
 // Gradient (h-r)^3 normalized in 3D (Spikey) magnitude
 // Need to multiply by r/|r|
-static double DelW(const double r, const double h) {
+static inline double DelW(const double r, const double h) {
   if(r > h)
     return 0.0;
 
