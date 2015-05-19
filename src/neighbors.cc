@@ -1,13 +1,13 @@
+#define restrict
 #include "neighbors.h"
 extern "C" {
-  #define restrict
   #include "debug.h"
   #include "safe_alloc.h"
   #include "fluid.h"
   #include "geometry.h"
   #include "simulation.h"
-  #undef restrict
 }
+#undef restrict
 
 #include <thrust/sort.h>
 #include <thrust/execution_policy.h>
