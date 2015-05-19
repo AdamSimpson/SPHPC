@@ -2,9 +2,6 @@
 #define SPH_SRC_NEIGHBORS_H_
 
 #include <stdbool.h>
-#include "fluid.h"
-#include "geometry.h"
-#include "simulation.h"
 
 // Forward Declaration
 struct FluidParticles;
@@ -20,7 +17,7 @@ struct Neighbors {
   int hash_size_x;
   int hash_size_y;
   int hash_size_z;
-  struct Neighbor *particle_neighbors;
+  struct Neighbor *restrict particle_neighbors;
   double hash_spacing;
 };
 

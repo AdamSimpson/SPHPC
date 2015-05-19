@@ -7,16 +7,16 @@ struct Params;
 
 // Particles that are within halo width of node edge
 struct Edges {
-  int *indices_left;
-  int *indices_right;
+  int *restrict indices_left;
+  int *restrict indices_right;
   int number_particles_left;
   int number_particles_right;
 };
 
 // Particles that have left the node
 struct OOB {
-  int *indices_left; // Indicies in particle pointer array for particles traveling left
-  int *indices_right;
+  int *restrict indices_left; // Indicies in particle pointer array for particles traveling left
+  int *restrict indices_right;
   int number_particles_left;
   int number_particles_right;
 };
@@ -25,8 +25,8 @@ struct Communication {
   struct Edges edges;
   struct OOB out_of_bounds;
   int max_particles;
-  double *particle_send_buffer;
-  double *particle_recv_buffer;
+  double *restrict particle_send_buffer;
+  double *restrict particle_recv_buffer;
 };
 
 void InitCommunication(int argc, char *argv[]);

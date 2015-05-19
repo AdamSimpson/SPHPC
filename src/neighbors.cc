@@ -1,6 +1,14 @@
 #include "neighbors.h"
-#include "debug.h"
-#include "safe_alloc.h"
+extern "C" {
+  #define restrict
+  #include "debug.h"
+  #include "safe_alloc.h"
+  #include "fluid.h"
+  #include "geometry.h"
+  #include "simulation.h"
+  #undef restrict
+}
+
 #include <thrust/sort.h>
 #include <thrust/execution_policy.h>
 #include <math.h>

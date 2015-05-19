@@ -1,11 +1,6 @@
 #ifndef SPH_SRC_FLUID_H_
 #define SPH_SRC_FLUID_H_
 
-#include <stdbool.h>
-#include <stdio.h>
-#include <math.h>
-#include <stdlib.h>
-
 // Forward Declaration
 struct Params;
 struct Neighbors;
@@ -17,24 +12,24 @@ struct Communication;
 ////////////////////////////////////////////////
 
 struct FluidParticles {
-  double *x_star;
-  double *y_star;
-  double *z_star;
-  double *x;
-  double *y;
-  double *z;
-  double *v_x;
-  double *v_y;
-  double *v_z;
-  double *dp_x;
-  double *dp_y;
-  double *dp_z;
-  double *w_x;
-  double *w_y;
-  double *w_z;
-  double *density;
-  double *lambda;
-  int *id; // Id is 'local' index within the fluid particle pointer array
+  double *restrict x_star;
+  double *restrict y_star;
+  double *restrict z_star;
+  double *restrict x;
+  double *restrict y;
+  double *restrict z;
+  double *restrict v_x;
+  double *restrict v_y;
+  double *restrict v_z;
+  double *restrict dp_x;
+  double *restrict dp_y;
+  double *restrict dp_z;
+  double *restrict w_x;
+  double *restrict w_y;
+  double *restrict w_z;
+  double *restrict density;
+  double *restrict lambda;
+  int    *restrict id; // Id is 'local' index within the fluid particle pointer array
 };
 
 ////////////////////////////////////////////////

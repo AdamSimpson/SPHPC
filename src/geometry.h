@@ -1,10 +1,6 @@
 #ifndef SPH_SRC_GEOMETRY_H_
 #define SPH_SRC_GEOMETRY_H_
 
-#include "fluid.h"
-#include "communication.h"
-#include "simulation.h"
-
 // Forward Declaration
 struct FluidParticles;
 struct Params;

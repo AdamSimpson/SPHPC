@@ -2,6 +2,7 @@
 #include "simulation.h"
 #include "communication.h"
 #include "neighbors.h"
+#include "geometry.h"
 #include "debug.h"
 #include "safe_alloc.h"
 #include <stdio.h>

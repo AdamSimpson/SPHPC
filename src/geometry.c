@@ -1,13 +1,16 @@
 #include "geometry.h"
 #include <stdio.h>
+#include <math.h>
+#include "fluid.h"
 #include "communication.h"
+#include "simulation.h"
 #include "debug.h"
 #include "mpi.h"
 
 ////////////////////////////////////////////////
 // Utility Functions
 ////////////////////////////////////////////////
-static double min(const double a, const double b) {
+static inline double min(const double a, const double b) {
   double min = a;
   min = b < min ? b : min;
   return min;
