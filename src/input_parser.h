@@ -11,8 +11,10 @@ extern "C" {
 #endif
 
 void ReadParameters(struct Params *const parameters,
+                    struct Particles *particles,
                     struct AABB *boundary_volume,
                     struct AABB *initial_fluid_volume);
+
 #ifdef __cplusplus
 }
 #endif

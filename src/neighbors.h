@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 // Forward Declaration
-struct FluidParticles;
+struct Particles;
 struct Params;
 struct AABB;
 
@@ -30,14 +30,16 @@ struct Neighbor {
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 void AllocateNeighbors(struct Neighbors *const neighbors,
+                       const struct Particles *particles,
                        const struct Params *const params,
                        const struct AABB *const boundary_global);
 
 void FreeNeighbors(struct Neighbors *neighbors);
 
-void FindAllNeighbors(const struct Params *const params,
-                      const struct FluidParticles *const particles,
+void FindAllNeighbors(const struct Particles *const particles,
+                      const struct Params *const params,
                       struct Neighbors *const neighbors);
 #ifdef __cplusplus
 }
@@ -48,23 +50,23 @@ unsigned int HashVal(const struct Neighbors *const neighbors,
                      const double y,
                      const double z);
 
-void HashParticles(const struct Params *const params,
-                   const struct FluidParticles *const particles,
+void HashParticles(const struct Particles *const particles,
                    struct Neighbors *const neighbors);
 
-void SortHash(const struct Params *const params,
+void SortHash(const struct Particles *particles,
+              const struct Params *const params,
               const struct Neighbors *const neighbors);
 
-void FindCellBounds(const struct Params *const params,
+void FindCellBounds(const struct Particles *particles,
                     struct Neighbors *const neighbors);
 
 void FillParticleNeighbors(struct Neighbors *const neighbors,
+                           const struct Particles *particles,
                            const struct Params *const params,
-                           const struct FluidParticles *particles,
                            const unsigned int p_index);
 
-void FillNeighbors(const struct Params *const params,
-                   const struct FluidParticles *particles,
+void FillNeighbors(const struct Particles *particles,
+                   const struct Params *const params,
                    struct Neighbors *const neighbors);
 
 #endif

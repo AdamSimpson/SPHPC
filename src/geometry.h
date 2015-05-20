@@ -2,7 +2,7 @@
 #define SPH_SRC_GEOMETRY_H_
 
 // Forward Declaration
-struct FluidParticles;
+struct Particles;
 struct Params;
 struct AABB;
 struct Communication;
@@ -16,14 +16,16 @@ struct AABB {
   double max_z;
 };//Axis aligned bounding box
 
-void ConstructFluidVolume(struct FluidParticles *const particles,
+void ConstructFluidVolume(struct Particles *const particles,
                           struct Params *const params,
                           const struct AABB *const fluid);
 
 void SetParticleNumbers(const struct AABB *const fluid_global,
+                        struct Particles *particles,
                         struct Params *const params,
                         struct Communication *const communication);
 
-void CheckPartition(struct Params *const params);
+void CheckPartition(const struct Particles *particles,
+                    struct Params *const params);
 
 #endif

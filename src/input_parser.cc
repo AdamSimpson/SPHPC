@@ -1,8 +1,11 @@
 #include "input_parser.h"
 
 extern "C" {
+#define restrict
+#include "fluid.h"
 #include "simulation.h"
 #include "geometry.h"
+#undef restrict
 }
 
 #include <boost/property_tree/ptree.hpp>
@@ -10,6 +13,7 @@ extern "C" {
 #include <iostream>
 
 void ReadParameters(struct Params *const parameters,
+                    struct Particles *particles,
                     struct AABB *boundary_volume,
                     struct AABB *initial_fluid_volume) {
   boost::property_tree::ptree property_tree;
@@ -22,7 +26,7 @@ void ReadParameters(struct Params *const parameters,
         "SimParameters.number_steps");
     parameters->time_step = property_tree.get<double>(
         "SimParameters.time_step");
-    parameters->number_particles_global = property_tree.get<int>(
+    particles->number_global = property_tree.get<int>(
         "SimParameters.number_particles");
     parameters->g = property_tree.get<double>("PhysicalParameters.g");
     parameters->c = property_tree.get<double>("PhysicalParameters.c");

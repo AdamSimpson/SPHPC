@@ -16,9 +16,10 @@
 #include <unistd.h>
 
 void FileIOInit(struct FileIO *const file_io,
-                const struct Params *const params) {
+                const struct Particles *const particles,
+                const struct Params *params) {
   int num_components = 3;
-  file_io->write_buffer = SAFE_ALLOC(num_components*params->max_particles_local,
+  file_io->write_buffer = SAFE_ALLOC(num_components*particles->max_local,
                                      sizeof(double));
 
   // Get current path
@@ -28,14 +29,19 @@ void FileIOInit(struct FileIO *const file_io,
     printf("Error getting current working directory \n");
     exit(-1);
   }
-  // Create pwd/output directory
+
   char output_path[1024];
   sprintf(output_path, "%s/output", current_path);
-  int dir_return = mkdir(output_path, 0775);
-  if (dir_return != 0) {
-    printf("Error creating output directory: %s\n", strerror(errno));
-    exit(-1);
+
+  // Create pwd/output directory
+  if (params->rank == 0) {
+    int dir_return = mkdir(output_path, 0775);
+    if (dir_return != 0) {
+      printf("Error creating output directory: %s\n", strerror(errno));
+      exit(-1);
+    }
   }
+
   // Set output directory
   file_io->output_path = SAFE_ALLOC(strlen(output_path)+2, sizeof(char));
   strcpy(file_io->output_path, output_path);
@@ -49,7 +55,7 @@ void FileIOFinalize(struct FileIO *const file_io) {
 }
 
 // Write boundary in MPI
-void WriteMPI(const struct FluidParticles *const particles,
+void WriteMPI(const struct Particles *const particles,
               const struct Params *const params,
               struct FileIO *const file_io) {
 
@@ -58,7 +64,7 @@ void WriteMPI(const struct FluidParticles *const particles,
   char file_name[1024];
   sprintf(file_name, "%s/sim-%d.bin", file_io->output_path, file_io->file_num);
 
-  const int num_particles = params->number_particles_local;
+  const int num_particles = particles->number_local;
 
   // How many bytes each process will write
   int rank_write_counts[params->num_procs];

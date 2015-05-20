@@ -2,7 +2,7 @@
 #define SPH_SRC_FILEIO_H_
 
 // Forward Declaration
-struct FluidParticles;
+struct Particles;
 struct Params;
 
 struct FileIO {
@@ -12,11 +12,12 @@ struct FileIO {
 };
 
 void FileIOInit(struct FileIO *const file_io,
-                const struct Params *const params);
+                const struct Particles *const particles,
+                const struct Params *params);
 
 void FileIOFinalize(struct FileIO *const file_io);
 
-void WriteMPI(const struct FluidParticles *const particles,
+void WriteMPI(const struct Particles *const particles,
               const struct Params *const params,
               struct FileIO *const file_io);
 

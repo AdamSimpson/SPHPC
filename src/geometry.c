@@ -16,7 +16,7 @@ static inline double min(const double a, const double b) {
   return min;
 }
 
-void ConstructFluidVolume(struct FluidParticles *const particles,
+void ConstructFluidVolume(struct Particles *const particles,
                           struct Params *const params,
                           const struct AABB *const fluid) {
 
@@ -54,7 +54,7 @@ void ConstructFluidVolume(struct FluidParticles *const particles,
     }
   }
 
-  params->number_particles_local = i;
+  particles->number_local = i;
   DEBUG_PRINT("rank %d: min fluid: %f max fluid x: %f\n",
               params->rank, min_x + spacing/2.0,
               min_x + num_x*spacing + spacing/2.0);
@@ -62,6 +62,7 @@ void ConstructFluidVolume(struct FluidParticles *const particles,
 
 // Sets upper bound on number of particles, used for memory allocation
 void SetParticleNumbers(const struct AABB *const fluid_global,
+                        struct Particles *particles,
                         struct Params *const params,
                         struct Communication *const communication) {
 
@@ -79,16 +80,16 @@ void SetParticleNumbers(const struct AABB *const fluid_global,
   communication->max_particles = num_initial/10;
 
   // Add initial space and left/right out of bounds/halo particles
-  params->max_particles_local = num_initial + 4*communication->max_particles;
+  particles->max_local = num_initial + 4*communication->max_particles;
 
   DEBUG_PRINT("initial number of particles %d\n", num_initial);
   DEBUG_PRINT("Max fluid particles local: %d\n", params->max_particles_local);
 }
 
 // Test if boundaries need to be adjusted
-void CheckPartition(struct Params *const params)
-{
-  const int num_rank = params->number_particles_local;
+void CheckPartition(const struct Particles *particles,
+                    struct Params *const params) {
+  const int num_rank = particles->number_local;
   const int rank = params->rank;
   const int num_procs = params->num_procs;
   const double h = params->smoothing_radius;
@@ -120,7 +121,7 @@ void CheckPartition(struct Params *const params)
   const double length_left = left[1];
   const double length_right = right[1];
 
-  const int even_particles = params->number_particles_global
+  const int even_particles = particles->number_global
                             / (double)params->num_procs;
   const int max_diff = even_particles/10.0f;
 
