@@ -31,11 +31,11 @@ struct Particles {
   double *restrict lambda;
   int    *restrict id; // Id is 'local' index within the fluid particle pointer array
 
-  int number_global;
-  int number_local;
+  int global_count;
+  int local_count;
   int max_local;  // Maximum number for max_fluid_particle_index + halo particles
-  int number_halo_left;
-  int number_halo_right;
+  int halo_count_left;
+  int halo_count_right;
 };
 
 ////////////////////////////////////////////////

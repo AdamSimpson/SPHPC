@@ -18,7 +18,7 @@ struct Params {
   double node_end_x;   // right x position of node partition
   int number_steps;
   int rank;
-  int num_procs;
+  int proc_count;
 }; // Simulation paramaters
 
 void SetParameters(struct Params *const params,

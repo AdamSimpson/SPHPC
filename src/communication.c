@@ -55,10 +55,10 @@ int get_rank() {
   return rank;
 }
 
-int get_num_procs() {
-  int num_procs;
-  MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
-  return num_procs;
+int get_proc_count() {
+  int proc_count;
+  MPI_Comm_size(MPI_COMM_WORLD, &proc_count);
+  return proc_count;
 }
 
 void PackParticleToBuffer(const struct Particles *const particles,
@@ -116,12 +116,12 @@ void PackHaloComponents(const struct Communication *const communication,
 
   const struct Edges *const edges = &communication->edges;
 
-  for (int i=0; i<edges->number_particles_left; i++) {
+  for (int i=0; i<edges->particle_count_left; i++) {
     const int p_index = edges->indices_left[i];
     PackParticleToBuffer(particles, p_index, packed_send_left, i*17);
   }
 
-  for (int i=0; i<edges->number_particles_right; i++) {
+  for (int i=0; i<edges->particle_count_right; i++) {
     const int p_index = edges->indices_right[i];
     PackParticleToBuffer(particles, p_index, packed_send_right, i*17);
   }
@@ -131,18 +131,18 @@ void UnpackHaloComponents(const double *const packed_recv_left,
                           const double *const packed_recv_right,
                           struct Particles *const particles) {
 
-  const int num_local = particles->number_local;
+  const int num_local = particles->local_count;
 
   // Unpack halo particles from left rank first
-  for (int i=0; i<particles->number_halo_left; i++) {
+  for (int i=0; i<particles->halo_count_left; i++) {
     const int p_index = num_local + i; // "Global" index
     UnpackBufferToParticle(packed_recv_left, i*17, particles, p_index);
   }
 
   // Unpack halo particles from right rank second
-  for (int i=0; i<particles->number_halo_right; i++) {
+  for (int i=0; i<particles->halo_count_right; i++) {
     const int p_index = num_local
-                      + particles->number_halo_left + i; // "Global" index
+                      + particles->halo_count_left + i; // "Global" index
     UnpackBufferToParticle(packed_recv_right, i*17, particles, p_index);
   }
 }
@@ -152,26 +152,26 @@ void HaloExchange(struct Communication *const communication,
                   struct Particles *const particles) {
 
   const int rank = params->rank;
-  const int num_procs = params->num_procs;
+  const int proc_count = params->proc_count;
   struct Edges *const edges = &communication->edges;
   double h = params->smoothing_radius;
 
   // Set edge particle indices and update number
-  edges->number_particles_left = 0;
-  edges->number_particles_right = 0;
-  for (int i=0; i<particles->number_local; ++i) {
+  edges->particle_count_left = 0;
+  edges->particle_count_right = 0;
+  for (int i=0; i<particles->local_count; ++i) {
     if (particles->x_star[i] - params->node_start_x <= h)
-      edges->indices_left[edges->number_particles_left++] = i;
+      edges->indices_left[edges->particle_count_left++] = i;
     else if (params->node_end_x - particles->x_star[i] <= h)
-      edges->indices_right[edges->number_particles_right++] = i;
+      edges->indices_right[edges->particle_count_right++] = i;
   }
 
-  int num_moving_left = edges->number_particles_left;
-  int num_moving_right = edges->number_particles_right;
+  int num_moving_left = edges->particle_count_left;
+  int num_moving_right = edges->particle_count_right;
 
   // Setup nodes to left and right of self
   int proc_to_left =  (rank == 0 ? MPI_PROC_NULL : rank-1);
-  int proc_to_right = (rank == num_procs-1 ? MPI_PROC_NULL : rank+1);
+  int proc_to_right = (rank == proc_count-1 ? MPI_PROC_NULL : rank+1);
 
   DEBUG_PRINT("rank %d, halo: will send %d to left, %d to right\n",
               rank, num_moving_left, num_moving_right);
@@ -232,8 +232,8 @@ void HaloExchange(struct Communication *const communication,
   num_received_left  /= num_components;
   num_received_right /= num_components;
 
-  particles->number_halo_left  = num_received_left;
-  particles->number_halo_right = num_received_right;
+  particles->halo_count_left  = num_received_left;
+  particles->halo_count_right = num_received_right;
 
   UnpackHaloComponents(packed_recv_left,
                        packed_recv_right,
@@ -251,12 +251,12 @@ void PackOOBComponents(const struct Communication *const communication,
 
   const struct OOB *const oob = &communication->out_of_bounds;
 
-  for (int i=0; i<oob->number_particles_left; i++) {
+  for (int i=0; i<oob->particle_count_left; i++) {
     const int p_index = oob->indices_left[i];
     PackParticleToBuffer(particles, p_index, packed_send_left, i*17);
   }
 
-  for (int i=0; i<oob->number_particles_right; i++) {
+  for (int i=0; i<oob->particle_count_right; i++) {
     const int p_index = oob->indices_right[i];
     PackParticleToBuffer(particles, p_index, packed_send_right, i*17);
   }
@@ -268,15 +268,15 @@ void UnpackOOBComponents(const int num_from_left, const int num_from_right,
                          struct Particles *const particles) {
 
   for (int i=0; i<num_from_left; ++i) {
-    const int p_index = particles->number_local;
+    const int p_index = particles->local_count;
     UnpackBufferToParticle(packed_recv_left, i*17, particles, p_index);
-    ++particles->number_local;
+    ++particles->local_count;
   }
 
   for (int i=0; i<num_from_right; ++i) {
-    const int p_index = particles->number_local + num_from_left + i;
+    const int p_index = particles->local_count + num_from_left + i;
     UnpackBufferToParticle(packed_recv_left, i*17, particles, p_index);
-    ++particles->number_local;
+    ++particles->local_count;
   }
 }
 
@@ -286,26 +286,26 @@ void TransferOOBParticles(struct Communication *const communication,
                           struct Params *const params) {
 
   const int rank = params->rank;
-  const int num_procs = params->num_procs;
+  const int proc_count = params->proc_count;
   struct OOB *const oob = &communication->out_of_bounds;
 
   // Identify out of bound particles
-  oob->number_particles_left  = 0;
-  oob->number_particles_right = 0;
-  for (int i=0; i<particles->number_local; ++i) {
+  oob->particle_count_left  = 0;
+  oob->particle_count_right = 0;
+  for (int i=0; i<particles->local_count; ++i) {
     if (particles->x_star[i] < params->node_start_x && params->rank != 0) {
-      oob->indices_left[oob->number_particles_left] = i;
-      ++oob->number_particles_left;
+      oob->indices_left[oob->particle_count_left] = i;
+      ++oob->particle_count_left;
     }
     else if (particles->x_star[i] > params->node_end_x &&
-       params->rank != params->num_procs-1) {
-      oob->indices_right[oob->number_particles_right] = i;
-      ++oob->number_particles_right;
+       params->rank != params->proc_count-1) {
+      oob->indices_right[oob->particle_count_right] = i;
+      ++oob->particle_count_right;
     }
   }
 
-  int num_moving_left = oob->number_particles_left;
-  int num_moving_right = oob->number_particles_right;
+  int num_moving_left = oob->particle_count_left;
+  int num_moving_right = oob->particle_count_right;
 
   DEBUG_PRINT("rank %d, OOB: will send %d to left, %d to right\n",
               rank, num_moving_left, num_moving_right);
@@ -321,20 +321,20 @@ void TransferOOBParticles(struct Communication *const communication,
                     packed_send_right);
 
   // Move particles from end to fill leaving particles
-  for (int i=0; i<oob->number_particles_left; ++i) {
+  for (int i=0; i<oob->particle_count_left; ++i) {
       const int removed_index = oob->indices_left[i];
-      MoveParticle(particles, particles->number_local-1, removed_index);
-      --particles->number_local;
+      MoveParticle(particles, particles->local_count-1, removed_index);
+      --particles->local_count;
   }
-  for (int i=0; i<oob->number_particles_right; ++i) {
+  for (int i=0; i<oob->particle_count_right; ++i) {
       const int removed_index = oob->indices_right[i];
-      MoveParticle(particles, particles->number_local-1, removed_index);
-      --particles->number_local;
+      MoveParticle(particles, particles->local_count-1, removed_index);
+      --particles->local_count;
   }
 
   // Setup nodes to left and right of self
   int proc_to_left =  (rank == 0 ? MPI_PROC_NULL : rank-1);
-  int proc_to_right = (rank == num_procs-1 ? MPI_PROC_NULL : rank+1);
+  int proc_to_right = (rank == proc_count-1 ? MPI_PROC_NULL : rank+1);
 
   // Get number of particles from right and left
   int num_from_left  = 0;
@@ -390,13 +390,13 @@ void UpdateHaloLambdas(const struct Communication *const communication,
   const struct Edges *const edges = &communication->edges;
 
   const int rank = params->rank;
-  const int num_procs = params->num_procs;
+  const int proc_count = params->proc_count;
 
-  const int num_moving_left  = edges->number_particles_left;
-  const int num_moving_right = edges->number_particles_right;
+  const int num_moving_left  = edges->particle_count_left;
+  const int num_moving_right = edges->particle_count_right;
 
-  const int num_from_left  = particles->number_halo_left;
-  const int num_from_right = particles->number_halo_right;
+  const int num_from_left  = particles->halo_count_left;
+  const int num_from_right = particles->halo_count_right;
 
   // Allocate send/recv buffers
   double *const send_lambdas_left  = communication->particle_send_buffer;
@@ -417,7 +417,7 @@ void UpdateHaloLambdas(const struct Communication *const communication,
 
   // Setup nodes to left and right of self
   const int proc_to_left =  (rank == 0 ? MPI_PROC_NULL : rank-1);
-  const int proc_to_right = (rank == num_procs-1 ? MPI_PROC_NULL : rank+1);
+  const int proc_to_right = (rank == proc_count-1 ? MPI_PROC_NULL : rank+1);
 
   // Could do async to perhaps increase performance
   // Send lambdas to right and receive from left
@@ -434,11 +434,11 @@ void UpdateHaloLambdas(const struct Communication *const communication,
 
   // Unpack halo particle lambdas
   for (int i=0; i<num_from_left; i++) {
-    const int p_index = particles->number_local + i;
+    const int p_index = particles->local_count + i;
     particles->lambda[p_index] = recv_lambdas_left[i];
   }
   for (int i=0; i<num_from_right; i++) {
-    const int p_index = particles->number_local + num_from_left + i;
+    const int p_index = particles->local_count + num_from_left + i;
     particles->lambda[p_index] = recv_lambdas_right[i];
   }
 }
@@ -449,15 +449,15 @@ void UpdateHaloPositions(const struct Communication *const communication,
   const struct Edges *const edges = &communication->edges;
 
   const int rank = params->rank;
-  const int num_procs = params->num_procs;
+  const int proc_count = params->proc_count;
 
   // x,y,z components required
   const int double_components = 3;
-  const int num_moving_left  = double_components*edges->number_particles_left;
-  const int num_moving_right = double_components*edges->number_particles_right;
+  const int num_moving_left  = double_components*edges->particle_count_left;
+  const int num_moving_right = double_components*edges->particle_count_right;
 
-  const int num_from_left  = num_components*particles->number_halo_left;
-  const int num_from_right = num_components*particles->number_halo_right;
+  const int num_from_left  = num_components*particles->halo_count_left;
+  const int num_from_right = num_components*particles->halo_count_right;
 
   // Set send/recv buffers
   double *const send_positions_left  = communication->particle_send_buffer;
@@ -482,7 +482,7 @@ void UpdateHaloPositions(const struct Communication *const communication,
 
   // Setup nodes to left and right of self
   const int proc_to_left =  (rank == 0 ? MPI_PROC_NULL : rank-1);
-  const int proc_to_right = (rank == num_procs-1 ? MPI_PROC_NULL : rank+1);
+  const int proc_to_right = (rank == proc_count-1 ? MPI_PROC_NULL : rank+1);
 
   // Could do async to perhaps increase performance
   // Send positions to right and receive from left
@@ -499,13 +499,13 @@ void UpdateHaloPositions(const struct Communication *const communication,
 
     // Unpack halo particle positions
     for (int i=0; i<num_from_left; i+=3) {
-        const int p_index = particles->number_local + i/3;
+        const int p_index = particles->local_count + i/3;
         particles->x_star[p_index] = recv_positions_left[i];
         particles->y_star[p_index] = recv_positions_left[i+1];
         particles->z_star[p_index] = recv_positions_left[i+2];
     }
     for (int i=0; i<num_from_right; i+=3) {
-        const int p_index = particles->number_local
+        const int p_index = particles->local_count
                           + num_from_left/3 + i/3;
         particles->x_star[p_index] = recv_positions_right[i];
         particles->y_star[p_index] = recv_positions_right[i+1];

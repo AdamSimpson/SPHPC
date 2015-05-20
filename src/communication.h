@@ -9,16 +9,16 @@ struct Params;
 struct Edges {
   int *restrict indices_left;
   int *restrict indices_right;
-  int number_particles_left;
-  int number_particles_right;
+  int particle_count_left;
+  int particle_count_right;
 };
 
 // Particles that have left the node
 struct OOB {
   int *restrict indices_left; // Indicies in particle pointer array for particles traveling left
   int *restrict indices_right;
-  int number_particles_left;
-  int number_particles_right;
+  int particle_count_left;
+  int particle_count_right;
 };
 
 struct Communication {
@@ -34,7 +34,7 @@ void FinalizeCommunication();
 void AllocateCommunication(struct Communication *const communication);
 void FreeCommunication(struct Communication *const communication);
 int get_rank();
-int get_num_procs();
+int get_proc_count();
 void PackHaloComponents(const struct Communication *const communication,
                         const struct Particles *const particles,
                         double *const packed_send_left,

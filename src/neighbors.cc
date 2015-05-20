@@ -93,9 +93,9 @@ void HashParticles(const struct Particles *const particles,
 
   unsigned int *const hash_values = neighbors->hash_values;
   unsigned int *const particle_ids = neighbors->particle_ids;
-  int num_particles = particles->number_local
-                    + particles->number_halo_left
-                    + particles->number_halo_right;
+  int num_particles = particles->local_count
+                    + particles->halo_count_left
+                    + particles->halo_count_right;
 
   for (int i=0; i<num_particles; i++) {
     hash_values[i] =  HashVal(neighbors,
@@ -113,9 +113,9 @@ void SortHash(const struct Particles *particles,
 
   unsigned int *const keys = neighbors->hash_values;
   unsigned int *const values = neighbors->particle_ids;
-  const int total_particles = particles->number_local
-                            + particles->number_halo_left
-                            + particles->number_halo_right;
+  const int total_particles = particles->local_count
+                            + particles->halo_count_left
+                            + particles->halo_count_right;
   thrust::sort_by_key(thrust::host, keys, keys+total_particles, values);
 
 }
@@ -133,9 +133,9 @@ void FindCellBounds(const struct Particles *particles,
   memset(neighbors->start_indices, ((unsigned int)-1),
                                     length_hash*sizeof(unsigned int));
 
-  const int num_particles = particles->number_local
-                          + particles->number_halo_left
-                          + particles->number_halo_right;
+  const int num_particles = particles->local_count
+                          + particles->halo_count_left
+                          + particles->halo_count_right;
 
   // If this particle has a different cell index to the previous
   // particle then it must be the first particle in the cell,
@@ -170,7 +170,7 @@ void FillParticleNeighbors(struct Neighbors *const neighbors,
 
   // Get neighbor bucket for particle p
   Neighbor *const neighbor = &neighbors->particle_neighbors[p_index];
-  neighbor->number_fluid_neighbors = 0;
+  neighbor->count = 0;
 
   const double px = particles->x_star[p_index];
   const double py = particles->y_star[p_index];
@@ -219,10 +219,10 @@ void FillParticleNeighbors(struct Neighbors *const neighbors,
             // If inside smoothing radius and enough space
             // in p's neighbor bucket add q
             if(r2<smoothing_radius2 &&
-               neighbor->number_fluid_neighbors < max_neighbors) {
-                const int num_neighbors = neighbor->number_fluid_neighbors;
+               neighbor->count < max_neighbors) {
+                const int num_neighbors = neighbor->count;
                 neighbor->neighbor_indices[num_neighbors] = q_index;
-                ++neighbor->number_fluid_neighbors;
+                ++neighbor->count;
             }
           }
         }
@@ -234,7 +234,7 @@ void FillParticleNeighbors(struct Neighbors *const neighbors,
 void FillNeighbors(const struct Particles *particles,
                    const struct Params *const params,
                    struct Neighbors *const neighbors) {
-  const int total_particles = particles->number_local;
+  const int total_particles = particles->local_count;
 
   // Fill neighbor bucket for all resident particles
   for (int i=0; i<total_particles; ++i) {

@@ -26,7 +26,7 @@ void ReadParameters(struct Params *const parameters,
         "SimParameters.number_steps");
     parameters->time_step = property_tree.get<double>(
         "SimParameters.time_step");
-    particles->number_global = property_tree.get<int>(
+    particles->global_count = property_tree.get<int>(
         "SimParameters.number_particles");
     parameters->g = property_tree.get<double>("PhysicalParameters.g");
     parameters->c = property_tree.get<double>("PhysicalParameters.c");

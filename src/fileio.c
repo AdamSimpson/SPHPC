@@ -65,10 +65,10 @@ void WriteMPI(const struct Particles *const particles,
   char file_name[1024];
   sprintf(file_name, "%s/sim-%d.bin", file_io->output_path, file_io->file_num);
 
-  const int num_particles = particles->number_local;
+  const int num_particles = particles->local_count;
 
   // How many bytes each process will write
-  int rank_write_counts[params->num_procs];
+  int rank_write_counts[params->proc_count];
   // alltoall of write counts
   int num_doubles_to_send = 3 * num_particles;
   MPI_Allgather(&num_doubles_to_send, 1, MPI_INT, rank_write_counts,

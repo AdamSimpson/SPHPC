@@ -23,7 +23,7 @@ struct Neighbors {
 
 struct Neighbor {
     unsigned int neighbor_indices[60];
-    int number_fluid_neighbors;
+    int count;
 };
 
 // These functions are to be visible to both C and C++

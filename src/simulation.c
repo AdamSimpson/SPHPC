@@ -35,10 +35,8 @@ int main(int argc, char *argv[]) {
 
   FileIOInit(&file_io, &particles, &params);
 
-  // Initialize particles
   InitParticles(&particles, &params, &water_volume_global);
 
-  // Initial configuration
   WriteMPI(&particles, &params, &file_io);
 
   MPI_Barrier(MPI_COMM_WORLD);
@@ -51,7 +49,6 @@ int main(int argc, char *argv[]) {
 
     ApplyGravity(&particles, &params);
 
-    // Advance to predicted position
     PredictPositions(&particles, &params, &boundary_global);
 
     if (n % 10 == 0)
@@ -97,7 +94,6 @@ int main(int argc, char *argv[]) {
   const double end_time = MPI_Wtime();
   printf("Rank %d Elapsed seconds: %f\n", params.rank, end_time-start_time);
 
-  // Release memory
   FreeFluid(&particles);
   FreeCommunication(&communication);
   FreeNeighbors(&neighbors);
@@ -116,7 +112,7 @@ void SetParameters(struct Params *const params,
                    struct AABB *const boundary_global,
                    struct AABB *const water_volume_global) {
   params->rank = get_rank();
-  params->num_procs = get_num_procs();
+  params->proc_count = get_proc_count();
 
   ReadParameters(params, particles, boundary_global, water_volume_global);
 
@@ -126,11 +122,10 @@ void SetParameters(struct Params *const params,
                       * (water_volume_global->max_z - water_volume_global->min_z);
 
   // Initial spacing between particles
-  const float spacing_particle = pow(volume/particles->number_global,
-                                     1.0/3.0);
+  const float spacing_particle = pow(volume/particles->global_count, 1.0/3.0);
 
   // Let mass of each particle equal 1
-  params->rest_density = particles->number_global/volume;
+  params->rest_density = particles->global_count/volume;
   printf("rest density: %f\n", params->rest_density);
 
   // Smoothing radius, h
@@ -142,7 +137,7 @@ void SetParameters(struct Params *const params,
   // Set initial node boundaries
   // Equally divide water volume between all ranks
   double water_length = water_volume_global->max_x - water_volume_global->min_x;
-  double equal_spacing =  water_length / params->num_procs;
+  double equal_spacing =  water_length / params->proc_count;
   params->node_start_x = water_volume_global->min_x
                        + params->rank * equal_spacing;
 
@@ -151,7 +146,7 @@ void SetParameters(struct Params *const params,
   // "Stretch" first and last ranks bounds to match boundary
   if (params->rank == 0)
     params->node_start_x  = boundary_global->min_x;
-  if (params->rank == params->num_procs-1)
+  if (params->rank == params->proc_count-1)
     params->node_end_x   = boundary_global->max_x;
 
   neighbors->max_neighbors = 60;

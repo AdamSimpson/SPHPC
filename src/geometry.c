@@ -54,7 +54,7 @@ void ConstructFluidVolume(struct Particles *const particles,
     }
   }
 
-  particles->number_local = i;
+  particles->local_count = i;
   DEBUG_PRINT("rank %d: min fluid: %f max fluid x: %f\n",
               params->rank, min_x + spacing/2.0,
               min_x + num_x*spacing + spacing/2.0);
@@ -74,7 +74,7 @@ void SetParticleNumbers(const struct AABB *const fluid_global,
   const int num_z = floor((fluid_global->max_z - fluid_global->min_z ) / spacing);
 
   // Initial fluid particles per rank
-  const int num_initial = (num_x * num_y * num_z)/get_num_procs();
+  const int num_initial = (num_x * num_y * num_z)/get_proc_count();
 
   // Set max communication particles to a 10th of node start number
   communication->max_particles = num_initial/10;
@@ -89,9 +89,9 @@ void SetParticleNumbers(const struct AABB *const fluid_global,
 // Test if boundaries need to be adjusted
 void CheckPartition(const struct Particles *particles,
                     struct Params *const params) {
-  const int num_rank = particles->number_local;
+  const int num_rank = particles->local_count;
   const int rank = params->rank;
-  const int num_procs = params->num_procs;
+  const int num_procs = params->proc_count;
   const double h = params->smoothing_radius;
 
   // Setup nodes to left and right of self
@@ -121,8 +121,8 @@ void CheckPartition(const struct Particles *particles,
   const double length_left = left[1];
   const double length_right = right[1];
 
-  const int even_particles = particles->number_global
-                            / (double)params->num_procs;
+  const int even_particles = particles->global_count
+                            / (double)params->proc_count;
   const int max_diff = even_particles/10.0f;
 
   // Difference in particle numbers from an even distribution
