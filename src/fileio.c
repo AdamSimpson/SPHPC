@@ -41,6 +41,7 @@ void FileIOInit(struct FileIO *const file_io,
       exit(-1);
     }
   }
+  MPI_Barrier(MPI_COMM_WORLD);
 
   // Set output directory
   file_io->output_path = SAFE_ALLOC(strlen(output_path)+2, sizeof(char));
