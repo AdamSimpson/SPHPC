@@ -37,8 +37,7 @@ void WriteMPI(const struct FluidParticles *const particles,
 
   MPI_File file;
   MPI_Status status;
-  char *file_name = SAFE_ALLOC(strlen(file_io->output_path) + 15,
-                               sizeof(char));
+  char file_name[128];
   sprintf(file_name, "%s/sim-%d.bin", file_io->output_path, file_io->file_num);
 
   const int num_particles = params->number_particles_local;
