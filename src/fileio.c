@@ -8,9 +8,12 @@
 #include "fluid.h"
 #include "mpi.h"
 #include <stdio.h>
+#include <errno.h>
 #include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 void FileIOInit(struct FileIO *const file_io,
                 const struct Params *const params) {
@@ -18,7 +21,22 @@ void FileIOInit(struct FileIO *const file_io,
   file_io->write_buffer = SAFE_ALLOC(num_components*params->max_particles_local,
                                      sizeof(double));
 
-  const char output_path[] = "/home/atj/OLCF/SPHPC/output";
+  // Get current path
+  char current_path[1024];
+  getcwd(current_path, sizeof(current_path));
+  if(current_path == NULL) {
+    printf("Error getting current working directory \n");
+    exit(-1);
+  }
+  // Create pwd/output directory
+  char output_path[1024];
+  sprintf(output_path, "%s/output", current_path);
+  int dir_return = mkdir(output_path, 0775);
+  if (dir_return != 0) {
+    printf("Error creating output directory: %s\n", strerror(errno));
+    exit(-1);
+  }
+  // Set output directory
   file_io->output_path = SAFE_ALLOC(strlen(output_path)+2, sizeof(char));
   strcpy(file_io->output_path, output_path);
 
@@ -37,7 +55,7 @@ void WriteMPI(const struct FluidParticles *const particles,
 
   MPI_File file;
   MPI_Status status;
-  char file_name[128];
+  char file_name[1024];
   sprintf(file_name, "%s/sim-%d.bin", file_io->output_path, file_io->file_num);
 
   const int num_particles = params->number_particles_local;
