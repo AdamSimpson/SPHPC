@@ -1,6 +1,6 @@
 #include "communication.h"
 #include "simulation.h"
-#include "fluid.h"
+#include "particles.h"
 #include "debug.h"
 #include "safe_alloc.h"
 #include <stdio.h>
@@ -8,8 +8,12 @@
 #include <string.h>
 #include "mpi.h"
 
-// Number of double variables that represent particle
+// Number of double components that need to be communicated per particle
 static const int num_components = 17;
+
+void InitCommunication(int argc, char *argv[]) {
+  MPI_Init(&argc, &argv);
+}
 
 void AllocateCommunication(struct Communication *const communication) {
 
@@ -39,10 +43,6 @@ void FreeCommunication(struct Communication *const communication) {
   free(communication->out_of_bounds.indices_right);
   free(communication->particle_send_buffer);
   free(communication->particle_recv_buffer);
-}
-
-void InitCommunication(int argc, char *argv[]) {
-  MPI_Init(&argc, &argv);
 }
 
 void FinalizeCommunication() {
@@ -142,7 +142,7 @@ void UnpackHaloComponents(const double *const packed_recv_left,
   // Unpack halo particles from right rank second
   for (int i=0; i<particles->halo_count_right; i++) {
     const int p_index = num_local
-                      + particles->halo_count_left + i; // "Global" index
+                      + particles->halo_count_left + i;
     UnpackBufferToParticle(packed_recv_right, i*17, particles, p_index);
   }
 }
@@ -323,12 +323,12 @@ void TransferOOBParticles(struct Communication *const communication,
   // Move particles from end to fill leaving particles
   for (int i=0; i<oob->particle_count_left; ++i) {
       const int removed_index = oob->indices_left[i];
-      MoveParticle(particles, particles->local_count-1, removed_index);
+      CopyParticle(particles, particles->local_count-1, removed_index);
       --particles->local_count;
   }
   for (int i=0; i<oob->particle_count_right; ++i) {
       const int removed_index = oob->indices_right[i];
-      MoveParticle(particles, particles->local_count-1, removed_index);
+      CopyParticle(particles, particles->local_count-1, removed_index);
       --particles->local_count;
   }
 
@@ -419,7 +419,6 @@ void UpdateHaloLambdas(const struct Communication *const communication,
   const int proc_to_left =  (rank == 0 ? MPI_PROC_NULL : rank-1);
   const int proc_to_right = (rank == proc_count-1 ? MPI_PROC_NULL : rank+1);
 
-  // Could do async to perhaps increase performance
   // Send lambdas to right and receive from left
   int tag = 784;
   MPI_Sendrecv(send_lambdas_right, num_moving_right, MPI_DOUBLE, proc_to_right, tag,
@@ -484,7 +483,6 @@ void UpdateHaloPositions(const struct Communication *const communication,
   const int proc_to_left =  (rank == 0 ? MPI_PROC_NULL : rank-1);
   const int proc_to_right = (rank == proc_count-1 ? MPI_PROC_NULL : rank+1);
 
-  // Could do async to perhaps increase performance
   // Send positions to right and receive from left
   int tag = 874;
   MPI_Sendrecv(send_positions_right, num_moving_right, MPI_DOUBLE, proc_to_right, tag,

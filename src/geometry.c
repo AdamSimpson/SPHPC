@@ -1,7 +1,7 @@
 #include "geometry.h"
 #include <stdio.h>
 #include <math.h>
-#include "fluid.h"
+#include "particles.h"
 #include "communication.h"
 #include "simulation.h"
 #include "debug.h"

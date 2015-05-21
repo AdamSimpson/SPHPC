@@ -2,7 +2,7 @@
 
 extern "C" {
 #define restrict
-#include "fluid.h"
+#include "particles.h"
 #include "simulation.h"
 #include "geometry.h"
 #undef restrict

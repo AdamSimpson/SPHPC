@@ -1,15 +1,11 @@
-#ifndef SPH_SRC_FLUID_H_
-#define SPH_SRC_FLUID_H_
+#ifndef SPH_SRC_PARTICLES_H_
+#define SPH_SRC_PARTICLES_H_
 
 // Forward Declaration
 struct Params;
 struct Neighbors;
 struct AABB;
 struct Communication;
-
-////////////////////////////////////////////////
-// Structures
-////////////////////////////////////////////////
 
 struct Particles {
   double *restrict x_star;
@@ -29,19 +25,18 @@ struct Particles {
   double *restrict w_z;
   double *restrict density;
   double *restrict lambda;
-  int    *restrict id; // Id is 'local' index within the fluid particle pointer array
+  int    *restrict id;
 
-  int global_count;
-  int local_count;
-  int max_local;  // Maximum number for max_fluid_particle_index + halo particles
+  int global_count; // Global number of particles in simulation
+  int local_count; // Particles within node bounds, excludes halo particles
+  int max_local;  // Maximum number of local and halo particles
   int halo_count_left;
   int halo_count_right;
 };
 
-////////////////////////////////////////////////
-// Function prototypes
-////////////////////////////////////////////////
-void MoveParticle(struct Particles *const particles, const int from_index, const int to_index);
+// Copies particle located at from_index to to_index
+void CopyParticle(struct Particles *const particles,
+                  const int from_index, const int to_index);
 
 void VorticityConfinement(struct Particles *const fluid_particles,
                           const struct Params *const params,
@@ -92,8 +87,8 @@ void InitParticles(struct Particles *const fluid_particles,
                    struct Params *const params,
                    const struct AABB *const water);
 
-void AllocateFluid(struct Particles *particles);
+void AllocateParticles(struct Particles *particles);
 
-void FreeFluid(struct Particles *particles);
+void FreeParticles(struct Particles *particles);
 
 #endif

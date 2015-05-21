@@ -5,7 +5,7 @@
 #include "simulation.h"
 #include "debug.h"
 #include "safe_alloc.h"
-#include "fluid.h"
+#include "particles.h"
 #include "mpi.h"
 #include <stdio.h>
 #include <errno.h>

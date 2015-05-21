@@ -1,4 +1,4 @@
-#include "fluid.h"
+#include "particles.h"
 #include "simulation.h"
 #include "communication.h"
 #include "neighbors.h"
@@ -39,7 +39,7 @@ static inline double DelW(const double r, const double h) {
   return DelW;
 }
 
-void MoveParticle(struct Particles *const particles,
+void CopyParticle(struct Particles *const particles,
                   const int from_index, const int to_index) {
   particles->x_star[to_index]  = particles->x_star[from_index];
   particles->y_star[to_index]  = particles->y_star[from_index];

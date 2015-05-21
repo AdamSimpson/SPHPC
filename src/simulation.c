@@ -5,7 +5,7 @@
 #include "debug.h"
 #include "communication.h"
 #include "neighbors.h"
-#include "fluid.h"
+#include "particles.h"
 #include "geometry.h"
 #include "fileio.h"
 #include "input_parser.h"

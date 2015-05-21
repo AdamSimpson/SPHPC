@@ -3,7 +3,7 @@
 extern "C" {
   #include "debug.h"
   #include "safe_alloc.h"
-  #include "fluid.h"
+  #include "particles.h"
   #include "geometry.h"
   #include "simulation.h"
 }
