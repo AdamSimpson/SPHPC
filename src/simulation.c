@@ -71,9 +71,9 @@ int main(int argc, char *argv[]) {
 
     UpdateVelocities(&particles, &params);
 
-    XSPHViscosity(&particles, &params, &neighbors);
+    ApplyViscosity(&particles, &params, &neighbors);
 
-    VorticityConfinement(&particles, &params, &neighbors);
+    ApplyVorticityConfinement(&particles, &params, &neighbors);
 
     UpdatePositions(&particles);
 

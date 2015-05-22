@@ -65,7 +65,7 @@ void CopyParticle(struct Particles *const particles,
 // Particle attribute computations
 ////////////////////////////////////////////////////////////////////////////
 
-void VorticityConfinement(struct Particles *const particles,
+void ApplyVorticityConfinement(struct Particles *const particles,
                            const struct Params *const params,
                            const struct Neighbors *const neighbors) {
 
@@ -170,7 +170,7 @@ void VorticityConfinement(struct Particles *const particles,
   }
 }
 
-void XSPHViscosity(struct Particles *const particles,
+void ApplyViscosity(struct Particles *const particles,
                    const struct Params *const params,
                    const struct Neighbors *const neighbors) {
 
