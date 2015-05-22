@@ -87,7 +87,7 @@ void SetParticleNumbers(const struct AABB *const fluid_global,
 }
 
 // Test if boundaries need to be adjusted
-void CheckPartition(const struct Particles *particles,
+void BalanceNodes(const struct Particles *particles,
                     struct Params *const params) {
   const int num_rank = particles->local_count;
   const int rank = params->rank;

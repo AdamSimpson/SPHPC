@@ -9,7 +9,6 @@
 #include "geometry.h"
 #include "fileio.h"
 #include "input_parser.h"
-#include "mpi.h"
 
 int main(int argc, char *argv[]) {
   InitCommunication(argc, argv);
@@ -47,20 +46,19 @@ int main(int argc, char *argv[]) {
     PredictPositions(&particles, &params, &boundary_global);
 
     if (n % 10 == 0)
-      CheckPartition(&particles, &params);
+      BalanceNodes(&particles, &params);
 
-    ExchangeOOB(&particles, &params, &communication);
+    ExchangeOOB(&communication, &particles, &params);
 
     ExchangeHalo(&communication, &params, &particles);
 
     FindAllNeighbors(&particles, &params, &neighbors);
 
     const int solve_iterations = 4;
-    int si;
-    for (si=0; si<solve_iterations; si++) {
+    for (int sub_i=0; sub_i<solve_iterations; ++sub_i) {
       ComputeDensities(&particles, &params, &neighbors);
 
-      CalculateLambda(&particles, &params, &neighbors);
+      ComputeLambda(&particles, &params, &neighbors);
 
       UpdateHaloLambdas(&communication, &params, &particles);
 

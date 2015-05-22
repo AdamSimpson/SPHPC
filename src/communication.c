@@ -147,7 +147,7 @@ void UnpackHaloComponents(const double *const packed_recv_left,
   }
 }
 
-void HaloExchange(struct Communication *const communication,
+void ExchangeHalo(struct Communication *const communication,
                   struct Params *const params,
                   struct Particles *const particles) {
 
@@ -281,7 +281,7 @@ void UnpackOOBComponents(const int num_from_left, const int num_from_right,
 }
 
 // Transfer particles that are out of node bounds
-void TransferOOBParticles(struct Communication *const communication,
+void ExchangeOOB(struct Communication *const communication,
                           struct Particles *const particles,
                           struct Params *const params) {
 

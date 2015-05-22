@@ -58,17 +58,13 @@ void UpdatePositionStars(struct Particles *const fluid_particles,
 
 void UpdatePositions(struct Particles *const fluid_particles);
 
-void CalculateLambda(struct Particles *const fluid_particles,
+void ComputeLambda(struct Particles *const fluid_particles,
                      const struct Params *const params,
                      const struct Neighbors *const neighbors);
 
 void UpdateDPs(struct Particles *const fluid_particles,
                const struct Params *const params,
                const struct Neighbors *const neighbors);
-
-void ExchangeOOB(struct Particles *const fluid_particles,
-                          struct Params *const params,
-                          struct Communication *const communication);
 
 void PredictPositions(struct Particles *const fluid_particles,
                       const struct Params *const params,
@@ -79,7 +75,7 @@ void CheckVelocity(double *const v_x, double *const v_y, double *const v_z);
 void UpdateVelocities(struct Particles *const fluid_particles,
                       const struct Params *const params);
 
-void BoundaryConditions(struct Particles *const fluid_particles,
+void ApplyBoundaryConditions(struct Particles *const fluid_particles,
                         const unsigned int i,
                         const struct AABB *const boundary);
 

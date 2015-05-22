@@ -80,7 +80,7 @@ void UnpackOOBComponents(const int num_from_left, const int num_from_right,
 // Identifies particles that have left the node start/end x boundary
 // then packs them into flat double arrays and sends them to the
 // left or right node
-void TransferOOBParticles(struct Communication *const communication,
+void ExchangeOOB(struct Communication *const communication,
                           struct Particles *const particles,
                           struct Params *const params);
 

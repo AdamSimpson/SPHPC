@@ -29,7 +29,7 @@ void SetParticleNumbers(const struct AABB *const fluid_global,
                         struct Communication *const communication);
 
 // Sets node x max and x min based upon particle count
-void CheckPartition(const struct Particles *particles,
-                    struct Params *const params);
+void BalanceNodes(const struct Particles *particles,
+                  struct Params *const params);
 
 #endif

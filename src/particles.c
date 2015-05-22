@@ -273,7 +273,7 @@ void UpdatePositionStars(struct Particles *const particles,
     particles->z_star[i] += particles->dp_z[i];
 
     // Enforce boundary conditions
-    BoundaryConditions(particles, i, boundary_global);
+    ApplyBoundaryConditions(particles, i, boundary_global);
   }
 
 }
@@ -288,7 +288,7 @@ void UpdatePositions(struct Particles *const particles) {
 
 }
 
-void CalculateLambda(struct Particles *const particles,
+void ComputeLambda(struct Particles *const particles,
                      const struct Params *const params,
                      const struct Neighbors *const neighbors) {
 
@@ -387,30 +387,6 @@ void UpdateDPs(struct Particles *const particles,
 
 }
 
-// Identify out of bounds particles and send them to appropriate rank
-void ExchangeOOBParticles(struct Particles *const particles,
-                          struct Params *const params,
-                          struct Communication *const communication) {
-
-  struct OOB *const out_of_bounds = &communication->out_of_bounds;
-
-  // Reset OOB numbers
-  out_of_bounds->particle_count_left = 0;
-  out_of_bounds->particle_count_right = 0;
-
-  for (int i=0; i<particles->local_count; i++) {
-    const double x_star = particles->x_star[i];
-    // Set OOB particle indices and update number
-    if (x_star < params->node_start_x)
-      out_of_bounds->indices_left[out_of_bounds->particle_count_left++] = i;
-    else if (x_star > params->node_end_x)
-      out_of_bounds->indices_right[out_of_bounds->particle_count_right++] = i;
-  }
-
-  // Transfer particles that have left the processor bounds
-  TransferOOBParticles(communication, particles, params);
-}
-
 void PredictPositions(struct Particles *const particles,
                       const struct Params *const params,
                       const struct AABB *const boundary_global) {
@@ -426,7 +402,7 @@ void PredictPositions(struct Particles *const particles,
 
     // Enforce boundary conditions before hash
     // Otherwise predicted position can blow up hash
-    BoundaryConditions(particles, i, boundary_global);
+    ApplyBoundaryConditions(particles, i, boundary_global);
   }
 }
 
@@ -474,7 +450,7 @@ void UpdateVelocities(struct Particles *const particles,
 }
 
 // Assume AABB with min point being axis origin
-void BoundaryConditions(struct Particles *const particles,
+void ApplyBoundaryConditions(struct Particles *const particles,
                         const unsigned int i,
                         const struct AABB *const boundary) {
 
@@ -497,22 +473,6 @@ void BoundaryConditions(struct Particles *const particles,
   else if(particles->z_star[i]  > boundary->max_z)
     particles->z_star[i] = boundary->max_z-0.00001;
 
-}
-
-void InitParticles(struct Particles *const particles,
-                   struct Params *const params,
-                   const struct AABB *const water) {
-
-  // Create fluid volume
-  ConstructFluidVolume(particles, params, water);
-
-  // Initialize particle values
-  for (int i=0; i<particles->local_count; ++i) {
-    particles->x_star[i] = particles->x[i];
-    particles->y_star[i] = particles->y[i];
-    particles->z_star[i] = particles->z[i];
-    particles->density[i] = params->rest_density;
-  }
 }
 
 void AllocInitParticles(struct Particles *particles,
