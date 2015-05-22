@@ -176,19 +176,31 @@ void ExchangeHalo(struct Communication *const communication,
   DEBUG_PRINT("rank %d, halo: will send %d to left, %d to right\n",
               rank, num_moving_left, num_moving_right);
 
+  int tagl = 4312;
+  int tagr = 5177;
+
   // Get number of halo particles from right and left
   int num_from_left = 0;
   int num_from_right = 0;
-  int tag = 3217;
-  // Send number to right and receive from left
-  MPI_Sendrecv(&num_moving_right, 1, MPI_INT, proc_to_right, tag,
-               &num_from_left,    1, MPI_INT, proc_to_left,  tag,
-               MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-  // Send number to left and receive from right
-  tag = 8425;
-  MPI_Sendrecv(&num_moving_left, 1, MPI_INT, proc_to_left, tag,
-               &num_from_right,  1, MPI_INT, proc_to_right,tag,
-               MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+  // Receive count from left rank
+  MPI_Request reqs[4];
+  MPI_Irecv(&num_from_left, 1, MPI_INT, proc_to_left,
+            tagl, MPI_COMM_WORLD, &reqs[0]);
+  // Receive count from right rank
+  MPI_Irecv(&num_from_right, 1, MPI_INT, proc_to_right,
+            tagr, MPI_COMM_WORLD, &reqs[1]);
+
+  // Send count to right rank
+  MPI_Isend(&num_moving_right, 1, MPI_INT, proc_to_right,
+            tagl, MPI_COMM_WORLD, &reqs[2]);
+  // Send count to left rank
+  MPI_Isend(&num_moving_left, 1, MPI_INT, proc_to_left,
+            tagr, MPI_COMM_WORLD, &reqs[3]);
+
+  // Wait for transfer to complete
+  MPI_Status statuses[4];
+  MPI_Waitall(4, reqs, statuses);
 
   // Set send/recv buffer points
   double *const packed_send_left  = communication->particle_send_buffer;
@@ -202,11 +214,7 @@ void ExchangeHalo(struct Communication *const communication,
   PackHaloComponents(communication, particles,
                      packed_send_left, packed_send_right);
 
-  int tagl = 4312;
-  int tagr = 5177;
-
   // Receive halo from left rank
-  MPI_Request reqs[4];
   MPI_Irecv(packed_recv_left, num_components*num_from_left, MPI_DOUBLE,
             proc_to_left, tagl, MPI_COMM_WORLD, &reqs[0]);
   // Receive halo from right rank
@@ -221,7 +229,6 @@ void ExchangeHalo(struct Communication *const communication,
             proc_to_left, tagr, MPI_COMM_WORLD, &reqs[3]);
 
   // Wait for transfer to complete
-  MPI_Status statuses[4];
   MPI_Waitall(4, reqs, statuses);
 
   // Update params struct with halo values
@@ -339,41 +346,53 @@ void ExchangeOOB(struct Communication *const communication,
   // Get number of particles from right and left
   int num_from_left  = 0;
   int num_from_right = 0;
-  int tag = 7006;
-  // Send number to right and receive from left
-  MPI_Sendrecv(&num_moving_right, 1, MPI_INT, proc_to_right, tag,
-               &num_from_left,    1, MPI_INT,proc_to_left,   tag,
-               MPI_COMM_WORLD,MPI_STATUS_IGNORE);
-  // Send number to left and receive from right
-  tag = 8278;
-  MPI_Sendrecv(&num_moving_left, 1, MPI_INT, proc_to_left,  tag,
-               &num_from_right,  1, MPI_INT, proc_to_right, tag,
-               MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+  int tagl = 7006;
+  int tagr = 8278;
+
+  // Receive count from left rank
+  MPI_Request reqs[4];
+  MPI_Irecv(&num_from_left, 1, MPI_INT, proc_to_left,
+            tagl, MPI_COMM_WORLD, &reqs[0]);
+  // Receive count from right rank
+  MPI_Irecv(&num_from_right, 1, MPI_INT, proc_to_right,
+            tagr, MPI_COMM_WORLD, &reqs[1]);
+
+  // Send count to right rank
+  MPI_Isend(&num_moving_right, 1, MPI_INT, proc_to_right,
+            tagl, MPI_COMM_WORLD, &reqs[2]);
+  // Send count to left rank
+  MPI_Isend(&num_moving_left, 1, MPI_INT, proc_to_left,
+            tagr, MPI_COMM_WORLD, &reqs[3]);
+
+  // Wait for transfer to complete
+  MPI_Status statuses[4];
+  MPI_Waitall(4, reqs, statuses);
 
   // Set recv buffer points
   double *const packed_recv_left  = communication->particle_recv_buffer;
   double *const packed_recv_right = packed_recv_left
                                   + num_from_left*num_components;
 
-  MPI_Status status;
-  int num_received_left = 0;
-  int num_received_right = 0;
+  // Receive packed doubles from left rank
+  MPI_Irecv(packed_recv_left, num_components*num_from_left, MPI_DOUBLE,
+            proc_to_left, tagl, MPI_COMM_WORLD, &reqs[0]);
+  // Receive packed doubles from right rank
+  MPI_Irecv(packed_recv_right, num_components*num_from_right, MPI_DOUBLE,
+            proc_to_right, tagr, MPI_COMM_WORLD, &reqs[1]);
 
-  // Sending to right, recv from left
-  tag = 2522;
-  MPI_Sendrecv(packed_send_right, num_components*num_moving_right, MPI_DOUBLE, proc_to_right, tag,
-               packed_recv_left, num_components*num_from_left, MPI_DOUBLE, proc_to_left, tag,
-               MPI_COMM_WORLD, &status);
-  MPI_Get_count(&status, MPI_DOUBLE, &num_received_left);
-  num_received_left /= num_components;
+  // Send packed doubles to right rank
+  MPI_Isend(packed_send_right,  num_components*num_moving_right, MPI_DOUBLE,
+            proc_to_right, tagl, MPI_COMM_WORLD, &reqs[2]);
+  // Send packed doubles to left rank
+  MPI_Isend(packed_send_left, num_components*num_moving_left, MPI_DOUBLE,
+            proc_to_left, tagr, MPI_COMM_WORLD, &reqs[3]);
 
-  // Sending to left, recv from right
-  tag = 1165;
-  MPI_Sendrecv(packed_send_left, num_components*num_moving_left, MPI_DOUBLE, proc_to_left, tag,
-               packed_recv_right, num_components*num_from_right, MPI_DOUBLE, proc_to_right, tag,
-               MPI_COMM_WORLD, &status);
-  MPI_Get_count(&status, MPI_DOUBLE, &num_received_right);
-  num_received_right /= num_components;
+  // Wait for transfer to complete
+  MPI_Waitall(4, reqs, statuses);
+
+  // Convert to number of particles
+  num_from_left  /= num_components;
+  num_from_right /= num_components;
 
   UnpackOOBComponents(num_from_left,num_from_right,
                       packed_recv_left,
@@ -399,20 +418,20 @@ void UpdateHaloLambdas(const struct Communication *const communication,
   const int num_from_right = particles->halo_count_right;
 
   // Allocate send/recv buffers
-  double *const send_lambdas_left  = communication->particle_send_buffer;
-  double *const send_lambdas_right = send_lambdas_left + num_moving_left;
+  double *const lambdas_send_left  = communication->particle_send_buffer;
+  double *const lambdas_send_right = lambdas_send_left + num_moving_left;
 
-  double *const recv_lambdas_left  = communication->particle_recv_buffer;
-  double *const recv_lambdas_right = recv_lambdas_left + num_from_left;
+  double *const lambdas_recv_left  = communication->particle_recv_buffer;
+  double *const lambdas_recv_right = lambdas_recv_left + num_from_left;
 
   // Pack local halo lambdas
   for (int i=0; i<num_moving_left; i++) {
     const int p_index = edges->indices_left[i];
-    send_lambdas_left[i] = particles->lambda[p_index];
+    lambdas_send_left[i] = particles->lambda[p_index];
   }
   for (int i=0; i<num_moving_right; i++) {
     const int p_index = edges->indices_right[i];
-    send_lambdas_right[i] = particles->lambda[p_index];
+    lambdas_send_right[i] = particles->lambda[p_index];
   }
 
   // Setup nodes to left and right of self
@@ -420,25 +439,35 @@ void UpdateHaloLambdas(const struct Communication *const communication,
   const int proc_to_right = (rank == proc_count-1 ? MPI_PROC_NULL : rank+1);
 
   // Send lambdas to right and receive from left
-  int tag = 784;
-  MPI_Sendrecv(send_lambdas_right, num_moving_right, MPI_DOUBLE, proc_to_right, tag,
-               recv_lambdas_left, num_from_left, MPI_DOUBLE, proc_to_left, tag,
-               MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  int tagl = 784;
+  int tagr = 456;
+  MPI_Request reqs[4];
+  // Receive packed doubles from left rank
+  MPI_Irecv(lambdas_recv_left, num_from_left, MPI_DOUBLE,
+            proc_to_left, tagl, MPI_COMM_WORLD, &reqs[0]);
+  // Receive packed doubles from right rank
+  MPI_Irecv(lambdas_recv_right, num_from_right, MPI_DOUBLE,
+            proc_to_right, tagr, MPI_COMM_WORLD, &reqs[1]);
 
-  // Send lambdas to left and receive from right
-  tag = 456;
-  MPI_Sendrecv(send_lambdas_left, num_moving_left, MPI_DOUBLE, proc_to_left, tag,
-               recv_lambdas_right, num_from_right, MPI_DOUBLE, proc_to_right,tag,
-               MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  // Send packed doubles to right rank
+  MPI_Isend(lambdas_send_right, num_moving_right, MPI_DOUBLE,
+            proc_to_right, tagl, MPI_COMM_WORLD, &reqs[2]);
+  // Send packed doubles to left rank
+  MPI_Isend(lambdas_send_left, num_moving_left, MPI_DOUBLE,
+            proc_to_left, tagr, MPI_COMM_WORLD, &reqs[3]);
+
+  // Wait for transfer to complete
+  MPI_Status statuses[4];
+  MPI_Waitall(4, reqs, statuses);
 
   // Unpack halo particle lambdas
   for (int i=0; i<num_from_left; i++) {
     const int p_index = particles->local_count + i;
-    particles->lambda[p_index] = recv_lambdas_left[i];
+    particles->lambda[p_index] = lambdas_recv_left[i];
   }
   for (int i=0; i<num_from_right; i++) {
     const int p_index = particles->local_count + num_from_left + i;
-    particles->lambda[p_index] = recv_lambdas_right[i];
+    particles->lambda[p_index] = lambdas_recv_right[i];
   }
 }
 
@@ -459,54 +488,64 @@ void UpdateHaloPositions(const struct Communication *const communication,
   const int num_from_right = num_components*particles->halo_count_right;
 
   // Set send/recv buffers
-  double *const send_positions_left  = communication->particle_send_buffer;
-  double *const send_positions_right = send_positions_left + num_moving_left;
+  double *const positions_send_left  = communication->particle_send_buffer;
+  double *const positions_send_right = positions_send_left + num_moving_left;
 
-  double *const recv_positions_left  = communication->particle_recv_buffer;
-  double *const recv_positions_right = recv_positions_left + num_from_left;
+  double *const positions_recv_left  = communication->particle_recv_buffer;
+  double *const positions_recv_right = positions_recv_left + num_from_left;
 
   // Pack local edge positions
   for (int i=0; i<num_moving_left; i+=3) {
     const int p_index = edges->indices_left[i/3];
-    send_positions_left[i]   = particles->x_star[p_index];
-    send_positions_left[i+1] = particles->y_star[p_index];
-    send_positions_left[i+2] = particles->z_star[p_index];
+    positions_send_left[i]   = particles->x_star[p_index];
+    positions_send_left[i+1] = particles->y_star[p_index];
+    positions_send_left[i+2] = particles->z_star[p_index];
   }
   for (int i=0; i<num_moving_right; i+=3) {
     const int p_index = edges->indices_right[i/3];
-    send_positions_right[i]   = particles->x_star[p_index];
-    send_positions_right[i+1] = particles->y_star[p_index];
-    send_positions_right[i+2] = particles->z_star[p_index];
+    positions_send_right[i]   = particles->x_star[p_index];
+    positions_send_right[i+1] = particles->y_star[p_index];
+    positions_send_right[i+2] = particles->z_star[p_index];
   }
 
   // Setup nodes to left and right of self
   const int proc_to_left =  (rank == 0 ? MPI_PROC_NULL : rank-1);
   const int proc_to_right = (rank == proc_count-1 ? MPI_PROC_NULL : rank+1);
 
-  // Send positions to right and receive from left
-  int tag = 874;
-  MPI_Sendrecv(send_positions_right, num_moving_right, MPI_DOUBLE, proc_to_right, tag,
-               recv_positions_left,  num_from_left,    MPI_DOUBLE, proc_to_left,  tag,
-               MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  // Send lambdas to right and receive from left
+  int tagl = 874;
+  int tagr = 546;
+  MPI_Request reqs[4];
+  // Receive packed doubles from left rank
+  MPI_Irecv(positions_recv_left, num_from_left, MPI_DOUBLE,
+            proc_to_left, tagl, MPI_COMM_WORLD, &reqs[0]);
+  // Receive packed doubles from right rank
+  MPI_Irecv(positions_recv_right, num_from_right, MPI_DOUBLE,
+            proc_to_right, tagr, MPI_COMM_WORLD, &reqs[1]);
 
-  // Send positions to left and receive from right
-  tag = 546;
-  MPI_Sendrecv(send_positions_left,  num_moving_left, MPI_DOUBLE, proc_to_left,  tag,
-               recv_positions_right, num_from_right,  MPI_DOUBLE, proc_to_right, tag,
-               MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  // Send packed doubles to right rank
+  MPI_Isend(positions_send_right, num_moving_right, MPI_DOUBLE,
+            proc_to_right, tagl, MPI_COMM_WORLD, &reqs[2]);
+  // Send packed doubles to left rank
+  MPI_Isend(positions_send_left, num_moving_left, MPI_DOUBLE,
+            proc_to_left, tagr, MPI_COMM_WORLD, &reqs[3]);
 
-    // Unpack halo particle positions
-    for (int i=0; i<num_from_left; i+=3) {
-        const int p_index = particles->local_count + i/3;
-        particles->x_star[p_index] = recv_positions_left[i];
-        particles->y_star[p_index] = recv_positions_left[i+1];
-        particles->z_star[p_index] = recv_positions_left[i+2];
-    }
-    for (int i=0; i<num_from_right; i+=3) {
-        const int p_index = particles->local_count
-                          + num_from_left/3 + i/3;
-        particles->x_star[p_index] = recv_positions_right[i];
-        particles->y_star[p_index] = recv_positions_right[i+1];
-        particles->z_star[p_index] = recv_positions_right[i+2];
-    }
+  // Wait for transfer to complete
+  MPI_Status statuses[4];
+  MPI_Waitall(4, reqs, statuses);
+
+  // Unpack halo particle positions
+  for (int i=0; i<num_from_left; i+=3) {
+    const int p_index = particles->local_count + i/3;
+    particles->x_star[p_index] = positions_recv_left[i];
+    particles->y_star[p_index] = positions_recv_left[i+1];
+    particles->z_star[p_index] = positions_recv_left[i+2];
+  }
+  for (int i=0; i<num_from_right; i+=3) {
+    const int p_index = particles->local_count
+                      + num_from_left/3 + i/3;
+    particles->x_star[p_index] = positions_recv_right[i];
+    particles->y_star[p_index] = positions_recv_right[i+1];
+    particles->z_star[p_index] = positions_recv_right[i+2];
+  }
 }
