@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-// Forward Declaration
+// Forward Declarations
 struct Particles;
 struct Params;
 struct AABB;
@@ -17,11 +17,11 @@ struct Neighbors {
   int hash_size_x;
   int hash_size_y;
   int hash_size_z;
-  struct Neighbor *restrict particle_neighbors;
+  struct NeighborBucket *restrict neighbor_buckets;
   double hash_spacing;
 };
 
-struct Neighbor {
+struct NeighborBucket {
     unsigned int neighbor_indices[60];
     int count;
 };
@@ -31,12 +31,12 @@ struct Neighbor {
 extern "C" {
 #endif
 
-void AllocateNeighbors(struct Neighbors *const neighbors,
+void AllocInitNeighbors(struct Neighbors *const neighbors,
                        const struct Particles *particles,
                        const struct Params *const params,
                        const struct AABB *const boundary_global);
 
-void FreeNeighbors(struct Neighbors *neighbors);
+void FinalizeNeighbors(struct Neighbors *neighbors);
 
 void FindAllNeighbors(const struct Particles *const particles,
                       const struct Params *const params,

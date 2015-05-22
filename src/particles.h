@@ -83,12 +83,10 @@ void BoundaryConditions(struct Particles *const fluid_particles,
                         const unsigned int i,
                         const struct AABB *const boundary);
 
-void InitParticles(struct Particles *const fluid_particles,
-                   struct Params *const params,
-                   const struct AABB *const water);
+void AllocInitParticles(struct Particles *particles,
+                        struct Params *params,
+                        struct AABB *fluid_volume_initial);
 
-void AllocateParticles(struct Particles *particles);
-
-void FreeParticles(struct Particles *particles);
+void FinalizeParticles(struct Particles *particles);
 
 #endif

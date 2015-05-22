@@ -14,15 +14,15 @@ extern "C" {
 #include <stdbool.h>
 #include <string.h>
 
-void AllocateNeighbors(struct Neighbors *const neighbors,
+void AllocInitNeighbors(struct Neighbors *const neighbors,
                        const struct Particles *particles,
                        const struct Params *const params,
                        const struct AABB *const boundary_global) {
 
   // Allocate neighbors array
-  neighbors->particle_neighbors = (struct Neighbor*)
+  neighbors->neighbor_buckets = (struct NeighborBucket*)
                                   SAFE_ALLOC(particles->max_local,
-                                             sizeof(struct Neighbor));
+                                             sizeof(struct NeighborBucket));
 
   // +1 added because range begins at 0
   neighbors->hash_size_x = ceil((boundary_global->max_x - boundary_global->min_x)
@@ -43,11 +43,10 @@ void AllocateNeighbors(struct Neighbors *const neighbors,
                                                      sizeof(unsigned int));
   neighbors->particle_ids = (unsigned int*)SAFE_ALLOC(particles->max_local,
                                                       sizeof(unsigned int));
-
 }
 
-void FreeNeighbors(struct Neighbors *neighbors) {
-  free(neighbors->particle_neighbors);
+void FinalizeNeighbors(struct Neighbors *neighbors) {
+  free(neighbors->neighbor_buckets);
   free(neighbors->start_indices);
   free(neighbors->end_indices);
   free(neighbors->hash_values);
@@ -169,8 +168,8 @@ void FillParticleNeighbors(struct Neighbors *const neighbors,
   const double spacing = neighbors->hash_spacing;
 
   // Get neighbor bucket for particle p
-  Neighbor *const neighbor = &neighbors->particle_neighbors[p_index];
-  neighbor->count = 0;
+  NeighborBucket *const neighbor_bucket = &neighbors->neighbor_buckets[p_index];
+  neighbor_bucket->count = 0;
 
   const double px = particles->x_star[p_index];
   const double py = particles->y_star[p_index];
@@ -219,10 +218,10 @@ void FillParticleNeighbors(struct Neighbors *const neighbors,
             // If inside smoothing radius and enough space
             // in p's neighbor bucket add q
             if(r2<smoothing_radius2 &&
-               neighbor->count < max_neighbors) {
-                const int num_neighbors = neighbor->count;
-                neighbor->neighbor_indices[num_neighbors] = q_index;
-                ++neighbor->count;
+               neighbor_bucket->count < max_neighbors) {
+                const int num_neighbors = neighbor_bucket->count;
+                neighbor_bucket->neighbor_indices[num_neighbors] = q_index;
+                ++neighbor_bucket->count;
             }
           }
         }

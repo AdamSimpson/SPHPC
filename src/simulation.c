@@ -27,15 +27,13 @@ int main(int argc, char *argv[]) {
 
   SetParticleNumbers(&water_volume_global, &particles, &params, &communication);
 
-  AllocateFluid(&particles);
+  AllocInitParticles(&particles, &params, &water_volume_global);
 
-  AllocateNeighbors(&neighbors, &particles, &params, &boundary_global);
+  AllocInitNeighbors(&neighbors, &particles, &params, &boundary_global);
 
   AllocateCommunication(&communication);
 
-  FileIOInit(&file_io, &particles, &params);
-
-  InitParticles(&particles, &params, &water_volume_global);
+  AllocInitFileIO(&file_io, &particles, &params);
 
   WriteMPI(&particles, &params, &file_io);
 
@@ -94,11 +92,11 @@ int main(int argc, char *argv[]) {
   const double end_time = MPI_Wtime();
   printf("Rank %d Elapsed seconds: %f\n", params.rank, end_time-start_time);
 
-  FreeFluid(&particles);
+  FinalizeParticles(&particles);
   FreeCommunication(&communication);
-  FreeNeighbors(&neighbors);
+  FinalizeNeighbors(&neighbors);
 
-  FileIOFinalize(&file_io);
+  FinalizeFileIO(&file_io);
 
   // Close MPI
   FinalizeCommunication();

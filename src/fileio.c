@@ -15,7 +15,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-void FileIOInit(struct FileIO *const file_io,
+void AllocInitFileIO(struct FileIO *const file_io,
                 const struct Particles *const particles,
                 const struct Params *params) {
   int num_components = 3;
@@ -50,7 +50,7 @@ void FileIOInit(struct FileIO *const file_io,
   file_io->file_num = 0;
 }
 
-void FileIOFinalize(struct FileIO *const file_io) {
+void FinalizeFileIO(struct FileIO *const file_io) {
     free(file_io->write_buffer);
     free(file_io->output_path);
 }

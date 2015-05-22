@@ -75,7 +75,7 @@ void VorticityConfinement(struct Particles *const particles,
   // Calculate vorticy at each particle
   for (int i=0; i<particles->local_count; i++) {
     const int p_index = i;
-    const struct Neighbor *const n = &neighbors->particle_neighbors[i];
+    const struct NeighborBucket *const n = &neighbors->neighbor_buckets[i];
 
     double vort_x = 0.0;
     double vort_y = 0.0;
@@ -117,7 +117,7 @@ void VorticityConfinement(struct Particles *const particles,
   // Apply vorticity confinement
   for (int i=0; i<particles->local_count; i++) {
     const int p_index = i;
-    const struct Neighbor *const n = &neighbors->particle_neighbors[i];
+    const struct NeighborBucket *const n = &neighbors->neighbor_buckets[i];
 
     double eta_x  = 0.0;
     double eta_y  = 0.0;
@@ -179,7 +179,7 @@ void XSPHViscosity(struct Particles *const particles,
 
   for (int i=0; i<particles->local_count; i++) {
     const int p_index = i;
-    const struct Neighbor *const n = &neighbors->particle_neighbors[i];
+    const struct NeighborBucket *const n = &neighbors->neighbor_buckets[i];
 
     double partial_sum_x = 0.0;
     double partial_sum_y = 0.0;
@@ -230,7 +230,7 @@ void ComputeDensities(struct Particles *const particles,
 
   for (int i=0; i<particles->local_count; i++) {
     const int p_index = i;
-    const struct Neighbor *const n = &neighbors->particle_neighbors[i];
+    const struct NeighborBucket *const n = &neighbors->neighbor_buckets[i];
 
     // Own contribution to density
     double density = W(0.0, h);
@@ -294,7 +294,7 @@ void CalculateLambda(struct Particles *const particles,
 
   for (int i=0; i<particles->local_count; i++) {
     const int p_index = i;
-    const struct Neighbor *const n = &neighbors->particle_neighbors[i];
+    const struct NeighborBucket *const n = &neighbors->neighbor_buckets[i];
     const double Ci = particles->density[p_index]
                      /params->rest_density - 1.0;
     double sum_C = 0.0;
@@ -350,7 +350,7 @@ void UpdateDPs(struct Particles *const particles,
 
   for (int i=0; i<particles->local_count; i++) {
     const int p_index = i;
-    const struct Neighbor *const n = &neighbors->particle_neighbors[i];
+    const struct NeighborBucket *const n = &neighbors->neighbor_buckets[i];
 
     double dp_x = 0.0;
     double dp_y = 0.0;
@@ -515,7 +515,9 @@ void InitParticles(struct Particles *const particles,
   }
 }
 
-void AllocateFluid(struct Particles *particles) {
+void AllocInitParticles(struct Particles *particles,
+                        struct Params *params,
+                        struct AABB *fluid_volume_initial) {
 
   const size_t num_particles = particles->max_local;
 
@@ -545,9 +547,19 @@ void AllocateFluid(struct Particles *particles) {
 
   particles->id = SAFE_ALLOC(num_particles, sizeof(int));
 
+  ConstructFluidVolume(particles, params, fluid_volume_initial);
+
+  // Initialize particle values
+  for (int i=0; i<particles->local_count; ++i) {
+    particles->x_star[i] = particles->x[i];
+    particles->y_star[i] = particles->y[i];
+    particles->z_star[i] = particles->z[i];
+    particles->density[i] = params->rest_density;
+  }
+
 }
 
-void FreeFluid(struct Particles *particles) {
+void FinalizeParticles(struct Particles *particles) {
     free(particles->x_star);
     free(particles->y_star);
     free(particles->z_star);

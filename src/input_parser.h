@@ -10,6 +10,7 @@ struct AABB;
 extern "C" {
 #endif
 
+// Read an external parameters file and set simulation values
 void ReadParameters(struct Params *const parameters,
                     struct Particles *particles,
                     struct AABB *boundary_volume,
