@@ -83,7 +83,7 @@ void SetParticleNumbers(const struct AABB *const fluid_global,
   particles->max_local = num_initial + 4*communication->max_particles;
 
   DEBUG_PRINT("initial number of particles %d\n", num_initial);
-  DEBUG_PRINT("Max fluid particles local: %d\n", params->max_particles_local);
+  DEBUG_PRINT("Max fluid particles local: %d\n", particles->max_local);
 }
 
 // Test if boundaries need to be adjusted

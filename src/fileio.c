@@ -99,8 +99,8 @@ void WriteParticles(const struct Particles *const particles,
 
   int num_bytes;
   MPI_Get_elements(&status, MPI_CHAR, &num_bytes);
-  DEBUG_PRINT("rank %d wrote %d bytes(%d particles) to file %s\n",
-              params->rank,num_bytes,num_particles,name);
+  DEBUG_PRINT("rank %d wrote %d bytes(%d particles) to output\n",
+              params->rank,num_bytes,num_particles);
 
   // Close file
   MPI_File_close(&file);

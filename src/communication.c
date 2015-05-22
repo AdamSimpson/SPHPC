@@ -400,7 +400,7 @@ void ExchangeOOB(struct Communication *const communication,
                       particles);
 
   DEBUG_PRINT("rank %d, OOB: recv %d from left, %d from right\n",
-              num_received_left, num_received_right);
+              rank, num_from_left, num_from_right);
 }
 
 void UpdateHaloLambdas(const struct Communication *const communication,

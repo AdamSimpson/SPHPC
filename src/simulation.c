@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
   for (int n=0; n<params.number_steps; ++n) {
 
     DEBUG_PRINT("Rank %d Entering fluid step %d with %d particles\n",
-                params.rank, n, params.number_particles_local);
+                params.rank, n, particles.local_count);
 
     ApplyGravity(&particles, &params);
 
