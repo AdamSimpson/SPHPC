@@ -56,7 +56,7 @@ void FinalizeFileIO(struct FileIO *const file_io) {
 }
 
 // Write boundary in MPI
-void WriteMPI(const struct Particles *const particles,
+void WriteParticles(const struct Particles *const particles,
               const struct Params *const params,
               struct FileIO *const file_io) {
 

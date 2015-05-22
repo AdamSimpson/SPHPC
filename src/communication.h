@@ -87,7 +87,7 @@ void TransferOOBParticles(struct Communication *const communication,
 // Identifies particles that have are within one smooth radius of node edge
 // then packs them into flat double arrays and sends them to the
 // left or right node
-void HaloExchange(struct Communication *const communication,
+void ExchangeHalo(struct Communication *const communication,
                   struct Params *const params,
                   struct Particles *const particles);
 

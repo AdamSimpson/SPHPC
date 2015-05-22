@@ -20,7 +20,7 @@ void AllocInitFileIO(struct FileIO *const file_io,
 void FinalizeFileIO(struct FileIO *const file_io);
 
 // Writes particle x,y,z positions to file using MPI-IO
-void WriteMPI(const struct Particles *const particles,
+void WriteParticles(const struct Particles *const particles,
               const struct Params *const params,
               struct FileIO *const file_io);
 

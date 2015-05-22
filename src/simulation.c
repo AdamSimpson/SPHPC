@@ -35,12 +35,9 @@ int main(int argc, char *argv[]) {
 
   AllocInitFileIO(&file_io, &particles, &params);
 
-  WriteMPI(&particles, &params, &file_io);
+  WriteParticles(&particles, &params, &file_io);
 
-  MPI_Barrier(MPI_COMM_WORLD);
-  const double start_time = MPI_Wtime();
-
-  for (int n=0; n<params.number_steps; n++) {
+  for (int n=0; n<params.number_steps; ++n) {
 
     DEBUG_PRINT("Rank %d Entering fluid step %d with %d particles\n",
                 params.rank, n, params.number_particles_local);
@@ -52,10 +49,9 @@ int main(int argc, char *argv[]) {
     if (n % 10 == 0)
       CheckPartition(&particles, &params);
 
-    // Identify out of bounds particles and send them to appropriate rank
-    IdentifyOOBParticles(&particles, &params, &communication);
+    ExchangeOOB(&particles, &params, &communication);
 
-    HaloExchange(&communication, &params, &particles);
+    ExchangeHalo(&communication, &params, &particles);
 
     FindAllNeighbors(&particles, &params, &neighbors);
 
@@ -85,20 +81,15 @@ int main(int argc, char *argv[]) {
 
     // Write file at 30 FPS
     if (n % (int)(1.0/(params.time_step*30.0)) )
-      WriteMPI(&particles, &params, &file_io);
+      WriteParticles(&particles, &params, &file_io);
 
   }
 
-  const double end_time = MPI_Wtime();
-  printf("Rank %d Elapsed seconds: %f\n", params.rank, end_time-start_time);
-
   FinalizeParticles(&particles);
-  FreeCommunication(&communication);
   FinalizeNeighbors(&neighbors);
-
   FinalizeFileIO(&file_io);
 
-  // Close MPI
+  FreeCommunication(&communication);
   FinalizeCommunication();
 
   return 0;

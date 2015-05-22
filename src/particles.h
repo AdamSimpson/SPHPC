@@ -66,7 +66,7 @@ void UpdateDPs(struct Particles *const fluid_particles,
                const struct Params *const params,
                const struct Neighbors *const neighbors);
 
-void IdentifyOOBParticles(struct Particles *const fluid_particles,
+void ExchangeOOB(struct Particles *const fluid_particles,
                           struct Params *const params,
                           struct Communication *const communication);
 

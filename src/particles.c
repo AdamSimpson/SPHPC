@@ -388,7 +388,7 @@ void UpdateDPs(struct Particles *const particles,
 }
 
 // Identify out of bounds particles and send them to appropriate rank
-void IdentifyOOBParticles(struct Particles *const particles,
+void ExchangeOOBParticles(struct Particles *const particles,
                           struct Params *const params,
                           struct Communication *const communication) {
 
