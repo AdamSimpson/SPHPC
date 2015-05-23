@@ -82,7 +82,6 @@ void SetParticleNumbers(const struct AABB *const fluid_global,
   // Add initial space and left/right out of bounds/halo particles
   particles->max_local = num_initial + 4*communication->max_particles;
 
-  DEBUG_PRINT("initial number of particles %d\n", num_initial);
   DEBUG_PRINT("Max fluid particles local: %d\n", particles->max_local);
 }
 

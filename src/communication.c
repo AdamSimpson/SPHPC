@@ -202,6 +202,12 @@ void ExchangeHalo(struct Communication *const communication,
   MPI_Status statuses[4];
   MPI_Waitall(4, reqs, statuses);
 
+  if (particles->local_count + num_from_left + num_from_right
+      > particles->max_local) {
+    printf("Halo overflow: Aborting! \n");
+    exit(-1);
+  }
+
   // Set send/recv buffer points
   double *const packed_send_left  = communication->particle_send_buffer;
   double *const packed_send_right = packed_send_left
@@ -231,23 +237,15 @@ void ExchangeHalo(struct Communication *const communication,
   // Wait for transfer to complete
   MPI_Waitall(4, reqs, statuses);
 
-  // Update params struct with halo values
-  int num_received_right = 0;
-  int num_received_left = 0;
-  MPI_Get_count(&statuses[0], MPI_DOUBLE, &num_received_left);
-  MPI_Get_count(&statuses[1], MPI_DOUBLE, &num_received_right);
-  num_received_left  /= num_components;
-  num_received_right /= num_components;
-
-  particles->halo_count_left  = num_received_left;
-  particles->halo_count_right = num_received_right;
+  particles->halo_count_left  = num_from_left;
+  particles->halo_count_right = num_from_right;
 
   UnpackHaloComponents(packed_recv_left,
                        packed_recv_right,
                        particles);
 
   DEBUG_PRINT("rank %d, halo: recv %d from left, %d from right\n",
-              params->rank,num_received_left,num_received_right);
+              params->rank,num_from_left,num_from_right);
 }
 
 // Pack out of bounds particle components
@@ -368,6 +366,12 @@ void ExchangeOOB(struct Communication *const communication,
   MPI_Status statuses[4];
   MPI_Waitall(4, reqs, statuses);
 
+  if (particles->local_count + num_from_left + num_from_right
+      > particles->max_local) {
+    printf("OOB overflow: Aborting! \n");
+    exit(-1);
+  }
+
   // Set recv buffer points
   double *const packed_recv_left  = communication->particle_recv_buffer;
   double *const packed_recv_right = packed_recv_left
@@ -390,11 +394,7 @@ void ExchangeOOB(struct Communication *const communication,
   // Wait for transfer to complete
   MPI_Waitall(4, reqs, statuses);
 
-  // Convert to number of particles
-  num_from_left  /= num_components;
-  num_from_right /= num_components;
-
-  UnpackOOBComponents(num_from_left,num_from_right,
+  UnpackOOBComponents(num_from_left, num_from_right,
                       packed_recv_left,
                       packed_recv_right,
                       particles);
