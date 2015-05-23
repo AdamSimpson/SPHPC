@@ -92,7 +92,7 @@ void HashParticles(const struct Particles *const particles,
 
   unsigned int *const hash_values = neighbors->hash_values;
   unsigned int *const particle_ids = neighbors->particle_ids;
-  int num_particles = particles->local_count
+  const int num_particles = particles->local_count
                     + particles->halo_count_left
                     + particles->halo_count_right;
 
@@ -221,7 +221,7 @@ void FillParticleNeighbors(struct Neighbors *const neighbors,
                neighbor_bucket->count < max_neighbors) {
                 const int num_neighbors = neighbor_bucket->count;
                 neighbor_bucket->neighbor_indices[num_neighbors] = q_index;
-                ++neighbor_bucket->count;
+                ++(neighbor_bucket->count);
             }
           }
         }

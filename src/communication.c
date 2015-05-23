@@ -160,13 +160,15 @@ void ExchangeHalo(struct Communication *const communication,
   edges->particle_count_left = 0;
   edges->particle_count_right = 0;
   for (int i=0; i<particles->local_count; ++i) {
-    if (particles->x_star[i] - params->node_start_x <= h) {
+    if (particles->x_star[i] - params->node_start_x <= h
+        && params->rank != 0) {
       edges->indices_left[edges->particle_count_left] = i;
-      ++edges->particle_count_left;
+      ++(edges->particle_count_left);
     }
-    else if (params->node_end_x - particles->x_star[i] <= h) {
+    else if (params->node_end_x - particles->x_star[i] <= h
+             && params->rank != params->proc_count-1) {
       edges->indices_right[edges->particle_count_right] = i;
-      ++edges->particle_count_right;
+      ++(edges->particle_count_right);
     }
   }
 
@@ -177,8 +179,9 @@ void ExchangeHalo(struct Communication *const communication,
   int proc_to_left =  (rank == 0 ? MPI_PROC_NULL : rank-1);
   int proc_to_right = (rank == proc_count-1 ? MPI_PROC_NULL : rank+1);
 
-  DEBUG_PRINT("rank %d, halo: will send %d to left, %d to right\n",
-              rank, num_moving_left, num_moving_right);
+  DEBUG_PRINT("rank %d, halo: will send %d to %d, %d to %d\n",
+              rank, num_moving_left, proc_to_left,
+              num_moving_right, proc_to_right);
 
   int tagl = 4312;
   int tagr = 5177;
@@ -250,8 +253,9 @@ void ExchangeHalo(struct Communication *const communication,
                        packed_recv_right,
                        particles);
 
-  DEBUG_PRINT("rank %d, halo: recv %d from left, %d from right\n",
-              params->rank,num_from_left,num_from_right);
+  DEBUG_PRINT("rank %d, halo: recv %d from %d, %d from %d\n",
+              params->rank,num_from_left, proc_to_left,
+              num_from_right, proc_to_right);
 }
 
 // Pack out of bounds particle components
@@ -281,13 +285,13 @@ void UnpackOOBComponents(const int num_from_left, const int num_from_right,
   for (int i=0; i<num_from_left; ++i) {
     const int p_index = particles->local_count;
     UnpackBufferToParticle(packed_recv_left, i*num_components, particles, p_index);
-    ++particles->local_count;
+    ++(particles->local_count);
   }
 
   for (int i=0; i<num_from_right; ++i) {
-    const int p_index = particles->local_count + num_from_left + i;
-    UnpackBufferToParticle(packed_recv_left, i*num_components, particles, p_index);
-    ++particles->local_count;
+    const int p_index = particles->local_count;
+    UnpackBufferToParticle(packed_recv_right, i*num_components, particles, p_index);
+    ++(particles->local_count);
   }
 }
 
@@ -304,22 +308,19 @@ void ExchangeOOB(struct Communication *const communication,
   oob->particle_count_left  = 0;
   oob->particle_count_right = 0;
   for (int i=0; i<particles->local_count; ++i) {
-    if (particles->x_star[i] < params->node_start_x && params->rank != 0) {
+    if (particles->x_star[i] < params->node_start_x && rank != 0) {
       oob->indices_left[oob->particle_count_left] = i;
-      ++oob->particle_count_left;
+      ++(oob->particle_count_left);
     }
-    else if (particles->x_star[i] > params->node_end_x &&
-      params->rank != params->proc_count-1) {
+    else if (particles->x_star[i] > params->node_end_x
+             && rank != proc_count-1) {
       oob->indices_right[oob->particle_count_right] = i;
-      ++oob->particle_count_right;
+      ++(oob->particle_count_right);
     }
   }
 
   int num_moving_left = oob->particle_count_left;
   int num_moving_right = oob->particle_count_right;
-
-  DEBUG_PRINT("rank %d, OOB: will send %d to left, %d to right\n",
-              rank, num_moving_left, num_moving_right);
 
   // Set send buffer points
   double *const packed_send_left  = communication->particle_send_buffer;
@@ -335,17 +336,21 @@ void ExchangeOOB(struct Communication *const communication,
   for (int i=0; i<oob->particle_count_left; ++i) {
       const int removed_index = oob->indices_left[i];
       CopyParticle(particles, particles->local_count-1, removed_index);
-      --particles->local_count;
+      --(particles->local_count);
   }
   for (int i=0; i<oob->particle_count_right; ++i) {
       const int removed_index = oob->indices_right[i];
       CopyParticle(particles, particles->local_count-1, removed_index);
-      --particles->local_count;
+      --(particles->local_count);
   }
 
   // Setup nodes to left and right of self
   int proc_to_left =  (rank == 0 ? MPI_PROC_NULL : rank-1);
   int proc_to_right = (rank == proc_count-1 ? MPI_PROC_NULL : rank+1);
+
+  DEBUG_PRINT("rank %d, OOB: will send %d to %d, %d to %d\n",
+              rank, num_moving_left, proc_to_left,
+              num_moving_right, proc_to_right);
 
   // Get number of particles from right and left
   int num_from_left  = 0;
@@ -406,8 +411,8 @@ void ExchangeOOB(struct Communication *const communication,
                       packed_recv_right,
                       particles);
 
-  DEBUG_PRINT("rank %d, OOB: recv %d from left, %d from right\n",
-              rank, num_from_left, num_from_right);
+  DEBUG_PRINT("rank %d, OOB: recv %d from %d, %d from %d\n",
+              rank, num_from_left, proc_to_left, num_from_right, proc_to_right);
 }
 
 void UpdateHaloLambdas(const struct Communication *const communication,
