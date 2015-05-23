@@ -118,12 +118,12 @@ void PackHaloComponents(const struct Communication *const communication,
 
   for (int i=0; i<edges->particle_count_left; i++) {
     const int p_index = edges->indices_left[i];
-    PackParticleToBuffer(particles, p_index, packed_send_left, i*17);
+    PackParticleToBuffer(particles, p_index, packed_send_left, i*num_components);
   }
 
   for (int i=0; i<edges->particle_count_right; i++) {
     const int p_index = edges->indices_right[i];
-    PackParticleToBuffer(particles, p_index, packed_send_right, i*17);
+    PackParticleToBuffer(particles, p_index, packed_send_right, i*num_components);
   }
 }
 
@@ -136,14 +136,14 @@ void UnpackHaloComponents(const double *const packed_recv_left,
   // Unpack halo particles from left rank first
   for (int i=0; i<particles->halo_count_left; i++) {
     const int p_index = num_local + i; // "Global" index
-    UnpackBufferToParticle(packed_recv_left, i*17, particles, p_index);
+    UnpackBufferToParticle(packed_recv_left, i*num_components, particles, p_index);
   }
 
   // Unpack halo particles from right rank second
   for (int i=0; i<particles->halo_count_right; i++) {
     const int p_index = num_local
                       + particles->halo_count_left + i;
-    UnpackBufferToParticle(packed_recv_right, i*17, particles, p_index);
+    UnpackBufferToParticle(packed_recv_right, i*num_components, particles, p_index);
   }
 }
 
@@ -484,8 +484,8 @@ void UpdateHaloPositions(const struct Communication *const communication,
   const int num_moving_left  = double_components*edges->particle_count_left;
   const int num_moving_right = double_components*edges->particle_count_right;
 
-  const int num_from_left  = num_components*particles->halo_count_left;
-  const int num_from_right = num_components*particles->halo_count_right;
+  const int num_from_left  = double_components*particles->halo_count_left;
+  const int num_from_right = double_components*particles->halo_count_right;
 
   // Set send/recv buffers
   double *const positions_send_left  = communication->particle_send_buffer;
