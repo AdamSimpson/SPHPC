@@ -77,9 +77,9 @@ void SetParticleNumbers(const struct AABB *const fluid_global,
   const int num_initial = (num_x * num_y * num_z)/get_proc_count();
 
   // Set max communication particles to a 10th of node start number
-  communication->max_particles = num_initial/10;
+  communication->max_particles = num_initial/5;
 
-  // Add initial space and left/right out of bounds/halo particles
+  // Add initial space and left/right halo particles
   particles->max_local = num_initial + 4*communication->max_particles;
 
   DEBUG_PRINT("Max fluid particles local: %d\n", particles->max_local);

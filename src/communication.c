@@ -135,7 +135,7 @@ void UnpackHaloComponents(const double *const packed_recv_left,
 
   // Unpack halo particles from left rank first
   for (int i=0; i<particles->halo_count_left; i++) {
-    const int p_index = num_local + i; // "Global" index
+    const int p_index = num_local + i;
     UnpackBufferToParticle(packed_recv_left, i*num_components, particles, p_index);
   }
 
@@ -160,10 +160,14 @@ void ExchangeHalo(struct Communication *const communication,
   edges->particle_count_left = 0;
   edges->particle_count_right = 0;
   for (int i=0; i<particles->local_count; ++i) {
-    if (particles->x_star[i] - params->node_start_x <= h)
-      edges->indices_left[edges->particle_count_left++] = i;
-    else if (params->node_end_x - particles->x_star[i] <= h)
-      edges->indices_right[edges->particle_count_right++] = i;
+    if (particles->x_star[i] - params->node_start_x <= h) {
+      edges->indices_left[edges->particle_count_left] = i;
+      ++edges->particle_count_left;
+    }
+    else if (params->node_end_x - particles->x_star[i] <= h) {
+      edges->indices_right[edges->particle_count_right] = i;
+      ++edges->particle_count_right;
+    }
   }
 
   int num_moving_left = edges->particle_count_left;
@@ -220,6 +224,8 @@ void ExchangeHalo(struct Communication *const communication,
   PackHaloComponents(communication, particles,
                      packed_send_left, packed_send_right);
 
+  tagl = 4313;
+  tagr = 5178;
   // Receive halo from left rank
   MPI_Irecv(packed_recv_left, num_components*num_from_left, MPI_DOUBLE,
             proc_to_left, tagl, MPI_COMM_WORLD, &reqs[0]);
@@ -258,12 +264,12 @@ void PackOOBComponents(const struct Communication *const communication,
 
   for (int i=0; i<oob->particle_count_left; i++) {
     const int p_index = oob->indices_left[i];
-    PackParticleToBuffer(particles, p_index, packed_send_left, i*17);
+    PackParticleToBuffer(particles, p_index, packed_send_left, i*num_components);
   }
 
   for (int i=0; i<oob->particle_count_right; i++) {
     const int p_index = oob->indices_right[i];
-    PackParticleToBuffer(particles, p_index, packed_send_right, i*17);
+    PackParticleToBuffer(particles, p_index, packed_send_right, i*num_components);
   }
 }
 
@@ -274,13 +280,13 @@ void UnpackOOBComponents(const int num_from_left, const int num_from_right,
 
   for (int i=0; i<num_from_left; ++i) {
     const int p_index = particles->local_count;
-    UnpackBufferToParticle(packed_recv_left, i*17, particles, p_index);
+    UnpackBufferToParticle(packed_recv_left, i*num_components, particles, p_index);
     ++particles->local_count;
   }
 
   for (int i=0; i<num_from_right; ++i) {
     const int p_index = particles->local_count + num_from_left + i;
-    UnpackBufferToParticle(packed_recv_left, i*17, particles, p_index);
+    UnpackBufferToParticle(packed_recv_left, i*num_components, particles, p_index);
     ++particles->local_count;
   }
 }
@@ -303,7 +309,7 @@ void ExchangeOOB(struct Communication *const communication,
       ++oob->particle_count_left;
     }
     else if (particles->x_star[i] > params->node_end_x &&
-       params->rank != params->proc_count-1) {
+      params->rank != params->proc_count-1) {
       oob->indices_right[oob->particle_count_right] = i;
       ++oob->particle_count_right;
     }
@@ -376,7 +382,8 @@ void ExchangeOOB(struct Communication *const communication,
   double *const packed_recv_left  = communication->particle_recv_buffer;
   double *const packed_recv_right = packed_recv_left
                                   + num_from_left*num_components;
-
+  tagl = 7007;
+  tagr = 8279;
   // Receive packed doubles from left rank
   MPI_Irecv(packed_recv_left, num_components*num_from_left, MPI_DOUBLE,
             proc_to_left, tagl, MPI_COMM_WORLD, &reqs[0]);
