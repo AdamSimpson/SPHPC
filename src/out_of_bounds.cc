@@ -17,7 +17,7 @@ struct CheckOOBLeft {
 
   __host__ __device__
   bool operator()(const double x) {
-    return !(x < x_min);
+    return (x < x_min);
   }
 };
 
@@ -27,7 +27,7 @@ struct CheckOOBRight {
 
   __host__ __device__
   bool operator()(const double x) {
-    return !(x > x_max);
+    return (x > x_max);
   }
 };
 
@@ -37,7 +37,7 @@ struct CheckOOB {
 
   __host__ __device__
   bool operator()(const double x) {
-    return !(x < x_min || x > x_max);
+    return (x < x_min || x > x_max);
   }
 };
 
@@ -48,7 +48,7 @@ void PackOOB(struct Params *const params,
 
   // Use x array as stencil, for predicate test, on particle ID array
   // If x is less than node start copy the id to indices_left
-  int *end_pointer = thrust::remove_copy_if(particles->id,
+  int *end_pointer = thrust::copy_if(particles->id,
                                        particles->id+particles->local_count,
                                        particles->x,
                                        communication->out_of_bounds.indices_left,
@@ -58,7 +58,7 @@ void PackOOB(struct Params *const params,
 
   // Use x array as stencil, for predicate test, on particle ID array
   // If x is less than node start copy the id to indices_left
-  end_pointer = thrust::remove_copy_if(particles->id,
+  end_pointer = thrust::copy_if(particles->id,
                                        particles->id+particles->local_count,
                                        particles->x,
                                        communication->out_of_bounds.indices_right,
