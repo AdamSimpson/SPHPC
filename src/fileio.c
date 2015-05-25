@@ -36,10 +36,10 @@ void AllocInitFileIO(struct FileIO *const file_io,
   // Create pwd/output directory
   if (params->rank == 0) {
     int dir_return = mkdir(output_path, 0775);
-    if (dir_return != 0) {
-      printf("Error creating output directory: %s\n", strerror(errno));
-      exit(-1);
-    }
+//    if (dir_return != 0) {
+//      printf("Error creating output directory: %s\n", strerror(errno));
+//      exit(-1);
+//    }
   }
   MPI_Barrier(MPI_COMM_WORLD);
 

@@ -15,9 +15,9 @@ extern "C" {
 #include <string.h>
 
 void AllocInitNeighbors(struct Neighbors *const neighbors,
-                       const struct Particles *particles,
-                       const struct Params *const params,
-                       const struct AABB *const boundary_global) {
+                        const struct Particles *particles,
+                        const struct Params *const params,
+                        const struct AABB *const boundary_global) {
 
   // Allocate neighbors array
   neighbors->neighbor_buckets = (struct NeighborBucket*)
@@ -93,8 +93,8 @@ void HashParticles(const struct Particles *const particles,
   unsigned int *const hash_values = neighbors->hash_values;
   unsigned int *const particle_ids = neighbors->particle_ids;
   const int num_particles = particles->local_count
-                    + particles->halo_count_left
-                    + particles->halo_count_right;
+                          + particles->halo_count_left
+                          + particles->halo_count_right;
 
   for (int i=0; i<num_particles; i++) {
     hash_values[i] =  HashVal(neighbors,

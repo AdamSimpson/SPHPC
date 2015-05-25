@@ -48,6 +48,16 @@ int get_rank();
 // Return MPI processor count
 int get_proc_count();
 
+void PackParticleToBuffer(const struct Particles *const particles,
+                          const int from_index,
+                          double *const to_buffer,
+                          const int to_index);
+
+void UnpackBufferToParticle(const double *const from_buffer,
+                            const int from_index,
+                            struct Particles *const particles,
+                            const int to_index);
+
 // Packs particles  arraydouble components into packed_send_left
 // and packed_send_right based upon indices held in edges
 // struct member of communication

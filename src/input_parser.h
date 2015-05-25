@@ -3,6 +3,7 @@
 
 // Forward Declaration
 struct Params;
+struct Particles;
 struct AABB;
 
 // These functions are to be visible to both C and C++
