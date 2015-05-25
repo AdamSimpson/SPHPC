@@ -50,9 +50,6 @@ int main(int argc, char *argv[]) {
 
     ExchangeOOB(&communication, &particles, &params);
 
-      // DEBUG WRITE...BROKE
-      WriteParticles(&particles, &params, &file_io);
-
     ExchangeHalo(&communication, &params, &particles);
 
     FindAllNeighbors(&particles, &params, &neighbors);
