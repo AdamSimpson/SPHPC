@@ -11,8 +11,8 @@ extern "C" {
 }
 #include <iostream>
 
-struct CheckOOBLeft {
-  CheckOOBLeft(double min): x_min(min) {}
+struct LessThan {
+  LessThan(double min): x_min(min) {}
   double x_min;
 
   __host__ __device__
@@ -21,8 +21,8 @@ struct CheckOOBLeft {
   }
 };
 
-struct CheckOOBRight {
-  CheckOOBRight(double max): x_max(max) {}
+struct GreaterThan {
+  GreaterThan(double max): x_max(max) {}
   double x_max;
 
   __host__ __device__
@@ -31,8 +31,8 @@ struct CheckOOBRight {
   }
 };
 
-struct CheckOOB {
-  CheckOOB(double min, double max): x_min(min), x_max(max) {}
+struct OutsideBounds {
+  OutsideBounds(double min, double max): x_min(min), x_max(max) {}
   double x_min, x_max;
 
   __host__ __device__
@@ -52,7 +52,7 @@ void PackOOB(struct Params *const params,
                                        particles->id+particles->local_count,
                                        particles->x,
                                        communication->out_of_bounds.indices_left,
-                                       CheckOOBLeft(params->node_start_x));
+                                       LessThan(params->node_start_x));
   int oob_left_count = end_pointer - communication->out_of_bounds.indices_left;
   communication->out_of_bounds.particle_count_left = oob_left_count;
 
@@ -62,7 +62,7 @@ void PackOOB(struct Params *const params,
                                        particles->id+particles->local_count,
                                        particles->x,
                                        communication->out_of_bounds.indices_right,
-                                       CheckOOBRight(params->node_end_x));
+                                       GreaterThan(params->node_end_x));
   int oob_right_count = end_pointer - communication->out_of_bounds.indices_right;
   communication->out_of_bounds.particle_count_right = oob_right_count;
 
@@ -70,7 +70,7 @@ void PackOOB(struct Params *const params,
   end_pointer = thrust::remove_if(particles->id,
                                   particles->id+particles->local_count,
                                   particles->x,
-                                  CheckOOB(params->node_start_x, params->node_end_x));
+                                  OutsideBounds(params->node_start_x, params->node_end_x));
 
   // Pack up removed components into double array
   double *packed_send_left = communication->particle_send_buffer;
