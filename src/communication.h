@@ -26,8 +26,10 @@ struct Communication {
   struct Edges edges;
   struct OOB out_of_bounds;
   int max_particles;
-  double *restrict particle_send_buffer;
-  double *restrict particle_recv_buffer;
+  double *restrict send_buffer_left;
+  double *restrict send_buffer_right;
+  double *restrict recv_buffer_left;
+  double *restrict recv_buffer_right;
 };
 
 // Wrapper for MPI_Init
@@ -58,33 +60,27 @@ void UnpackBufferToParticle(const double *const from_buffer,
                             struct Particles *const particles,
                             const int to_index);
 
-// Packs particles  arraydouble components into packed_send_left
-// and packed_send_right based upon indices held in edges
+// Packs particles  arraydouble components into packed
+// send buffers based upon indices held in edges
 // struct member of communication
 void PackHaloComponents(const struct Communication *const communication,
-                        const struct Particles *const particles,
-                        double *const packed_send_left,
-                        double *const packed_send_right);
+                        const struct Particles *const particles);
 
 // appends packed_recv_left followed by packed_recv_right doubles on to
 // particles array
-void UnpackHaloComponents(const double *const packed_recv_left,
-                          const double *const packed_recv_right,
+void UnpackHaloComponents(const struct Communication *const communication,
                           struct Particles *const particles);
 
 // Packs particles  arraydouble components into packed_send_left
 // and packed_send_right based upon indices held in edges
 // struct member of communication
 void PackOOBComponents(const struct Communication *const communication,
-                       const struct Particles *const particles,
-                       double *const packed_send_left,
-                       double *const packed_send_right);
+                       const struct Particles *const particles);
 
 // appends packed_recv_left followed by packed_recv_right doubles on to
 // particles array
 void UnpackOOBComponents(const int num_from_left, const int num_from_right,
-                         const double *const packed_recv_left,
-                         const double *const packed_recv_right,
+                         const struct Communication *const communication,
                          struct Particles *const particles);
 
 // Identifies particles that have left the node start/end x boundary

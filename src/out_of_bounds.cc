@@ -72,14 +72,9 @@ void PackOOB(struct Params *const params,
                                   particles->x,
                                   OutsideBounds(params->node_start_x, params->node_end_x));
 
-  // Pack up removed components into double array
-  double *packed_send_left = communication->particle_send_buffer;
-  double *packed_send_right = communication->particle_send_buffer + oob_left_count*17;
-
+  // Pack removed particle components
   PackOOBComponents(communication,
-                    particles,
-                    packed_send_left,
-                    packed_send_right);
+                    particles);
 
   // Set new particle count
   particles->local_count -= (oob_left_count+oob_right_count);
