@@ -1,7 +1,6 @@
 #include "out_of_bounds.h"
 
 #include <thrust/execution_policy.h>
-#include <thrust/device_vector.h>
 extern "C" {
   #define restrict
   #include "simulation.h"
@@ -46,13 +45,14 @@ struct OutsideBounds {
 
 // C wrapper function for thrust copy_if with LessThan predicate
 extern "C" void CopyIfLessThan(const double min,
-                          const int *const input,
-                          const int input_count,
-                          const double *const stencil,
-                          int *const output,
-                          int *const output_count) {
+                               const int *const input,
+                               const int input_count,
+                               const double *const stencil,
+                               int *const output,
+                               int *const output_count) {
 
-  int *end_pointer = thrust::copy_if(input,
+  int *end_pointer = thrust::copy_if(thrust::host,
+                                     input,
                                      input + input_count,
                                      stencil,
                                      output,
@@ -62,13 +62,14 @@ extern "C" void CopyIfLessThan(const double min,
 
 // C wrapper function for thrust copy_if with GreaterThan predicate
 extern "C" void CopyIfGreaterThan(const double max,
-                             const int *const input,
-                             const int input_count,
-                             const double *const stencil,
-                             int *const output,
-                             int *const output_count) {
+                                  const int *const input,
+                                  const int input_count,
+                                  const double *const stencil,
+                                  int *const output,
+                                  int *const output_count) {
 
-  int *end_pointer = thrust::copy_if(input,
+  int *end_pointer = thrust::copy_if(thrust::host,
+                                     input,
                                      input + input_count,
                                      stencil,
                                      output,
@@ -78,11 +79,12 @@ extern "C" void CopyIfGreaterThan(const double max,
 
 // C wrapper function for thrust remove_if with OutsideBounds predicate
 extern "C" void RemoveIfOutsideBounds(const double min, const double max,
-                                    const int *const input,
-                                    const int input_count,
-                                    const double *const stencil) {
+                                      int *const input,
+                                      const int input_count,
+                                      const double *const stencil) {
 
-  thrust::remove_if(input,
+  thrust::remove_if(thrust::host,
+                    input,
                     input + input_count,
                     stencil,
                     OutsideBounds(min, max));
@@ -95,26 +97,29 @@ void PackOOB(struct Params *const params,
 
   // Use x array as stencil, for predicate test, on particle ID array
   // If x is less than node start copy the id to indices_left
-  int *end_pointer = thrust::copy_if(particles->id,
-                                       particles->id+particles->local_count,
-                                       particles->x,
-                                       communication->out_of_bounds.indices_left,
-                                       LessThan(params->node_start_x));
+  int *end_pointer = thrust::copy_if(thrust::host,
+                                     particles->id,
+                                     particles->id+particles->local_count,
+                                     particles->x,
+                                     communication->out_of_bounds.indices_left,
+                                     LessThan(params->node_start_x));
   int oob_left_count = end_pointer - communication->out_of_bounds.indices_left;
   communication->out_of_bounds.particle_count_left = oob_left_count;
 
   // Use x array as stencil, for predicate test, on particle ID array
   // If x is less than node start copy the id to indices_left
-  end_pointer = thrust::copy_if(particles->id,
-                                       particles->id+particles->local_count,
-                                       particles->x,
-                                       communication->out_of_bounds.indices_right,
-                                       GreaterThan(params->node_end_x));
+  end_pointer = thrust::copy_if(thrust::host,
+                                particles->id,
+                                particles->id+particles->local_count,
+                                particles->x,
+                                communication->out_of_bounds.indices_right,
+                                GreaterThan(params->node_end_x));
   int oob_right_count = end_pointer - communication->out_of_bounds.indices_right;
   communication->out_of_bounds.particle_count_right = oob_right_count;
 
   // Remove OOB entries from id array...I wish this was combined with the above
-  end_pointer = thrust::remove_if(particles->id,
+  end_pointer = thrust::remove_if(thrust::host,
+                                  particles->id,
                                   particles->id+particles->local_count,
                                   particles->x,
                                   OutsideBounds(params->node_start_x, params->node_end_x));
