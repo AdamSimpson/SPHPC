@@ -13,6 +13,7 @@ extern "C" {
 
 struct LessThan {
   LessThan(double min): x_min(min) {}
+
   double x_min;
 
   __host__ __device__
@@ -23,6 +24,7 @@ struct LessThan {
 
 struct GreaterThan {
   GreaterThan(double max): x_max(max) {}
+
   double x_max;
 
   __host__ __device__
@@ -33,6 +35,7 @@ struct GreaterThan {
 
 struct OutsideBounds {
   OutsideBounds(double min, double max): x_min(min), x_max(max) {}
+
   double x_min, x_max;
 
   __host__ __device__
