@@ -44,6 +44,50 @@ struct OutsideBounds {
   }
 };
 
+// C wrapper function for thrust copy_if with LessThan predicate
+extern "C" void CopyIfLessThan(const double min,
+                          const int *const input,
+                          const int input_count,
+                          const double *const stencil,
+                          int *const output,
+                          int *const output_count) {
+
+  int *end_pointer = thrust::copy_if(input,
+                                     input + input_count,
+                                     stencil,
+                                     output,
+                                     LessThan(min));
+  *output_count = end_pointer - output;
+}
+
+// C wrapper function for thrust copy_if with GreaterThan predicate
+extern "C" void CopyIfGreaterThan(const double max,
+                             const int *const input,
+                             const int input_count,
+                             const double *const stencil,
+                             int *const output,
+                             int *const output_count) {
+
+  int *end_pointer = thrust::copy_if(input,
+                                     input + input_count,
+                                     stencil,
+                                     output,
+                                     GreaterThan(max));
+  *output_count = end_pointer - output;
+}
+
+// C wrapper function for thrust remove_if with OutsideBounds predicate
+extern "C" void RemoveIfOutsideBounds(const double min, const double max,
+                                    const int *const input,
+                                    const int input_count,
+                                    const double *const stencil) {
+
+  thrust::remove_if(input,
+                    input + input_count,
+                    stencil,
+                    OutsideBounds(min, max));
+}
+
 // Remove particles less than the node start and save to packed array;
 void PackOOB(struct Params *const params,
              struct Particles *const particles,
