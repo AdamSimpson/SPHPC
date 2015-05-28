@@ -412,7 +412,7 @@ void UpdateHaloLambdas(const struct Communication *const communication,
 
 
   double *const lambdas_recv_left  = communication->recv_buffer_left;
-  double *const lambdas_recv_right = communication->recv_buffer_left;
+  double *const lambdas_recv_right = communication->recv_buffer_right;
   // Receive packed doubles from left rank
   MPI_Irecv(lambdas_recv_left, num_from_left, MPI_DOUBLE,
             proc_to_left, tagl, MPI_COMM_WORLD, &reqs[0]);
