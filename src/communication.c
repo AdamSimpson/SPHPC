@@ -286,12 +286,42 @@ void ExchangeOOB(struct Communication *const communication,
   const int proc_count = params->proc_count;
   struct OOB *const oob = &communication->out_of_bounds;
 
-  PackOOB(params,
-          particles,
-          communication);
+  // Copy OOB particle id's to left node
+  CopyIfLessThan(params->node_start_x,
+                 particles->id,
+                 particles->local_count,
+                 particles->x,
+                 oob->indices_left,
+                 &oob->particle_count_left);
 
+  // Copy OOB particle id's to right node
+  CopyIfGreaterThan(params->node_end_x,
+                    particles->id,
+                    particles->local_count,
+                    particles->x,
+                    oob->indices_right,
+                    &oob->particle_count_right);
+
+  // Remove OOB particle id's
+  RemoveIfOutsideBounds(params->node_start_x, params->node_end_x,
+                        particles->id,
+                        particles->local_count,
+                        particles->x);
+
+  // Pack removed particle components
+  PackOOBComponents(communication,
+                    particles);
+
+  // Set new particle count
   int num_moving_left = oob->particle_count_left;
   int num_moving_right = oob->particle_count_right;
+  particles->local_count -= (num_moving_left + num_moving_right);
+
+  // Use ID component to reorganize particles array
+  for(int i=0; i<particles->local_count; ++i) {
+      const int current_id = particles->id[i];
+      CopyParticle(particles, current_id, i);
+  }
 
   // Setup nodes to left and right of self
   int proc_to_left =  (rank == 0 ? MPI_PROC_NULL : rank-1);

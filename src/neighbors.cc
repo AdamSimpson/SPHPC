@@ -1,4 +1,5 @@
-#define restrict
+#define restrict __restrict
+
 #include "neighbors.h"
 extern "C" {
   #include "debug.h"
