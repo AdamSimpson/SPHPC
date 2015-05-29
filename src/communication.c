@@ -171,12 +171,12 @@ void ExchangeHalo(struct Communication *const communication,
                         particles->x_star,
                         edges->indices_left,
                         &edges->particle_count_left);
-  CopyIfLessThanOrEqual(params->node_end_x - h,
-                        particles->id,
-                        particles->local_count,
-                        particles->x_star,
-                        edges->indices_right,
-                        &edges->particle_count_right);
+  CopyIfGreaterThanOrEqual(params->node_end_x - h,
+                           particles->id,
+                           particles->local_count,
+                           particles->x_star,
+                           edges->indices_right,
+                           &edges->particle_count_right);
 
   int num_moving_left = edges->particle_count_left;
   int num_moving_right = edges->particle_count_right;

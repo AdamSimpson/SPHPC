@@ -38,6 +38,17 @@ struct GreaterThan {
   }
 };
 
+struct GreaterThanOrEqual {
+  GreaterThanOrEqual(double max): x_max(max) {}
+
+  double x_max;
+
+  __host__ __device__
+  bool operator()(const double x) {
+    return (x > x_max);
+  }
+};
+
 struct OutsideBounds {
   OutsideBounds(double min, double max): x_min(min), x_max(max) {}
 
@@ -104,6 +115,23 @@ extern "C" void CopyIfGreaterThan(const double max,
                                      stencil,
                                      output,
                                      GreaterThan(max));
+  *output_count = end_pointer - output;
+}
+
+// C wrapper function for thrust copy_if with GreaterThan predicate
+extern "C" void CopyIfGreaterThanOrEqual(const double max,
+                                         const int *const input,
+                                         const int input_count,
+                                         const double *const stencil,
+                                         int *const output,
+                                         int *const output_count) {
+
+  int *end_pointer = thrust::copy_if(thrust::host,
+                                     input,
+                                     input + input_count,
+                                     stencil,
+                                     output,
+                                     GreaterThanOrEqual(max));
   *output_count = end_pointer - output;
 }
 

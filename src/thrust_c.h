@@ -27,6 +27,13 @@ void CopyIfGreaterThan(const double max,
                        int *const output,
                        int *const output_count);
 
+void CopyIfGreaterThanOrEqual(const double max,
+                       const int *const input,
+                       const int input_count,
+                       const double *const stencil,
+                       int *const output,
+                       int *const output_count);
+
 void RemoveIfOutsideBounds(const double min, const double max,
                            int *const input,
                            const int input_count,
