@@ -1,6 +1,6 @@
 #define restrict __restrict
 
-#include "out_of_bounds.h"
+#include "thrust_c.h"
 #include <thrust/execution_policy.h>
 extern "C" {
   #include "simulation.h"

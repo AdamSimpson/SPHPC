@@ -3,7 +3,7 @@
 #include "particles.h"
 #include "debug.h"
 #include "safe_alloc.h"
-#include "out_of_bounds.h"
+#include "thrust_c.h"
 #include <stdio.h>
 #include <stddef.h>
 #include <string.h>
