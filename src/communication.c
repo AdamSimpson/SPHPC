@@ -164,21 +164,19 @@ void ExchangeHalo(struct Communication *const communication,
   struct Edges *const edges = &communication->edges;
   double h = params->smoothing_radius;
 
-  // Set edge particle indices and update number
-  edges->particle_count_left = 0;
-  edges->particle_count_right = 0;
-  for (int i=0; i<particles->local_count; ++i) {
-    if (particles->x_star[i] - params->node_start_x <= h
-        && params->rank != 0) {
-      edges->indices_left[edges->particle_count_left] = i;
-      ++(edges->particle_count_left);
-    }
-    else if (params->node_end_x - particles->x_star[i] <= h
-             && params->rank != params->proc_count-1) {
-      edges->indices_right[edges->particle_count_right] = i;
-      ++(edges->particle_count_right);
-    }
-  }
+  // Set edge particle ID's
+  CopyIfLessThanOrEqual(h + params->node_start_x,
+                        particles->id,
+                        particles->local_count,
+                        particles->x_star,
+                        edges->indices_left,
+                        &edges->particle_count_left);
+  CopyIfLessThanOrEqual(params->node_end_x - h,
+                        particles->id,
+                        particles->local_count,
+                        particles->x_star,
+                        edges->indices_right,
+                        &edges->particle_count_right);
 
   int num_moving_left = edges->particle_count_left;
   int num_moving_right = edges->particle_count_right;

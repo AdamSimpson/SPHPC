@@ -13,6 +13,13 @@ void CopyIfLessThan(const double min,
                     int *const output,
                     int *const output_count);
 
+void CopyIfLessThanOrEqual(const double min,
+                           const int *const input,
+                           const int input_count,
+                           const double *const stencil,
+                           int *const output,
+                           int *const output_count);
+
 void CopyIfGreaterThan(const double max,
                        const int *const input,
                        const int input_count,

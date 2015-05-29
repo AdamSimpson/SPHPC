@@ -16,6 +16,17 @@ struct LessThan {
   }
 };
 
+struct LessThanOrEqual {
+  LessThanOrEqual(double min): x_min(min) {}
+
+  double x_min;
+
+  __host__ __device__
+  bool operator()(const double x) {
+    return (x <= x_min);
+  }
+};
+
 struct GreaterThan {
   GreaterThan(double max): x_max(max) {}
 
@@ -59,6 +70,23 @@ extern "C" void CopyIfLessThan(const double min,
                                      stencil,
                                      output,
                                      LessThan(min));
+  *output_count = end_pointer - output;
+}
+
+// C wrapper function for thrust copy_if with LessThanOrEqual predicate
+extern "C" void CopyIfLessThanOrEqual(const double min,
+                                      const int *const input,
+                                      const int input_count,
+                                      const double *const stencil,
+                                      int *const output,
+                                      int *const output_count) {
+
+  int *end_pointer = thrust::copy_if(thrust::host,
+                                     input,
+                                     input + input_count,
+                                     stencil,
+                                     output,
+                                     LessThanOrEqual(min));
   *output_count = end_pointer - output;
 }
 
