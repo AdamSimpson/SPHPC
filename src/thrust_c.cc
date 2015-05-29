@@ -3,6 +3,7 @@
 #include "thrust_c.h"
 #include <thrust/execution_policy.h>
 #include <thrust/sort.h>
+#include <thrust/binary_search.h>
 #include <iostream>
 
 struct LessThan {
@@ -65,6 +66,30 @@ extern "C" void SortByKey(unsigned int *const keys,
                           const int count) {
   thrust::sort_by_key(thrust::host, keys, keys + count, values);
 
+}
+
+extern "C" void FindLowerBounds(const unsigned int *const hash_values,
+                                const int value_count,
+                                const int search_count,
+                                unsigned int *const start_indices) {
+  thrust::counting_iterator<unsigned int> search_begin(0);
+  thrust::lower_bound(hash_values,
+                      hash_values + value_count,
+                      search_begin,
+                      search_begin + search_count,
+                      start_indices);
+}
+
+extern "C" void FindUpperBounds(const unsigned int *const hash_values,
+                                const int value_count,
+                                const int search_count,
+                                unsigned int *const start_indices) {
+  thrust::counting_iterator<unsigned int> search_begin(0);
+  thrust::upper_bound(hash_values,
+                      hash_values + value_count,
+                      search_begin,
+                      search_begin + search_count,
+                      start_indices);
 }
 
 // C wrapper function for thrust copy_if with LessThan predicate

@@ -43,6 +43,16 @@ void SortByKey(unsigned int *const keys,
                unsigned int *const values,
                const int count);
 
+void FindLowerBounds(const unsigned int *const hash_values,
+                                const int value_count,
+                                const int search_count,
+                                unsigned int *const start_indices);
+
+void FindUpperBounds(const unsigned int *const hash_values,
+                                const int value_count,
+                                const int search_count,
+                                unsigned int *const start_indices);
+
 #ifdef __cplusplus
 }
 #endif

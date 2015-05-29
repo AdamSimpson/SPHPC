@@ -124,31 +124,20 @@ void FindCellBounds(const struct Particles *particles,
   const int length_hash = neighbors->hash_size_x
                         * neighbors->hash_size_y
                         * neighbors->hash_size_z;
-  memset(neighbors->start_indices, ((unsigned int)-1),
-                                    length_hash*sizeof(unsigned int));
 
   const int num_particles = particles->local_count
                           + particles->halo_count_left
                           + particles->halo_count_right;
 
-  // If this particle has a different cell index to the previous
-  // particle then it must be the first particle in the cell,
-  // so store the index of this particle in the cell.
-  // As it isn't the first particle, it must also be the cell end of
-  // the previous particle's cell
-  for (int i=0; i<num_particles; i++) {
-    const unsigned int hash = neighbors->hash_values[i];
-    const unsigned int i_prev = (i-1)>=0?(i-1):0;
-    const unsigned int hash_prev = neighbors->hash_values[i_prev];
-
-    if (i==0 || hash!=hash_prev) {
-      neighbors->start_indices[hash] = i;
-      if (i > 0)
-        neighbors->end_indices[hash_prev] = i;
-    }
-    if (i == num_particles - 1)
-      neighbors->end_indices[hash] = i+1;
-  }
+  // Find start and end indices for each
+  FindLowerBounds(neighbors->hash_values,
+                  num_particles,
+                  length_hash,
+                  neighbors->start_indices);
+  FindUpperBounds(neighbors->hash_values,
+                  num_particles,
+                  length_hash,
+                  neighbors->end_indices);
 }
 
 // Neighbors are accessed multiple times per step so we keep them in buckets
@@ -188,11 +177,10 @@ void FillParticleNeighbors(struct Neighbors *const neighbors,
         const int neighbor_index = HashVal(neighbors, x, y, z);
 
         // Start index for hash value of current neighbor grid bucket
-        unsigned int start_index = neighbors->start_indices[neighbor_index];
-
+        const unsigned int start_index = neighbors->start_indices[neighbor_index];
+        const unsigned int end_index = neighbors->end_indices[neighbor_index];
         // If neighbor grid bucket is not empty
-        if (start_index != (unsigned int)-1) {
-          const unsigned int end_index = neighbors->end_indices[neighbor_index];
+        if (start_index != end_index) {
 
           for (int j=start_index; j<end_index; ++j) {
             const int q_index = neighbors->particle_ids[j];
