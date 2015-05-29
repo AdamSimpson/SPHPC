@@ -1,16 +1,10 @@
-#define restrict __restrict
-
 #include "neighbors.h"
-extern "C" {
-  #include "debug.h"
-  #include "safe_alloc.h"
-  #include "particles.h"
-  #include "geometry.h"
-  #include "simulation.h"
-}
-#undef restrict
-#include <thrust/sort.h>
-#include <thrust/execution_policy.h>
+#include "debug.h"
+#include "safe_alloc.h"
+#include "particles.h"
+#include "geometry.h"
+#include "simulation.h"
+#include "thrust_c.h"
 #include <math.h>
 #include <stdbool.h>
 #include <string.h>
@@ -109,14 +103,14 @@ void HashParticles(const struct Particles *const particles,
 // Sort list of particle id's based upon what their hash value is
 void SortHash(const struct Particles *particles,
               const struct Params *const params,
-              const struct Neighbors *const neighbors) {
+              struct Neighbors *const neighbors) {
 
   unsigned int *const keys = neighbors->hash_values;
   unsigned int *const values = neighbors->particle_ids;
   const int total_particles = particles->local_count
                             + particles->halo_count_left
                             + particles->halo_count_right;
-  thrust::sort_by_key(thrust::host, keys, keys+total_particles, values);
+  SortByKey(keys, values, total_particles);
 
 }
 
@@ -169,7 +163,7 @@ void FillParticleNeighbors(struct Neighbors *const neighbors,
   const double spacing = neighbors->hash_spacing;
 
   // Get neighbor bucket for particle p
-  NeighborBucket *const neighbor_bucket = &neighbors->neighbor_buckets[p_index];
+  struct NeighborBucket *const neighbor_bucket = &neighbors->neighbor_buckets[p_index];
   neighbor_bucket->count = 0;
 
   const double px = particles->x_star[p_index];

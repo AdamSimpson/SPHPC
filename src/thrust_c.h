@@ -25,6 +25,10 @@ void RemoveIfOutsideBounds(const double min, const double max,
                            const int input_count,
                            const double *const stencil);
 
+void SortByKey(unsigned int *const keys,
+               unsigned int *const values,
+               const int count);
+
 #ifdef __cplusplus
 }
 #endif

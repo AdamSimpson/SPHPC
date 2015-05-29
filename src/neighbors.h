@@ -55,14 +55,14 @@ void HashParticles(const struct Particles *const particles,
 
 void SortHash(const struct Particles *particles,
               const struct Params *const params,
-              const struct Neighbors *const neighbors);
+              struct Neighbors *const neighbors);
 
 void FindCellBounds(const struct Particles *particles,
                     struct Neighbors *const neighbors);
 
 void FillParticleNeighbors(struct Neighbors *const neighbors,
-                           const struct Particles *particles,
                            const struct Params *const params,
+                           const struct Particles *particles,
                            const unsigned int p_index);
 
 void FillNeighbors(const struct Particles *particles,

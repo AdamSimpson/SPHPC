@@ -2,11 +2,7 @@
 
 #include "thrust_c.h"
 #include <thrust/execution_policy.h>
-extern "C" {
-  #include "simulation.h"
-  #include "communication.h"
-  #include "particles.h"
-}
+#include <thrust/sort.h>
 #include <iostream>
 
 struct LessThan {
@@ -41,6 +37,13 @@ struct OutsideBounds {
     return (x < x_min || x > x_max);
   }
 };
+
+extern "C" void SortByKey(unsigned int *const keys,
+                          unsigned int *const values,
+                          const int count) {
+  thrust::sort_by_key(thrust::host, keys, keys + count, values);
+
+}
 
 // C wrapper function for thrust copy_if with LessThan predicate
 extern "C" void CopyIfLessThan(const double min,
