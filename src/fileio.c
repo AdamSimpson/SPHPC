@@ -76,13 +76,13 @@ void WriteParticles(const struct Particles *const particles,
 
   // Displacement can overflow with int, max size = 8*3*(global num particles)
   uint64_t displacement=0;
-  for (int i=0; i<params->rank; i++)
+  for (int i=0; i<params->rank; ++i)
     displacement+=rank_write_counts[i];
   // Displacement is in bytes
   displacement*=sizeof(double);
 
   int index=0;
-  for (int i=0; i<num_particles; i++) {
+  for (int i=0; i<num_particles; ++i) {
     file_io->write_buffer[index]   = particles->x[i];
     file_io->write_buffer[index+1] = particles->y[i];
     file_io->write_buffer[index+2] = particles->z[i];

@@ -123,12 +123,12 @@ void PackHaloComponents(const struct Communication *const communication,
   double *const packed_send_left  = communication->send_buffer_left;
   double *const packed_send_right = communication->send_buffer_right;
 
-  for (int i=0; i<edges->particle_count_left; i++) {
+  for (int i=0; i<edges->particle_count_left; ++i) {
     const int p_index = edges->indices_left[i];
     PackParticleToBuffer(particles, p_index, packed_send_left, i*num_components);
   }
 
-  for (int i=0; i<edges->particle_count_right; i++) {
+  for (int i=0; i<edges->particle_count_right; ++i) {
     const int p_index = edges->indices_right[i];
     PackParticleToBuffer(particles, p_index, packed_send_right, i*num_components);
   }
@@ -142,13 +142,13 @@ void UnpackHaloComponents(const struct Communication *const communication,
   const double *const packed_recv_right = communication->recv_buffer_right;
 
   // Unpack halo particles from left rank first
-  for (int i=0; i<particles->halo_count_left; i++) {
+  for (int i=0; i<particles->halo_count_left; ++i) {
     const int p_index = num_local + i;
     UnpackBufferToParticle(packed_recv_left, i*num_components, particles, p_index);
   }
 
   // Unpack halo particles from right rank second
-  for (int i=0; i<particles->halo_count_right; i++) {
+  for (int i=0; i<particles->halo_count_right; ++i) {
     const int p_index = num_local
                       + particles->halo_count_left + i;
     UnpackBufferToParticle(packed_recv_right, i*num_components, particles, p_index);
@@ -288,7 +288,7 @@ void ExchangeOOB(struct Communication *const communication,
   CopyIfLessThan(params->node_start_x,
                  particles->id,
                  particles->local_count,
-                 particles->x,
+                 particles->x_star,
                  oob->indices_left,
                  &oob->particle_count_left);
 
@@ -296,7 +296,7 @@ void ExchangeOOB(struct Communication *const communication,
   CopyIfGreaterThan(params->node_end_x,
                     particles->id,
                     particles->local_count,
-                    particles->x,
+                    particles->x_star,
                     oob->indices_right,
                     &oob->particle_count_right);
 
@@ -304,7 +304,7 @@ void ExchangeOOB(struct Communication *const communication,
   RemoveIfOutsideBounds(params->node_start_x, params->node_end_x,
                         particles->id,
                         particles->local_count,
-                        particles->x);
+                        particles->x_star);
 
   // Pack removed particle components
   PackOOBComponents(communication,
@@ -390,11 +390,11 @@ void UpdateHaloLambdas(const struct Communication *const communication,
   double *const lambdas_send_right = communication->send_buffer_right;
 
   // Pack local halo lambdas
-  for (int i=0; i<num_moving_left; i++) {
+  for (int i=0; i<num_moving_left; ++i) {
     const int p_index = edges->indices_left[i];
     lambdas_send_left[i] = particles->lambda[p_index];
   }
-  for (int i=0; i<num_moving_right; i++) {
+  for (int i=0; i<num_moving_right; ++i) {
     const int p_index = edges->indices_right[i];
     lambdas_send_right[i] = particles->lambda[p_index];
   }
@@ -407,7 +407,6 @@ void UpdateHaloLambdas(const struct Communication *const communication,
   int tagl = 784;
   int tagr = 456;
   MPI_Request reqs[4];
-
 
   double *const lambdas_recv_left  = communication->recv_buffer_left;
   double *const lambdas_recv_right = communication->recv_buffer_right;
@@ -430,11 +429,11 @@ void UpdateHaloLambdas(const struct Communication *const communication,
   MPI_Waitall(4, reqs, statuses);
 
   // Unpack halo particle lambdas
-  for (int i=0; i<num_from_left; i++) {
+  for (int i=0; i<num_from_left; ++i) {
     const int p_index = particles->local_count + i;
     particles->lambda[p_index] = lambdas_recv_left[i];
   }
-  for (int i=0; i<num_from_right; i++) {
+  for (int i=0; i<num_from_right; ++i) {
     const int p_index = particles->local_count + num_from_left + i;
     particles->lambda[p_index] = lambdas_recv_right[i];
   }

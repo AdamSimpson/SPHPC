@@ -39,17 +39,17 @@ void ConstructFluidVolume(struct Particles *const particles,
 
   // Place particles inside bounding volume
   int i = 0;
-  for (int nz=0; nz<num_z; nz++) {
+  for (int nz=0; nz<num_z; ++nz) {
     const double z = fluid->min_z + nz*spacing + spacing/2.0;
-    for (int ny=0; ny<num_y; ny++) {
+    for (int ny=0; ny<num_y; ++ny) {
       const double y = fluid->min_y + ny*spacing + spacing/2.0;
-      for(int nx=0; nx<num_x; nx++) {
+      for(int nx=0; nx<num_x; ++nx) {
         const double x = min_x + nx*spacing + spacing/2.0;
         particles->x[i] = x;
         particles->y[i] = y;
         particles->z[i] = z;
         particles->id[i] = i;
-        i++;
+        ++i;
       }
     }
   }

@@ -73,7 +73,7 @@ void ApplyVorticityConfinement(struct Particles *const particles,
   const double eps = 5.0;
 
   // Calculate vorticy at each particle
-  for (int i=0; i<particles->local_count; i++) {
+  for (int i=0; i<particles->local_count; ++i) {
     const int p_index = i;
     const struct NeighborBucket *const n = &neighbors->neighbor_buckets[i];
 
@@ -81,7 +81,7 @@ void ApplyVorticityConfinement(struct Particles *const particles,
     double vort_y = 0.0;
     double vort_z = 0.0;
 
-    for (int j=0; j<n->count; j++) {
+    for (int j=0; j<n->count; ++j) {
       const int q_index = n->neighbor_indices[j];
       const double x_diff = particles->x_star[p_index]
                           - particles->x_star[q_index];
@@ -115,7 +115,7 @@ void ApplyVorticityConfinement(struct Particles *const particles,
   }
 
   // Apply vorticity confinement
-  for (int i=0; i<particles->local_count; i++) {
+  for (int i=0; i<particles->local_count; ++i) {
     const int p_index = i;
     const struct NeighborBucket *const n = &neighbors->neighbor_buckets[i];
 
@@ -123,7 +123,7 @@ void ApplyVorticityConfinement(struct Particles *const particles,
     double eta_y  = 0.0;
     double eta_z  = 0.0;
 
-    for (int j=0; j<n->count; j++) {
+    for (int j=0; j<n->count; ++j) {
       const int q_index = n->neighbor_indices[j];
 
       const double x_diff = particles->x_star[p_index]
@@ -177,7 +177,7 @@ void ApplyViscosity(struct Particles *const particles,
   const double c = params->c;
   const double h = params->smoothing_radius;
 
-  for (int i=0; i<particles->local_count; i++) {
+  for (int i=0; i < particles->local_count; ++i) {
     const int p_index = i;
     const struct NeighborBucket *const n = &neighbors->neighbor_buckets[i];
 
@@ -185,7 +185,7 @@ void ApplyViscosity(struct Particles *const particles,
     double partial_sum_y = 0.0;
     double partial_sum_z = 0.0;
 
-    for (int j=0; j<n->count; j++) {
+    for (int j=0; j<n->count; ++j) {
       const int q_index = n->neighbor_indices[j];
       const double x_diff = particles->x_star[p_index]
                           - particles->x_star[q_index];
@@ -228,7 +228,7 @@ void ComputeDensities(struct Particles *const particles,
 
   const double h = params->smoothing_radius;
 
-  for (int i=0; i<particles->local_count; i++) {
+  for (int i=0; i<particles->local_count; ++i) {
     const int p_index = i;
     const struct NeighborBucket *const n = &neighbors->neighbor_buckets[i];
 
@@ -236,7 +236,7 @@ void ComputeDensities(struct Particles *const particles,
     double density = W(0.0, h);
 
     // Neighbor contribution
-    for (int j=0; j<n->count; j++) {
+    for (int j=0; j<n->count; ++j) {
       const int q_index = n->neighbor_indices[j];
       const double x_diff = particles->x_star[p_index]
                           - particles->x_star[q_index];
@@ -267,7 +267,7 @@ void ApplyGravity(struct Particles *const particles,
 void UpdatePositionStars(struct Particles *const particles,
                          const struct AABB *const boundary_global) {
 
-  for (int i=0; i<(particles->local_count); i++) {
+  for (int i=0; i<(particles->local_count); ++i) {
     particles->x_star[i] += particles->dp_x[i];
     particles->y_star[i] += particles->dp_y[i];
     particles->z_star[i] += particles->dp_z[i];
@@ -280,7 +280,7 @@ void UpdatePositionStars(struct Particles *const particles,
 
 void UpdatePositions(struct Particles *const particles) {
 
-  for (int i=0; i<particles->local_count; i++) {
+  for (int i=0; i<particles->local_count; ++i) {
     particles->x[i] = particles->x_star[i];
     particles->y[i] = particles->y_star[i];
     particles->z[i] = particles->z_star[i];
@@ -292,7 +292,7 @@ void ComputeLambda(struct Particles *const particles,
                      const struct Params *const params,
                      const struct Neighbors *const neighbors) {
 
-  for (int i=0; i<particles->local_count; i++) {
+  for (int i=0; i<particles->local_count; ++i) {
     const int p_index = i;
     const struct NeighborBucket *const n = &neighbors->neighbor_buckets[i];
     const double Ci = particles->density[p_index]
@@ -302,7 +302,7 @@ void ComputeLambda(struct Particles *const particles,
     double sum_grad_y = 0.0;
     double sum_grad_z = 0.0;
 
-    for (int j=0; j<n->count; j++) {
+    for (int j=0; j<n->count; ++j) {
       const int q_index = n->neighbor_indices[j];
       const double x_diff = particles->x_star[p_index]
                           - particles->x_star[q_index];
@@ -348,7 +348,7 @@ void UpdateDPs(struct Particles *const particles,
   const double dq = params->dq;
   const double Wdq = W(dq, h);
 
-  for (int i=0; i<particles->local_count; i++) {
+  for (int i=0; i<particles->local_count; ++i) {
     const int p_index = i;
     const struct NeighborBucket *const n = &neighbors->neighbor_buckets[i];
 
@@ -356,7 +356,7 @@ void UpdateDPs(struct Particles *const particles,
     double dp_y = 0.0;
     double dp_z = 0.0;
 
-    for (int j=0; j<n->count; j++) {
+    for (int j=0; j<n->count; ++j) {
       const int q_index = n->neighbor_indices[j];
       const double x_diff = particles->x_star[p_index]
                           - particles->x_star[q_index];
@@ -392,7 +392,7 @@ void PredictPositions(struct Particles *const particles,
                       const struct AABB *const boundary_global) {
   const double dt = params->time_step;
 
-  for (int i=0; i<particles->local_count; i++) {
+  for (int i=0; i<particles->local_count; ++i) {
     particles->x_star[i] = particles->x[i]
                          +(particles->v_x[i] * dt);
     particles->y_star[i] = particles->y[i]
@@ -436,7 +436,7 @@ void UpdateVelocities(struct Particles *const particles,
   int total_particles = particles->local_count
                       + particles->halo_count_left
                       + particles->halo_count_right;
-  for(int i=0; i<total_particles; i++) {
+  for(int i=0; i<total_particles; ++i) {
     double v_x = (particles->x_star[i] - particles->x[i])/dt;
     double v_y = (particles->y_star[i] - particles->y[i])/dt;
     double v_z = (particles->z_star[i] - particles->z[i])/dt;

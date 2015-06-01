@@ -91,7 +91,7 @@ void HashParticles(const struct Particles *const particles,
                           + particles->halo_count_left
                           + particles->halo_count_right;
 
-  for (int i=0; i<num_particles; i++) {
+  for (int i=0; i<num_particles; ++i) {
     hash_values[i] =  HashVal(neighbors,
                               particles->x_star[i],
                               particles->y_star[i],
