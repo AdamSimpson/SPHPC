@@ -9,7 +9,15 @@ endif()
 
 file(GLOB SRC_FILES src/*.c src/*.cc)
 
-add_executable(sph ${SRC_FILES})
+# A bit of a hack to enable easy Thrust/OpenACC compile on Titan
+# Compile thrust/cuda file seperatly
+find_package(CUDA)
+SET(CUDA_PROPAGATE_HOST_FLAGS OFF)
+set(CUDA_HOST_COMPILER /usr/bin/gcc)
+file(GLOB NVCC_FILES src/*.cu)
+cuda_compile(NVCC_OBJECTS ${NVCC_FILES})
+
+add_executable(sph ${SRC_FILES} ${NVCC_OBJECTS})
 
 find_package(MPI)
 include_directories(${MPI_INCLUDE_PATH})
