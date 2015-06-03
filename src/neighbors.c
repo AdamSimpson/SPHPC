@@ -38,7 +38,7 @@ void AllocInitNeighbors(struct Neighbors *const neighbors,
   neighbors->particle_ids = (unsigned int*)SAFE_ALLOC(particles->max_local,
                                                       sizeof(unsigned int));
 
-  #pragma acc enter data(neighbors->neighbor_buckets[0:particles->max_local], \
+  #pragma acc enter data copyin(neighbors->neighbor_buckets[0:particles->max_local], \
                          neighbors->start_indices[0:hash_size],               \
                          neighbors->end_indices[0:hash_size],                 \
                          neighbors->hash_values[0:particles->max_local],      \
