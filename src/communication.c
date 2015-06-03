@@ -39,7 +39,7 @@ void AllocateCommunication(struct Communication *const communication) {
   communication->recv_buffer_right = SAFE_ALLOC(num_buffer_doubles,
                                                    sizeof(double));
 
-  #pragma acc enter data copy(                                        \
+  #pragma acc enter data copyin(                                        \
     communication->edges.indices_left[0:num_buffer_indices],          \
     communication->edges.indices_right[0:num_buffer_indices],         \
     communication->out_of_bounds.indices_left[0:num_buffer_indices],  \
@@ -54,14 +54,14 @@ void AllocateCommunication(struct Communication *const communication) {
 
 void FreeCommunication(struct Communication *const communication) {
   #pragma acc exit data delete(                                       \
-    communication->edges.indices_left[0:num_buffer_indices],          \
-    communication->edges.indices_right[0:num_buffer_indices],         \
-    communication->out_of_bounds.indices_left[0:num_buffer_indices],  \
-    communication->out_of_bounds.indices_right[0:num_buffer_indices], \
-    communication->send_buffer_left[0:num_buffer_doubles],            \
-    communication->send_buffer_right[0:num_buffer_doubles],           \
-    communication->recv_buffer_left[0:num_buffer_doubles],            \
-    communication->recv_buffer_right[0:num_buffer_doubles]            \
+    communication->edges.indices_left,          \
+    communication->edges.indices_right,         \
+    communication->out_of_bounds.indices_left,  \
+    communication->out_of_bounds.indices_right, \
+    communication->send_buffer_left,            \
+    communication->send_buffer_right,           \
+    communication->recv_buffer_left,            \
+    communication->recv_buffer_right            \
   )
 
   free(communication->edges.indices_left);
