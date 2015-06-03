@@ -21,6 +21,8 @@ void AllocInitFileIO(struct FileIO *const file_io,
   int num_components = 3;
   file_io->write_buffer = SAFE_ALLOC(num_components*particles->max_local,
                                      sizeof(double));
+  #pragma acc enter data copy(                                   \
+    file_io->write_buffer[0:num_components*particles->max_local])
 
   // Get current path
   char current_path[1024];
@@ -51,8 +53,9 @@ void AllocInitFileIO(struct FileIO *const file_io,
 }
 
 void FinalizeFileIO(struct FileIO *const file_io) {
-    free(file_io->write_buffer);
-    free(file_io->output_path);
+  #pragma acc exit data delete(file_io->write_buffer);
+  free(file_io->write_buffer);
+  free(file_io->output_path);
 }
 
 // Write boundary in MPI
@@ -94,6 +97,7 @@ void WriteParticles(const struct Particles *const particles,
                 MPI_INFO_NULL, &file);
 
   // write coordinates to file
+  #pragma acc update host(file_io->write_buffer[0:num_particles])
   MPI_File_write_at(file, displacement, file_io->write_buffer,
                     num_doubles_to_send, MPI_DOUBLE, &status);
 
@@ -106,4 +110,5 @@ void WriteParticles(const struct Particles *const particles,
   MPI_File_close(&file);
 
   ++file_io->file_num;
+  #pragma acc update host(file_io->file_num)
 }

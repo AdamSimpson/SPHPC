@@ -39,9 +39,31 @@ void AllocateCommunication(struct Communication *const communication) {
   communication->recv_buffer_right = SAFE_ALLOC(num_buffer_doubles,
                                                    sizeof(double));
 
+  #pragma acc enter data copy(                                        \
+    communication->edges.indices_left[0:num_buffer_indices],          \
+    communication->edges.indices_right[0:num_buffer_indices],         \
+    communication->out_of_bounds.indices_left[0:num_buffer_indices],  \
+    communication->out_of_bounds.indices_right[0:num_buffer_indices], \
+    communication->send_buffer_left[0:num_buffer_doubles],            \
+    communication->send_buffer_right[0:num_buffer_doubles],           \
+    communication->recv_buffer_left[0:num_buffer_doubles],            \
+    communication->recv_buffer_right[0:num_buffer_doubles]            \
+  )
+
 }
 
 void FreeCommunication(struct Communication *const communication) {
+  #pragma acc exit data delete(                                       \
+    communication->edges.indices_left[0:num_buffer_indices],          \
+    communication->edges.indices_right[0:num_buffer_indices],         \
+    communication->out_of_bounds.indices_left[0:num_buffer_indices],  \
+    communication->out_of_bounds.indices_right[0:num_buffer_indices], \
+    communication->send_buffer_left[0:num_buffer_doubles],            \
+    communication->send_buffer_right[0:num_buffer_doubles],           \
+    communication->recv_buffer_left[0:num_buffer_doubles],            \
+    communication->recv_buffer_right[0:num_buffer_doubles]            \
+  )
+
   free(communication->edges.indices_left);
   free(communication->edges.indices_right);
   free(communication->out_of_bounds.indices_left);
@@ -178,6 +200,9 @@ void ExchangeHalo(struct Communication *const communication,
                            edges->indices_right,
                            &edges->particle_count_right);
 
+  #pragma acc update host(edges->particle_count_left, \
+                          edges->particle_count_right)
+
   int num_moving_left = edges->particle_count_left;
   int num_moving_right = edges->particle_count_right;
 
@@ -228,6 +253,8 @@ void ExchangeHalo(struct Communication *const communication,
 
   particles->halo_count_left  = num_from_left;
   particles->halo_count_right = num_from_right;
+
+  #pragma update host(particles->halo_count_left, particles->halo_count_right)
 
   UnpackHaloComponents(communication, particles);
 
@@ -300,6 +327,8 @@ void ExchangeOOB(struct Communication *const communication,
                     oob->indices_right,
                     &oob->particle_count_right);
 
+  #pragma acc update host(oob->particle_count_left, oob->particle_count_right)
+
   // Remove OOB particle id's
   RemoveIfOutsideBounds(params->node_start_x, params->node_end_x,
                         particles->id,
@@ -314,6 +343,7 @@ void ExchangeOOB(struct Communication *const communication,
   int num_moving_left = oob->particle_count_left;
   int num_moving_right = oob->particle_count_right;
   particles->local_count -= (num_moving_left + num_moving_right);
+  #pragma acc update host(particles->local_count)
 
   // Use ID component to reorganize particles array
   for(int i=0; i<particles->local_count; ++i) {
