@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.1)
 project(sph)
 
+option(OPENACC "Enable OpenACC support" ON)
+
 set(CMAKE_C_STANDARD 99)
 
 if(CMAKE_BUILD_TYPE MATCHES "Debug")
@@ -32,5 +34,9 @@ include_directories(${Boost_INCLUDE_DIR})
 
 find_library(M_LIB m)
 target_link_libraries(sph ${M_LIB})
+
+if (OPENACC)
+  set(CMAKE_CXX_FLAGS "-acc -Minfo")
+endif()
 
 install(TARGETS sph DESTINATION bin)
