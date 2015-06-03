@@ -143,6 +143,6 @@ void SetParameters(struct Params *const params,
   neighbors->max_neighbors = 60;
   neighbors->hash_spacing = params->smoothing_radius;
 
-  #pragma acc update(neighbors->max_neighbors, neighbors->hash_spacing)
+  #pragma acc update device(neighbors->max_neighbors, neighbors->hash_spacing)
 
 }
