@@ -517,7 +517,7 @@ void AllocInitParticles(struct Particles *particles,
     particles->density[i] = params->rest_density;
   }
 
-  #pramga acc enter data copy(
+  #pragma acc enter data copy(           \
     particles->x_star[0:num_particles],  \
     particles->y_star[0:num_particles],  \
     particles->z_star[0:num_particles],  \
@@ -535,31 +535,31 @@ void AllocInitParticles(struct Particles *particles,
     particles->w_z[0:num_particles],     \
     particles->density[0:num_particles], \
     particles->lambda[0:num_particles],  \
-    particles->id[0:num_particles],      \
+    particles->id[0:num_particles]       \
   )
 
 }
 
 void FinalizeParticles(struct Particles *particles) {
-  #pramga acc exit data delete(
-    particles->x_star,  \
-    particles->y_star,  \
-    particles->z_star,  \
-    particles->x,       \
-    particles->y,       \
-    particles->z,       \
-    particles->v_x,     \
-    particles->v_y,     \
-    particles->v_z,     \
-    particles->dp_x,    \
-    particles->dp_y,    \
-    particles->dp_z,    \
-    particles->w_x,     \
-    particles->w_y,     \
-    particles->w_z,     \
-    particles->density, \
-    particles->lambda,  \
-    particles->id,      \
+  #pragma acc exit data delete( \
+    particles->x_star,          \
+    particles->y_star,          \
+    particles->z_star,          \
+    particles->x,               \
+    particles->y,               \
+    particles->z,               \
+    particles->v_x,             \
+    particles->v_y,             \
+    particles->v_z,             \
+    particles->dp_x,            \
+    particles->dp_y,            \
+    particles->dp_z,            \
+    particles->w_x,             \
+    particles->w_y,             \
+    particles->w_z,             \
+    particles->density,         \
+    particles->lambda,          \
+    particles->id               \
   )
 
     free(particles->x_star);
