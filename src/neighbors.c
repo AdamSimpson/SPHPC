@@ -46,7 +46,6 @@ void AllocInitNeighbors(struct Neighbors *const neighbors,
   #pragma acc update device(neighbors->hash_size_x, \
                             neighbors->hash_size_y, \
                             neighbors->hash_size_z)
-
 }
 
 void FinalizeNeighbors(struct Neighbors *neighbors) {
