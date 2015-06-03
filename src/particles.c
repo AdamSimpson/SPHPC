@@ -517,7 +517,7 @@ void AllocInitParticles(struct Particles *particles,
     particles->density[i] = params->rest_density;
   }
 
-  #pragma acc enter data copy(           \
+  #pragma acc enter data copyin(           \
     particles->x_star[0:num_particles],  \
     particles->y_star[0:num_particles],  \
     particles->z_star[0:num_particles],  \
