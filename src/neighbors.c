@@ -49,10 +49,10 @@ void AllocInitNeighbors(struct Neighbors *const neighbors,
 }
 
 void FinalizeNeighbors(struct Neighbors *neighbors) {
-  #pragma acc exit data delete(neighbors->neighbor_buckets \
-    neighbors->start_indices,                       \
-    neighbors->end_indices,                         \
-    neighbors->hash_values,                         \
+  #pragma acc exit data delete( neighbors->neighbor_buckets, \
+    neighbors->start_indices,                                \
+    neighbors->end_indices,                                  \
+    neighbors->hash_values,                                  \
     neighbors->particle_ids)
 
   free(neighbors->neighbor_buckets);
