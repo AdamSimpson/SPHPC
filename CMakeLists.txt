@@ -36,6 +36,7 @@ find_library(M_LIB m)
 target_link_libraries(sph ${M_LIB})
 
 if (OPENACC)
+  set(CMAKE_C_FLAGS "-acc -Minfo")
   set(CMAKE_CXX_FLAGS "-acc -Minfo")
 endif()
 
