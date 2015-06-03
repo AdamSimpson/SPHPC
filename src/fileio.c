@@ -21,7 +21,7 @@ void AllocInitFileIO(struct FileIO *const file_io,
   int num_components = 3;
   file_io->write_buffer = SAFE_ALLOC(num_components*particles->max_local,
                                      sizeof(double));
-  #pragma acc enter data copy(                                   \
+  #pragma acc enter data copyin(                                   \
     file_io->write_buffer[0:num_components*particles->max_local])
 
   // Get current path
@@ -53,7 +53,7 @@ void AllocInitFileIO(struct FileIO *const file_io,
 }
 
 void FinalizeFileIO(struct FileIO *const file_io) {
-  #pragma acc exit data delete(file_io->write_buffer);
+  #pragma acc exit data delete(file_io->write_buffer)
   free(file_io->write_buffer);
   free(file_io->output_path);
 }
