@@ -73,6 +73,7 @@ void ApplyVorticityConfinement(struct Particles *const particles,
   const double eps = 5.0;
 
   // Calculate vorticy at each particle
+  #pragma acc parallel loop copyout(particles->w_x[0:])
   for (int i=0; i<particles->local_count; ++i) {
     const int p_index = i;
     const struct NeighborBucket *const n = &neighbors->neighbor_buckets[i];
