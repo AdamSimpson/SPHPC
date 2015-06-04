@@ -70,10 +70,6 @@ void PredictPositions(struct Particles *const fluid_particles,
                       const struct Params *const params,
                       const struct AABB *const boundary_global);
 
-void CheckVelocity(double *restrict const v_x,
-                   double *restrict const v_y,
-                   double *restrict const v_z);
-
 void UpdateVelocities(struct Particles *const fluid_particles,
                       const struct Params *const params);
 

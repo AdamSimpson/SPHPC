@@ -528,29 +528,6 @@ void PredictPositions(struct Particles *const particles,
   }
 }
 
-#pragma acc routine seq
-void CheckVelocity(double *restrict const v_x,
-                   double *restrict const v_y,
-                   double *restrict const v_z) {
-  const double v_max = 30.0;
-
-  if (*v_x > v_max)
-    *v_x = v_max;
-  else if (*v_x < -v_max)
-    *v_x = -v_max;
-
-  if (*v_y > v_max)
-    *v_y = v_max;
-  else if (*v_y < -v_max)
-    *v_y = -v_max;
-
-  if (*v_z > v_max)
-    *v_z = v_max;
-  else if (*v_z < -v_max)
-    *v_z = -v_max;
-
-}
-
 // Update particle position and check boundary
 void UpdateVelocities(struct Particles *const particles,
                       const struct Params *const params) {
@@ -581,7 +558,20 @@ void UpdateVelocities(struct Particles *const particles,
     double v_y = (particles->y_star[i] - particles->y[i])/dt;
     double v_z = (particles->z_star[i] - particles->z[i])/dt;
 
-    CheckVelocity(&v_x, &v_y, &v_z);
+   if (v_x > v_max)
+      v_x = v_max;
+   else if (v_x < -v_max)
+      v_x = -v_max;
+
+   if (v_y > v_max)
+      v_y = v_max;
+   else if (v_y < -v_max)
+      v_y = -v_max;
+
+   if (v_z > v_max)
+      v_z = v_max;
+   else if (v_z < -v_max)
+      v_z = -v_max;
 
     particles->v_x[i] = v_x;
     particles->v_y[i] = v_y;
