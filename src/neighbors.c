@@ -37,7 +37,7 @@ void AllocInitNeighbors(struct Neighbors *const neighbors,
                                                      sizeof(unsigned int));
   neighbors->particle_ids = (unsigned int*)SAFE_ALLOC(particles->max_local,
                                                       sizeof(unsigned int));
-
+/*
   #pragma acc enter data copyin(neighbors->neighbor_buckets[0:particles->max_local], \
                          neighbors->start_indices[0:hash_size],               \
                          neighbors->end_indices[0:hash_size],                 \
@@ -46,15 +46,17 @@ void AllocInitNeighbors(struct Neighbors *const neighbors,
   #pragma acc update device(neighbors->hash_size_x, \
                             neighbors->hash_size_y, \
                             neighbors->hash_size_z)
+*/
 }
 
 void FinalizeNeighbors(struct Neighbors *neighbors) {
+/*
   #pragma acc exit data delete( neighbors->neighbor_buckets, \
     neighbors->start_indices,                                \
     neighbors->end_indices,                                  \
     neighbors->hash_values,                                  \
     neighbors->particle_ids)
-
+*/
   free(neighbors->neighbor_buckets);
   free(neighbors->start_indices);
   free(neighbors->end_indices);

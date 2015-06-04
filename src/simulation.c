@@ -20,10 +20,10 @@ int main(int argc, char *argv[]) {
   struct Particles particles;
   struct Neighbors neighbors;
   struct FileIO file_io;
-  #pragma acc enter data create(params, water_volume_global,    \
+/*  #pragma acc enter data create(params, water_volume_global,    \
                                 boundary_global, communication, \
                                 particles, neighbors, file_io)
-
+*/
   SetParameters(&params, &particles, &neighbors,
                 &boundary_global, &water_volume_global);
 
@@ -138,11 +138,7 @@ void SetParameters(struct Params *const params,
   if (params->rank == params->proc_count-1)
     params->node_end_x   = boundary_global->max_x;
 
-  #pragma acc update device(params)
-
   neighbors->max_neighbors = 60;
   neighbors->hash_spacing = params->smoothing_radius;
-
-  #pragma acc update device(neighbors->max_neighbors, neighbors->hash_spacing)
 
 }

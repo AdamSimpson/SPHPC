@@ -82,9 +82,6 @@ void SetParticleNumbers(const struct AABB *const fluid_global,
   // Add initial space and left/right halo particles
   particles->max_local = num_initial + 4*communication->max_particles;
 
-  #pragma acc update host(communication->max_particles, \
-                          particles->max_local)
-
   DEBUG_PRINT("Max fluid particles local: %d\n", particles->max_local);
 }
 
@@ -153,5 +150,4 @@ void BalanceNodes(const struct Particles *particles,
   DEBUG_PRINT("rank %d node_start %f node_end %f \n",
               rank, params->node_start_x, params->node_end_x);
 
-  #pragma acc update host(params->node_start_x, params->node_end_x)
 }
