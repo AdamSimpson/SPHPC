@@ -78,21 +78,22 @@ void ApplyVorticityConfinement(struct Particles *const particles,
 
   // Calculate vorticy at each particle
   #pragma acc parallel                        \
-    copy(particles->v_x[:num_particles],  \
-         particles->v_y[:num_particles],  \
-         particles->v_z[:num_particles]   \
-     )                                    \
     copyin(particles[:1],                     \
            particles->x_star[:num_particles], \
            particles->y_star[:num_particles], \
            particles->z_star[:num_particles], \
+           params[:1],                        \
            neighbors[:1],                     \
            neighbors->neighbor_buckets[:num_particles] \
     ) \
     copyout(particles->w_x[:num_particles], \
             particles->w_y[:num_particles], \
             particles->w_z[:num_particles] \
-    ) default(none)
+    )                                      \
+    copy(particles->v_x[:num_particles],  \
+         particles->v_y[:num_particles],  \
+         particles->v_z[:num_particles]   \
+     ) default(none)
  {
 
   #pragma acc loop
@@ -208,17 +209,18 @@ void ApplyViscosity(struct Particles *const particles,
   const int num_particles = particles->local_count;
 
   #pragma acc parallel loop \
-    copy(particles->v_x[:num_particles],  \
-         particles->v_y[:num_particles],  \
-         particles->v_z[:num_particles]   \
-     )                                    \
     copyin(particles[:1],                     \
            particles->x_star[:num_particles], \
            particles->y_star[:num_particles], \
            particles->z_star[:num_particles], \
+           particles->density[:num_particles], \
            neighbors[:1],                     \
            neighbors->neighbor_buckets[:num_particles] \
-    ) default(none)
+    )                                     \
+    copy(particles->v_x[:num_particles],  \
+         particles->v_y[:num_particles],  \
+         particles->v_z[:num_particles]   \
+     ) default(none)
   for (int i=0; i < num_particles; ++i) {
     const int p_index = i;
     const struct NeighborBucket *const n = &neighbors->neighbor_buckets[i];
@@ -227,6 +229,7 @@ void ApplyViscosity(struct Particles *const particles,
     double partial_sum_y = 0.0;
     double partial_sum_z = 0.0;
 
+    #pragma acc loop seq
     for (int j=0; j<n->count; ++j) {
       const int q_index = n->neighbor_indices[j];
       const double x_diff = particles->x_star[p_index]
