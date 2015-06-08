@@ -91,6 +91,7 @@ int get_proc_count() {
   return proc_count;
 }
 
+#pragma acc routine
 void PackParticleToBuffer(const struct Particles *const particles,
                           const int from_index,
                           double *const to_buffer,
@@ -114,6 +115,7 @@ void PackParticleToBuffer(const struct Particles *const particles,
   to_buffer[to_index + 16] = particles->lambda[from_index];
 }
 
+#pragma acc routine
 void UnpackBufferToParticle(const double *const from_buffer,
                             const int from_index,
                             struct Particles *const particles,
@@ -146,11 +148,57 @@ void PackHaloComponents(const struct Communication *const communication,
   double *const packed_send_left  = communication->send_buffer_left;
   double *const packed_send_right = communication->send_buffer_right;
 
+  const int num_particles = particles->local_count;
+
+  #pragma acc parallel loop \
+    copyin(particles[:1],                   \
+           particles->x_star[:num_particles],\
+           particles->y_star[:num_particles],\
+           particles->z_star[:num_particles],\
+           particles->x[:num_particles],\
+           particles->y[:num_particles],\
+           particles->z[:num_particles],\
+           particles->v_x[:num_particles],\
+           particles->v_y[:num_particles],\
+           particles->v_z[:num_particles],\
+           particles->dp_x[:num_particles],\
+           particles->dp_y[:num_particles],\
+           particles->dp_z[:num_particles],\
+           particles->w_x[:num_particles],\
+           particles->w_y[:num_particles],\
+           particles->w_z[:num_particles],\
+           particles->density[:num_particles],\
+           particles->lambda[:num_particles], \
+           edges[:1],                          \
+           edges->indices_left[:edges->particle_count_left]) \
+  copyout(packed_send_left[:communication->max_particles*num_components]) default(none)
   for (int i=0; i<edges->particle_count_left; ++i) {
     const int p_index = edges->indices_left[i];
     PackParticleToBuffer(particles, p_index, packed_send_left, i*num_components);
   }
 
+  #pragma acc parallel loop \
+    copyin(particles[:1],                   \
+           particles->x_star[:num_particles],\
+           particles->y_star[:num_particles],\
+           particles->z_star[:num_particles],\
+           particles->x[:num_particles],\
+           particles->y[:num_particles],\
+           particles->z[:num_particles],\
+           particles->v_x[:num_particles],\
+           particles->v_y[:num_particles],\
+           particles->v_z[:num_particles],\
+           particles->dp_x[:num_particles],\
+           particles->dp_y[:num_particles],\
+           particles->dp_z[:num_particles],\
+           particles->w_x[:num_particles],\
+           particles->w_y[:num_particles],\
+           particles->w_z[:num_particles],\
+           particles->density[:num_particles],\
+           particles->lambda[:num_particles], \
+           edges[:1],                          \
+           edges->indices_right[:edges->particle_count_right]) \
+  copyout(packed_send_right[:communication->max_particles*num_components]) default(none)
   for (int i=0; i<edges->particle_count_right; ++i) {
     const int p_index = edges->indices_right[i];
     PackParticleToBuffer(particles, p_index, packed_send_right, i*num_components);
@@ -165,12 +213,54 @@ void UnpackHaloComponents(const struct Communication *const communication,
   const double *const packed_recv_right = communication->recv_buffer_right;
 
   // Unpack halo particles from left rank first
+  int num_particles = particles->local_count + particles->halo_count_left;
+  #pragma acc parallel loop \
+    copy(particles[:1],                   \
+           particles->x_star[:num_particles],\
+           particles->y_star[:num_particles],\
+           particles->z_star[:num_particles],\
+           particles->x[:num_particles],\
+           particles->y[:num_particles],\
+           particles->z[:num_particles],\
+           particles->v_x[:num_particles],\
+           particles->v_y[:num_particles],\
+           particles->v_z[:num_particles],\
+           particles->dp_x[:num_particles],\
+           particles->dp_y[:num_particles],\
+           particles->dp_z[:num_particles],\
+           particles->w_x[:num_particles],\
+           particles->w_y[:num_particles],\
+           particles->w_z[:num_particles],\
+           particles->density[:num_particles],\
+           particles->lambda[:num_particles]) \
+  copyin(packed_recv_left[:particles->halo_count_left*num_components]) default(none)
   for (int i=0; i<particles->halo_count_left; ++i) {
     const int p_index = num_local + i;
     UnpackBufferToParticle(packed_recv_left, i*num_components, particles, p_index);
   }
 
   // Unpack halo particles from right rank second
+  num_particles = particles->local_count + particles->halo_count_left + particles->halo_count_right;
+  #pragma acc parallel loop \
+    copy(particles[:1],                   \
+           particles->x_star[:num_particles],\
+           particles->y_star[:num_particles],\
+           particles->z_star[:num_particles],\
+           particles->x[:num_particles],\
+           particles->y[:num_particles],\
+           particles->z[:num_particles],\
+           particles->v_x[:num_particles],\
+           particles->v_y[:num_particles],\
+           particles->v_z[:num_particles],\
+           particles->dp_x[:num_particles],\
+           particles->dp_y[:num_particles],\
+           particles->dp_z[:num_particles],\
+           particles->w_x[:num_particles],\
+           particles->w_y[:num_particles],\
+           particles->w_z[:num_particles],\
+           particles->density[:num_particles],\
+           particles->lambda[:num_particles]) \
+  copyin(packed_recv_right[:particles->halo_count_right*num_components]) default(none)
   for (int i=0; i<particles->halo_count_right; ++i) {
     const int p_index = num_local
                       + particles->halo_count_left + i;
@@ -187,6 +277,7 @@ void ExchangeHalo(struct Communication *const communication,
   struct Edges *const edges = &communication->edges;
   double h = params->smoothing_radius;
 
+  #pragma acc host_data use_device(particles->id)
   // Set edge particle ID's
   CopyIfLessThanOrEqual(h + params->node_start_x,
                         particles->id,

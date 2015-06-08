@@ -108,6 +108,13 @@ void HashParticles(const struct Particles *const particles,
                           + particles->halo_count_left
                           + particles->halo_count_right;
 
+  #pragma acc parallel loop \
+    copyin(particles[:1],                       \
+           particles->x_star[:num_particles], \
+           particles->y_star[:num_particles], \
+           particles->z_star[:num_particles]) \
+    copyout(hash_values[:num_particles], \
+            particle_ids[:num_particles]) default(none)
   for (int i=0; i<num_particles; ++i) {
     hash_values[i] =  HashVal(neighbors,
                               particles->x_star[i],
@@ -124,11 +131,18 @@ void SortHash(const struct Particles *particles,
 
   unsigned int *const keys = neighbors->hash_values;
   unsigned int *const values = neighbors->particle_ids;
-  const int total_particles = particles->local_count
+  const int num_particles = particles->local_count
                             + particles->halo_count_left
                             + particles->halo_count_right;
-  SortByKey(keys, values, total_particles);
 
+  #pragma acc data copy(keys[0:num_particles],  \
+                        values[0:num_particles])
+  {
+  #pragma acc host_data use_device(keys, values)
+  {
+    SortByKey(keys, values, num_particles);
+  }
+  }
 }
 
 // Find start and end of hash cells
@@ -144,15 +158,32 @@ void FindCellBounds(const struct Particles *particles,
                           + particles->halo_count_left
                           + particles->halo_count_right;
 
+  // OpenACC doesn't accent struct member pointers in use_device
+  unsigned int *hash_values = neighbors->hash_values;
+  unsigned int *start_indices = neighbors->start_indices;
+  unsigned int *end_indices = neighbors->end_indices;
+
+  #pragma acc data copy(hash_values[0:num_particles],  \
+                          start_indices[0:length_hash], \
+                          end_indices[0:length_hash])
+  {
+
   // Find start and end indices for each
-  FindLowerBounds(neighbors->hash_values,
-                  num_particles,
-                  length_hash,
-                  neighbors->start_indices);
-  FindUpperBounds(neighbors->hash_values,
-                  num_particles,
-                  length_hash,
-                  neighbors->end_indices);
+  #pragma acc host_data use_device(hash_values,    \
+                                   start_indices,  \
+                                   end_indices)
+  {
+    FindLowerBounds(neighbors->hash_values,
+                    num_particles,
+                    length_hash,
+                    neighbors->start_indices);
+    FindUpperBounds(neighbors->hash_values,
+                    num_particles,
+                    length_hash,
+                    neighbors->end_indices);
+  }
+
+  }
 }
 
 // Neighbors are accessed multiple times per step so we keep them in buckets
