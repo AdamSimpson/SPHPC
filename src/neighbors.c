@@ -76,6 +76,7 @@ void FindAllNeighbors(const struct Particles *const particles,
 
 // Uniform grid hash
 // We don't check if the position is out of bounds so x,y,z must be valid
+#pragma acc routine seq
 unsigned int HashVal(const struct Neighbors *const neighbors,
                      const double x,
                      const double y,
@@ -155,6 +156,7 @@ void FindCellBounds(const struct Particles *particles,
 }
 
 // Neighbors are accessed multiple times per step so we keep them in buckets
+#pragma acc routine seq
 void FillParticleNeighbors(struct Neighbors *const neighbors,
                            const struct Params *const params,
                            const struct Particles *particles,
@@ -230,10 +232,26 @@ void FillParticleNeighbors(struct Neighbors *const neighbors,
 void FillNeighbors(const struct Particles *particles,
                    const struct Params *const params,
                    struct Neighbors *const neighbors) {
-  const int total_particles = particles->local_count;
+  const int num_particles = particles->local_count;
+
+  const size_t hash_size = neighbors->hash_size_x
+                   * neighbors->hash_size_y
+                   * neighbors->hash_size_z;
 
   // Fill neighbor bucket for all resident particles
-  for (int i=0; i<total_particles; ++i) {
+  #pragma acc parallel loop \
+    copyin(particles[:1],                     \
+           particles->x_star[:num_particles], \
+           particles->y_star[:num_particles], \
+           particles->z_star[:num_particles], \
+           params[:1],                        \
+           neighbors[:1],                      \
+           neighbors->start_indices[:hash_size], \
+           neighbors->end_indices[:hash_size], \
+           neighbors->hash_values[:num_particles], \
+           neighbors->particle_ids[:num_particles] \
+    ) copyout(neighbors->neighbor_buckets[:num_particles]) default(none)
+  for (int i=0; i<num_particles; ++i) {
     FillParticleNeighbors(neighbors,
                           params,
                           particles,

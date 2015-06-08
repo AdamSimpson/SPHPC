@@ -9,10 +9,10 @@ struct Params;
 struct AABB;
 
 struct Neighbors {
-  unsigned int *start_indices; // Start index for hash values
-  unsigned int *end_indices;   // End index for hash values
-  unsigned int *hash_values;   // Array of hash values
-  unsigned int *particle_ids;  // Array of particle id's
+  unsigned int *restrict start_indices; // Start index for hash values
+  unsigned int *restrict end_indices;   // End index for hash values
+  unsigned int *restrict hash_values;   // Array of hash values
+  unsigned int *restrict particle_ids;  // Array of particle id's
   int max_neighbors;
   int hash_size_x;
   int hash_size_y;
