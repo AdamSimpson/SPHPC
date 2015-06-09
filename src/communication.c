@@ -232,7 +232,8 @@ void UnpackHaloComponents(const struct Communication *const communication,
            particles->w_y[:num_particles],\
            particles->w_z[:num_particles],\
            particles->density[:num_particles],\
-           particles->lambda[:num_particles]) \
+           particles->lambda[:num_particles], \
+           particles->id[:num_particles]) \
   copyin(packed_recv_left[:particles->halo_count_left*num_components]) default(none)
   for (int i=0; i<particles->halo_count_left; ++i) {
     const int p_index = num_local + i;
@@ -259,7 +260,8 @@ void UnpackHaloComponents(const struct Communication *const communication,
            particles->w_y[:num_particles],\
            particles->w_z[:num_particles],\
            particles->density[:num_particles],\
-           particles->lambda[:num_particles]) \
+           particles->lambda[:num_particles], \
+           particles->id[:num_particles]) \
   copyin(packed_recv_right[:particles->halo_count_right*num_components]) default(none)
   for (int i=0; i<particles->halo_count_right; ++i) {
     const int p_index = num_local
@@ -278,14 +280,14 @@ void ExchangeHalo(struct Communication *const communication,
   double h = params->smoothing_radius;
 
   int num_particles = particles->local_count;
-  int max_comm_components = communication->max_particles*num_components;
+  int max_comm_indices = communication->max_particles;
 
   #pragma acc data copyin(particles[:1], \
      particles->id[:num_particles],       \
      particles->x_star[:num_particles],   \
      edges[:1])                            \
-    copyout(edges->indices_left[:max_comm_components], \
-     edges->indices_right[:max_comm_components])
+    copyout(edges->indices_left[:max_comm_indices], \
+     edges->indices_right[:max_comm_indices])
   {
   int *ids = particles->id;
   double *x_stars = particles->x_star;
@@ -458,7 +460,8 @@ void UnpackOOBComponents(const int num_from_left, const int num_from_right,
           particles->w_y[:num_particles],\
           particles->w_z[:num_particles],\
           particles->density[:num_particles],\
-          particles->lambda[:num_particles]) \
+          particles->lambda[:num_particles], \
+          particles->id[:num_particles])     \
   copyin(packed_recv_left[:num_from_left*num_components]) default(none)
   for (int i=0; i<num_from_left; ++i) {
     const int p_index = particles->local_count;
@@ -466,7 +469,7 @@ void UnpackOOBComponents(const int num_from_left, const int num_from_right,
     ++(particles->local_count);
   }
 
- #pragma acc parallel loop \
+  #pragma acc parallel loop \
    copy(particles[:1],                   \
           particles->x_star[:num_particles],\
           particles->y_star[:num_particles],\
@@ -484,7 +487,8 @@ void UnpackOOBComponents(const int num_from_left, const int num_from_right,
           particles->w_y[:num_particles],\
           particles->w_z[:num_particles],\
           particles->density[:num_particles],\
-          particles->lambda[:num_particles]) \
+          particles->lambda[:num_particles], \
+          particles->id[:num_particles])     \
  copyin(packed_recv_right[:num_from_right*num_components]) default(none)
   for (int i=0; i<num_from_right; ++i) {
     const int p_index = particles->local_count;
@@ -503,7 +507,7 @@ void ExchangeOOB(struct Communication *const communication,
   struct OOB *const oob = &communication->out_of_bounds;
 
   int num_particles = particles->local_count;
-  int max_components = communication->max_particles*num_components;
+  int max_comm_indices = communication->max_particles;
 
   // use_device doesn't accept struct pointer members so we unpack
   int *ids = particles->id;
@@ -513,8 +517,8 @@ void ExchangeOOB(struct Communication *const communication,
 
   #pragma acc data copy(ids[:num_particles]) \
   copyin(x_stars[:num_particles])   \
-  copyout(indices_left[:max_components],  \
-    indices_right[:max_components])
+  copyout(indices_left[:max_comm_indices],  \
+    indices_right[:max_comm_indices])
   {
   // Copy OOB particle id's to left node
   #pragma acc host_data use_device(ids, x_stars, indices_left)
@@ -528,7 +532,7 @@ void ExchangeOOB(struct Communication *const communication,
   }
 
   // Copy OOB particle id's to right node
-  #pragma acc host_data use_device(ids, x_stars, indices_left)
+  #pragma acc host_data use_device(ids, x_stars, indices_right)
   {
   CopyIfGreaterThan(params->node_end_x,
                     ids,
