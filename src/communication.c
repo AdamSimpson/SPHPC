@@ -171,7 +171,7 @@ void PackHaloComponents(const struct Communication *const communication,
            particles->lambda[:num_particles], \
            edges[:1],                          \
            edges->indices_left[:edges->particle_count_left]) \
-  copyout(packed_send_left[:communication->max_particles*num_components]) default(none)
+  copyout(packed_send_left[:edges->particle_count_left*num_components]) default(none)
   for (int i=0; i<edges->particle_count_left; ++i) {
     const int p_index = edges->indices_left[i];
     PackParticleToBuffer(particles, p_index, packed_send_left, i*num_components);
@@ -277,20 +277,37 @@ void ExchangeHalo(struct Communication *const communication,
   struct Edges *const edges = &communication->edges;
   double h = params->smoothing_radius;
 
-  #pragma acc host_data use_device(particles->id)
+  int num_particles = particles->local_count;
+  int max_comm_components = communication->max_particles*num_components;
+
+  #pragma acc data copyin(particles[:1], \
+     particles->id[:num_particles],       \
+     particles->x_star[:num_particles],   \
+     edges[:1])                            \
+    copyout(edges->indices_left[:max_comm_components], \
+     edges->indices_right[:max_comm_components])
+  {
+  int *ids = particles->id;
+  double *x_stars = particles->x_star;
+  int *indices_left = edges->indices_left;
+  int *indices_right = edges->indices_right;
+  #pragma acc host_data use_device(particles)
+  {
   // Set edge particle ID's
   CopyIfLessThanOrEqual(h + params->node_start_x,
-                        particles->id,
+                        ids,
                         particles->local_count,
-                        particles->x_star,
-                        edges->indices_left,
+                        x_stars,
+                        indices_left,
                         &edges->particle_count_left);
   CopyIfGreaterThanOrEqual(params->node_end_x - h,
-                           particles->id,
+                           ids,
                            particles->local_count,
-                           particles->x_star,
-                           edges->indices_right,
+                           x_stars,
+                           indices_right,
                            &edges->particle_count_right);
+  }
+  }
 
   int num_moving_left = edges->particle_count_left;
   int num_moving_right = edges->particle_count_right;
@@ -358,11 +375,57 @@ void PackOOBComponents(const struct Communication *const communication,
   double *const packed_send_left  = communication->send_buffer_left;
   double *const packed_send_right = communication->send_buffer_right;
 
+  int num_particles = particles->local_count;
+
+  #pragma acc parallel loop \
+    copyin(particles[:1],                   \
+           particles->x_star[:num_particles],\
+           particles->y_star[:num_particles],\
+           particles->z_star[:num_particles],\
+           particles->x[:num_particles],\
+           particles->y[:num_particles],\
+           particles->z[:num_particles],\
+           particles->v_x[:num_particles],\
+           particles->v_y[:num_particles],\
+           particles->v_z[:num_particles],\
+           particles->dp_x[:num_particles],\
+           particles->dp_y[:num_particles],\
+           particles->dp_z[:num_particles],\
+           particles->w_x[:num_particles],\
+           particles->w_y[:num_particles],\
+           particles->w_z[:num_particles],\
+           particles->density[:num_particles],\
+           particles->lambda[:num_particles], \
+           oob[:1],                          \
+           oob->indices_left[:oob->particle_count_left]) \
+  copyout(packed_send_left[:oob->particle_count_left*num_components]) default(none)
   for (int i=0; i<oob->particle_count_left; ++i) {
     const int p_index = oob->indices_left[i];
     PackParticleToBuffer(particles, p_index, packed_send_left, i*num_components);
   }
 
+  #pragma acc parallel loop \
+    copyin(particles[:1],                   \
+           particles->x_star[:num_particles],\
+           particles->y_star[:num_particles],\
+           particles->z_star[:num_particles],\
+           particles->x[:num_particles],\
+           particles->y[:num_particles],\
+           particles->z[:num_particles],\
+           particles->v_x[:num_particles],\
+           particles->v_y[:num_particles],\
+           particles->v_z[:num_particles],\
+           particles->dp_x[:num_particles],\
+           particles->dp_y[:num_particles],\
+           particles->dp_z[:num_particles],\
+           particles->w_x[:num_particles],\
+           particles->w_y[:num_particles],\
+           particles->w_z[:num_particles],\
+           particles->density[:num_particles],\
+           particles->lambda[:num_particles], \
+           oob[:1],                          \
+           oob->indices_right[:oob->particle_count_right]) \
+  copyout(packed_send_right[:communication->max_particles*num_components]) default(none)
   for (int i=0; i<oob->particle_count_right; ++i) {
     const int p_index = oob->indices_right[i];
     PackParticleToBuffer(particles, p_index, packed_send_right, i*num_components);
@@ -376,12 +439,53 @@ void UnpackOOBComponents(const int num_from_left, const int num_from_right,
   double *const packed_recv_left  = communication->recv_buffer_left;
   double *const packed_recv_right = communication->recv_buffer_right;
 
+  const int num_particles = particles->local_count;
+  #pragma acc parallel loop \
+   copy(particles[:1],                   \
+          particles->x_star[:num_particles],\
+          particles->y_star[:num_particles],\
+          particles->z_star[:num_particles],\
+          particles->x[:num_particles],\
+          particles->y[:num_particles],\
+          particles->z[:num_particles],\
+          particles->v_x[:num_particles],\
+          particles->v_y[:num_particles],\
+          particles->v_z[:num_particles],\
+          particles->dp_x[:num_particles],\
+          particles->dp_y[:num_particles],\
+          particles->dp_z[:num_particles],\
+          particles->w_x[:num_particles],\
+          particles->w_y[:num_particles],\
+          particles->w_z[:num_particles],\
+          particles->density[:num_particles],\
+          particles->lambda[:num_particles]) \
+  copyin(packed_recv_left[:num_from_left*num_components]) default(none)
   for (int i=0; i<num_from_left; ++i) {
     const int p_index = particles->local_count;
     UnpackBufferToParticle(packed_recv_left, i*num_components, particles, p_index);
     ++(particles->local_count);
   }
 
+ #pragma acc parallel loop \
+   copy(particles[:1],                   \
+          particles->x_star[:num_particles],\
+          particles->y_star[:num_particles],\
+          particles->z_star[:num_particles],\
+          particles->x[:num_particles],\
+          particles->y[:num_particles],\
+          particles->z[:num_particles],\
+          particles->v_x[:num_particles],\
+          particles->v_y[:num_particles],\
+          particles->v_z[:num_particles],\
+          particles->dp_x[:num_particles],\
+          particles->dp_y[:num_particles],\
+          particles->dp_z[:num_particles],\
+          particles->w_x[:num_particles],\
+          particles->w_y[:num_particles],\
+          particles->w_z[:num_particles],\
+          particles->density[:num_particles],\
+          particles->lambda[:num_particles]) \
+ copyin(packed_recv_right[:num_from_right*num_components]) default(none)
   for (int i=0; i<num_from_right; ++i) {
     const int p_index = particles->local_count;
     UnpackBufferToParticle(packed_recv_right, i*num_components, particles, p_index);
@@ -398,31 +502,55 @@ void ExchangeOOB(struct Communication *const communication,
   const int proc_count = params->proc_count;
   struct OOB *const oob = &communication->out_of_bounds;
 
+  int num_particles = particles->local_count;
+  int max_components = communication->max_particles*num_components;
+
+  // use_device doesn't accept struct pointer members so we unpack
+  int *ids = particles->id;
+  double *x_stars = particles->x_star;
+  int *indices_left = oob->indices_left;
+  int *indices_right = oob->indices_right;
+
+  #pragma acc data copy(ids[:num_particles]) \
+  copyin(x_stars[:num_particles])   \
+  copyout(indices_left[:max_components],  \
+    indices_right[:max_components])
+  {
   // Copy OOB particle id's to left node
+  #pragma acc host_data use_device(ids, x_stars, indices_left)
+  {
   CopyIfLessThan(params->node_start_x,
-                 particles->id,
+                 ids,
                  particles->local_count,
-                 particles->x_star,
-                 oob->indices_left,
+                 x_stars,
+                 indices_left,
                  &oob->particle_count_left);
+  }
 
   // Copy OOB particle id's to right node
+  #pragma acc host_data use_device(ids, x_stars, indices_left)
+  {
   CopyIfGreaterThan(params->node_end_x,
-                    particles->id,
+                    ids,
                     particles->local_count,
-                    particles->x_star,
-                    oob->indices_right,
+                    x_stars,
+                    indices_right,
                     &oob->particle_count_right);
-
+  }
   // Remove OOB particle id's
+  #pragma acc host_data use_device(ids, x_stars)
+  {
   RemoveIfOutsideBounds(params->node_start_x, params->node_end_x,
-                        particles->id,
+                        ids,
                         particles->local_count,
-                        particles->x_star);
+                        x_stars);
+  }
 
   // Pack removed particle components
   PackOOBComponents(communication,
                     particles);
+
+  }
 
   // Set new particle count
   int num_moving_left = oob->particle_count_left;
