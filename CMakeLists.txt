@@ -6,7 +6,7 @@ option(OPENACC "Enable OpenACC support" ON)
 set(CMAKE_C_STANDARD 99)
 
 if(CMAKE_BUILD_TYPE MATCHES "Debug")
-  add_definitions(-DDEBUG=1)
+  add_definitions(-DDEBUG -DTHRUST_DEBUG)
 endif()
 
 file(GLOB SRC_FILES src/*.c src/*.cc)
