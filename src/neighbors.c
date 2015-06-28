@@ -112,7 +112,8 @@ void HashParticles(const struct Particles *const particles,
     copyin(particles[:1],                       \
            particles->x_star[:num_particles], \
            particles->y_star[:num_particles], \
-           particles->z_star[:num_particles]) \
+           particles->z_star[:num_particles], \
+           neighbors[:1]) \
     copyout(hash_values[:num_particles], \
             particle_ids[:num_particles]) default(none)
   for (int i=0; i<num_particles; ++i) {
@@ -143,6 +144,7 @@ void SortHash(const struct Particles *particles,
     SortByKey(keys, values, num_particles);
   }
   }
+
 }
 
 // Find start and end of hash cells
@@ -158,14 +160,14 @@ void FindCellBounds(const struct Particles *particles,
                           + particles->halo_count_left
                           + particles->halo_count_right;
 
-  // OpenACC doesn't accent struct member pointers in use_device
+  // OpenACC doesn't accept struct member pointers in use_device
   unsigned int *hash_values = neighbors->hash_values;
   unsigned int *start_indices = neighbors->start_indices;
   unsigned int *end_indices = neighbors->end_indices;
 
-  #pragma acc data copy(hash_values[0:num_particles],  \
-                          start_indices[0:length_hash], \
-                          end_indices[0:length_hash])
+  #pragma acc data copyout(start_indices[0:length_hash], \
+                        end_indices[0:length_hash]) \
+                   copyin(hash_values[0:num_particles])
   {
 
   // Find start and end indices for each
@@ -173,21 +175,22 @@ void FindCellBounds(const struct Particles *particles,
                                    start_indices,  \
                                    end_indices)
   {
-    FindLowerBounds(neighbors->hash_values,
+    FindLowerBounds(hash_values,
                     num_particles,
                     length_hash,
-                    neighbors->start_indices);
-    FindUpperBounds(neighbors->hash_values,
+                    start_indices);
+    FindUpperBounds(hash_values,
                     num_particles,
                     length_hash,
-                    neighbors->end_indices);
+                    end_indices);
   }
 
   }
+
 }
 
 // Neighbors are accessed multiple times per step so we keep them in buckets
-#pragma acc routine seq
+//#pragma acc routine seq
 void FillParticleNeighbors(struct Neighbors *const neighbors,
                            const struct Params *const params,
                            const struct Particles *particles,
@@ -269,7 +272,7 @@ void FillNeighbors(const struct Particles *particles,
                    * neighbors->hash_size_y
                    * neighbors->hash_size_z;
 
-  // Fill neighbor bucket for all resident particles
+/*  // Fill neighbor bucket for all resident particles
   #pragma acc parallel loop \
     copyin(particles[:1],                     \
            particles->x_star[:num_particles], \
@@ -279,10 +282,9 @@ void FillNeighbors(const struct Particles *particles,
            neighbors[:1],                      \
            neighbors->start_indices[:hash_size], \
            neighbors->end_indices[:hash_size], \
-           neighbors->hash_values[:num_particles], \
            neighbors->particle_ids[:num_particles] \
     ) copyout(neighbors->neighbor_buckets[:num_particles]) default(none)
-  for (int i=0; i<num_particles; ++i) {
+*/  for (int i=0; i<num_particles; ++i) {
     FillParticleNeighbors(neighbors,
                           params,
                           particles,

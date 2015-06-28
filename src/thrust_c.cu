@@ -4,6 +4,8 @@
 #include <thrust/execution_policy.h>
 #include <thrust/sort.h>
 #include <thrust/binary_search.h>
+#include <thrust/device_ptr.h>
+#include <thrust/device_vector.h>
 #include <iostream>
 
 struct LessThan {
@@ -72,26 +74,34 @@ extern "C" void FindLowerBounds(const unsigned int *const hash_values,
                                 const int value_count,
                                 const int search_count,
                                 unsigned int *const start_indices) {
-  thrust::counting_iterator<unsigned int> search_begin(0);
+
+  // Why do I need this when i'm using device execution policy?
+  thrust::device_ptr<const unsigned int> d_hash_values = thrust::device_pointer_cast(hash_values);
+  thrust::device_ptr<unsigned int> d_start_indices = thrust::device_pointer_cast(start_indices);
+
   thrust::lower_bound(thrust::device,
-                      hash_values,
-                      hash_values + value_count,
-                      search_begin,
-                      search_begin + search_count,
-                      start_indices);
+                      d_hash_values,
+                      d_hash_values + value_count,
+                      thrust::make_counting_iterator((unsigned int)0),
+                      thrust::make_counting_iterator((unsigned int)search_count),
+                      d_start_indices);
 }
 
 extern "C" void FindUpperBounds(const unsigned int *const hash_values,
                                 const int value_count,
                                 const int search_count,
-                                unsigned int *const start_indices) {
-  thrust::counting_iterator<unsigned int> search_begin(0);
+                                unsigned int *const end_indices) {
+
+  // Why do I need this when i'm using device execution policy?
+  thrust::device_ptr<const unsigned int> d_hash_values = thrust::device_pointer_cast(hash_values);
+  thrust::device_ptr<unsigned int> d_end_indices = thrust::device_pointer_cast(end_indices);
+
   thrust::upper_bound(thrust::device,
                       hash_values,
                       hash_values + value_count,
-                      search_begin,
-                      search_begin + search_count,
-                      start_indices);
+                      thrust::make_counting_iterator((unsigned int)0),
+                      thrust::make_counting_iterator((unsigned int)search_count),
+                      d_end_indices);
 }
 
 // C wrapper function for thrust copy_if with LessThan predicate

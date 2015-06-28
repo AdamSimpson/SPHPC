@@ -215,8 +215,8 @@ void UnpackHaloComponents(const struct Communication *const communication,
   // Unpack halo particles from left rank first
   int num_particles = particles->local_count + particles->halo_count_left;
   #pragma acc parallel loop \
-    copy(particles[:1],                   \
-           particles->x_star[:num_particles],\
+    copyin(particles[:1])                   \
+    copy(particles->x_star[:num_particles],\
            particles->y_star[:num_particles],\
            particles->z_star[:num_particles],\
            particles->x[:num_particles],\
@@ -286,14 +286,15 @@ void ExchangeHalo(struct Communication *const communication,
      particles->id[:num_particles],       \
      particles->x_star[:num_particles],   \
      edges[:1])                            \
-    copyout(edges->indices_left[:max_comm_indices], \
+     copyout(edges->indices_left[:max_comm_indices], \
      edges->indices_right[:max_comm_indices])
   {
   int *ids = particles->id;
   double *x_stars = particles->x_star;
   int *indices_left = edges->indices_left;
   int *indices_right = edges->indices_right;
-  #pragma acc host_data use_device(particles)
+
+  #pragma acc host_data use_device(ids, x_stars, indices_left, indices_right)
   {
   // Set edge particle ID's
   CopyIfLessThanOrEqual(h + params->node_start_x,
@@ -443,9 +444,6 @@ void UnpackOOBComponents(const int num_from_left, const int num_from_right,
 
   int num_particles = particles->local_count + num_from_left;
 
-  printf("\n right before particles->x_star %p\n", particles->x_star);
-
-
   #pragma acc parallel loop \
    copyin(particles[:1])                   \
    copy( particles->x_star[:num_particles],\
@@ -474,8 +472,6 @@ void UnpackOOBComponents(const int num_from_left, const int num_from_right,
   }
 
   num_particles = particles->local_count + num_from_left + num_from_right;
-
-  printf("\n after particles->x_star %p\n", particles->x_star);
 
   #pragma acc parallel loop \
    copyin(particles[:1])    \
@@ -620,8 +616,6 @@ void ExchangeOOB(struct Communication *const communication,
   num_from_left /= num_components;
   MPI_Get_count(&statuses[1], MPI_DOUBLE, &num_from_right);
   num_from_right /= num_components;
-
-  printf("\nbefore particles->x_star %p\n", particles->x_star);
 
   UnpackOOBComponents(num_from_left, num_from_right,
                       communication,

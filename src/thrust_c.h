@@ -46,7 +46,7 @@ void SortByKey(unsigned int *const keys,
 void FindLowerBounds(const unsigned int *const hash_values,
                                 const int value_count,
                                 const int search_count,
-                                unsigned int *const start_indices);
+                                unsigned int *const end_indices);
 
 void FindUpperBounds(const unsigned int *const hash_values,
                                 const int value_count,

@@ -51,9 +51,9 @@ int main(int argc, char *argv[]) {
     if (n % 10 == 0)
       BalanceNodes(&particles, &params);
 
-    ExchangeOOB(&communication, &particles, &params);
+//    ExchangeOOB(&communication, &particles, &params);
 
-    ExchangeHalo(&communication, &params, &particles);
+//    ExchangeHalo(&communication, &params, &particles);
 
     FindAllNeighbors(&particles, &params, &neighbors);
 
@@ -63,13 +63,13 @@ int main(int argc, char *argv[]) {
 
       ComputeLambda(&particles, &params, &neighbors);
 
-      UpdateHaloLambdas(&communication, &params, &particles);
+//      UpdateHaloLambdas(&communication, &params, &particles);
 
       UpdateDPs(&particles, &params, &neighbors);
 
       UpdatePositionStars(&particles, &boundary_global);
 
-      UpdateHaloPositions(&communication, &params, &particles);
+//      UpdateHaloPositions(&communication, &params, &particles);
     }
 
     UpdateVelocities(&particles, &params);
