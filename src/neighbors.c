@@ -165,32 +165,34 @@ void FindCellBounds(const struct Particles *particles,
   unsigned int *start_indices = neighbors->start_indices;
   unsigned int *end_indices = neighbors->end_indices;
 
-  #pragma acc data copyout(start_indices[0:length_hash], \
-                        end_indices[0:length_hash]) \
+  // standard data region here didn't produce correct results unless ACC_NOTIFY=10 was set...
+  // weird inconsistent results...absolutely maddening...
+  #pragma acc enter data create(start_indices[0:length_hash], end_indices[0:length_hash]) \
                    copyin(hash_values[0:num_particles])
-  {
 
   // Find start and end indices for each
-  #pragma acc host_data use_device(hash_values,    \
-                                   start_indices,  \
-                                   end_indices)
+  #pragma acc host_data use_device(hash_values, start_indices, end_indices)
   {
+
     FindLowerBounds(hash_values,
                     num_particles,
                     length_hash,
                     start_indices);
+
     FindUpperBounds(hash_values,
                     num_particles,
                     length_hash,
                     end_indices);
-  }
 
   }
+
+  #pragma acc exit data copyout(start_indices[0: length_hash], end_indices[0:length_hash]) \
+                        delete(hash_values[0:num_particles])
 
 }
 
 // Neighbors are accessed multiple times per step so we keep them in buckets
-//#pragma acc routine seq
+#pragma acc routine seq
 void FillParticleNeighbors(struct Neighbors *const neighbors,
                            const struct Params *const params,
                            const struct Particles *particles,
@@ -272,7 +274,7 @@ void FillNeighbors(const struct Particles *particles,
                    * neighbors->hash_size_y
                    * neighbors->hash_size_z;
 
-/*  // Fill neighbor bucket for all resident particles
+  // Fill neighbor bucket for all resident particles
   #pragma acc parallel loop \
     copyin(particles[:1],                     \
            particles->x_star[:num_particles], \
@@ -284,7 +286,7 @@ void FillNeighbors(const struct Particles *particles,
            neighbors->end_indices[:hash_size], \
            neighbors->particle_ids[:num_particles] \
     ) copyout(neighbors->neighbor_buckets[:num_particles]) default(none)
-*/  for (int i=0; i<num_particles; ++i) {
+  for (int i=0; i<num_particles; ++i) {
     FillParticleNeighbors(neighbors,
                           params,
                           particles,

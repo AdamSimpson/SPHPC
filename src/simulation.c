@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
 
     ApplyViscosity(&particles, &params, &neighbors);
 
-    ApplyVorticityConfinement(&particles, &params, &neighbors);
+//    ApplyVorticityConfinement(&particles, &params, &neighbors);
 
     UpdatePositions(&particles);
 
