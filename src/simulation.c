@@ -85,7 +85,6 @@ int main(int argc, char *argv[]) {
       WriteParticles(&particles, &params, &file_io);
       PrintAverageDensity(&particles);
     }
-
   }
 
   FinalizeParticles(&particles);
