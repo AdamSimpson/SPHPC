@@ -466,10 +466,10 @@ void UnpackOOBComponents(const int num_from_left, const int num_from_right,
           particles->id[:num_particles])     \
   copyin(packed_recv_left[:num_from_left*num_components]) default(none)
   for (int i=0; i<num_from_left; ++i) {
-    const int p_index = particles->local_count;
+    const int p_index = particles->local_count + i;
     UnpackBufferToParticle(packed_recv_left, i*num_components, particles, p_index);
-    ++(particles->local_count);
   }
+  particles->local_count += num_from_left;
 
   num_particles = particles->local_count + num_from_left + num_from_right;
 
@@ -495,10 +495,10 @@ void UnpackOOBComponents(const int num_from_left, const int num_from_right,
           particles->id[:num_particles])     \
   copyin(packed_recv_right[:num_from_right*num_components]) default(none)
   for (int i=0; i<num_from_right; ++i) {
-    const int p_index = particles->local_count;
+    const int p_index = particles->local_count + i;
     UnpackBufferToParticle(packed_recv_right, i*num_components, particles, p_index);
-    ++(particles->local_count);
   }
+  particles->local_count += num_from_right;
 
 }
 
@@ -527,7 +527,7 @@ void ExchangeOOB(struct Communication *const communication,
   {
 
   // Copy OOB particle id's to left node
-  #pragma acc host_data use_device(ids, x_stars, indices_left)
+  #pragma acc host_data use_device(ids, x_stars, indices_left, indices_right)
   {
 
   CopyIfLessThan(params->node_start_x,
@@ -536,22 +536,15 @@ void ExchangeOOB(struct Communication *const communication,
                  x_stars,
                  indices_left,
                  &oob->particle_count_left);
-  }
 
   // Copy OOB particle id's to right node
-  #pragma acc host_data use_device(ids, x_stars, indices_right)
-  {
   CopyIfGreaterThan(params->node_end_x,
                     ids,
                     particles->local_count,
                     x_stars,
                     indices_right,
                     &oob->particle_count_right);
-  }
 
-  // Remove OOB particle id's
-  #pragma acc host_data use_device(ids, x_stars)
-  {
   RemoveIfOutsideBounds(params->node_start_x, params->node_end_x,
                         ids,
                         particles->local_count,
@@ -570,6 +563,8 @@ void ExchangeOOB(struct Communication *const communication,
   particles->local_count -= (num_moving_left + num_moving_right);
 
   // Use ID component to reorganize particles array
+  // Perhaps could do some hashing/sort here before copy, then merge into halo values later
+  // This would allow better coalescing
   for(int i=0; i<particles->local_count; ++i) {
       const int current_id = particles->id[i];
       CopyParticle(particles, current_id, i);

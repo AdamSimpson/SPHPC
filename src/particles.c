@@ -82,19 +82,16 @@ void ApplyVorticityConfinement(struct Particles *const particles,
            particles->x_star[:num_particles], \
            particles->y_star[:num_particles], \
            particles->z_star[:num_particles], \
-           particles->v_x[:num_particles],  \
-           particles->v_y[:num_particles],  \
-           particles->v_z[:num_particles], \
            params[:1],                        \
            neighbors[:1],                     \
            neighbors->neighbor_buckets[:num_particles] \
     ) \
     copyout(particles->w_x[:num_particles], \
             particles->w_y[:num_particles], \
-            particles->w_z[:num_particles], \
-            particles->v_x[:num_particles],  \
-            particles->v_y[:num_particles],  \
-            particles->v_z[:num_particles]) default(none)
+            particles->w_z[:num_particles]) \
+    copy(particles->v_x[:num_particles],  \
+          particles->v_y[:num_particles],  \
+          particles->v_z[:num_particles]) default(none)
  {
   #pragma acc loop
   for (int i=0; i<num_particles; ++i) {
