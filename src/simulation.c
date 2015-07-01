@@ -76,13 +76,16 @@ int main(int argc, char *argv[]) {
 
     ApplyViscosity(&particles, &params, &neighbors);
 
-//    ApplyVorticityConfinement(&particles, &params, &neighbors);
+    ApplyVorticityConfinement(&particles, &params, &neighbors);
 
     UpdatePositions(&particles);
 
-    // Write file at 30 FPS
-    if (n % (int)(1.0/(params.time_step*30.0)) )
+    // Write file at 30 FPS and print average density
+    if (n % (int)(1.0/(params.time_step*30.0)) ) {
       WriteParticles(&particles, &params, &file_io);
+      PrintAverageDensity(&particles);
+    }
+
   }
 
   FinalizeParticles(&particles);

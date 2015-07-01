@@ -82,20 +82,20 @@ void ApplyVorticityConfinement(struct Particles *const particles,
            particles->x_star[:num_particles], \
            particles->y_star[:num_particles], \
            particles->z_star[:num_particles], \
+           particles->v_x[:num_particles],  \
+           particles->v_y[:num_particles],  \
+           particles->v_z[:num_particles], \
            params[:1],                        \
            neighbors[:1],                     \
            neighbors->neighbor_buckets[:num_particles] \
     ) \
     copyout(particles->w_x[:num_particles], \
             particles->w_y[:num_particles], \
-            particles->w_z[:num_particles] \
-    )                                      \
-    copy(particles->v_x[:num_particles],  \
-         particles->v_y[:num_particles],  \
-         particles->v_z[:num_particles]   \
-     ) default(none)
+            particles->w_z[:num_particles], \
+            particles->v_x[:num_particles],  \
+            particles->v_y[:num_particles],  \
+            particles->v_z[:num_particles]) default(none)
  {
-
   #pragma acc loop
   for (int i=0; i<num_particles; ++i) {
     const int p_index = i;
@@ -606,7 +606,16 @@ void ApplyBoundaryConditions(struct Particles *const particles,
     particles->z_star[i] = boundary->min_z;
   else if(particles->z_star[i]  > boundary->max_z)
     particles->z_star[i] = boundary->max_z-0.00001;
+}
 
+void PrintAverageDensity(struct Particles *particles) {
+  double average_density = 0.0;
+
+  for (int i=0; i<particles->local_count; ++i) {
+    average_density += particles->density[i];
+  }
+  average_density /= (double)particles->local_count;
+  printf("average_density: %f\n", average_density);
 }
 
 void AllocInitParticles(struct Particles *particles,

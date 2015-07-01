@@ -77,6 +77,8 @@ void ApplyBoundaryConditions(struct Particles *const fluid_particles,
                         const unsigned int i,
                         const struct AABB *const boundary);
 
+void PrintAverageDensity(struct Particles *particles);
+
 void AllocInitParticles(struct Particles *particles,
                         struct Params *params,
                         struct AABB *fluid_volume_initial);
