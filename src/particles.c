@@ -86,7 +86,7 @@ void ApplyVorticityConfinement(struct Particles *const particles,
            neighbors[:1],                     \
            neighbors->neighbor_buckets[:num_particles] \
     ) \
-    copyout(particles->w_x[:num_particles], \
+    create(particles->w_x[:num_particles], \
             particles->w_y[:num_particles], \
             particles->w_z[:num_particles]) \
     copy(particles->v_x[:num_particles],  \
@@ -188,6 +188,7 @@ void ApplyVorticityConfinement(struct Particles *const particles,
     const double w_y = particles->w_y[p_index];
     const double w_z = particles->w_z[p_index];
 
+    // Tecnically shou'd write dv to array and then sum after all computed to avoid v_x,y,z race condition
     particles->v_x[p_index] += dt*eps * (N_y*w_z - N_z*w_y);
     particles->v_y[p_index] += dt*eps * (N_z*w_x - N_x*w_z);
     particles->v_z[p_index] += dt*eps * (N_x*w_y - N_y*w_x);
@@ -258,10 +259,12 @@ void ApplyViscosity(struct Particles *const particles,
     partial_sum_y *= c;
     partial_sum_z *= c;
 
+    // Tecnically shou'd write dv to array and then sum after all computed to avoid v_x,y,z race condition
     particles->v_x[p_index] += partial_sum_x;
     particles->v_y[p_index] += partial_sum_y;
     particles->v_z[p_index] += partial_sum_z;
   }
+
 }
 
 void ComputeDensities(struct Particles *const particles,
@@ -612,7 +615,7 @@ void PrintAverageDensity(struct Particles *particles) {
     average_density += particles->density[i];
   }
   average_density /= (double)particles->local_count;
-  printf("average_density: %f\n", average_density);
+  printf("average_density: %.16f\n", average_density);
 }
 
 void AllocInitParticles(struct Particles *particles,

@@ -379,6 +379,8 @@ void PackOOBComponents(const struct Communication *const communication,
   double *const packed_send_right = communication->send_buffer_right;
 
   int num_particles = particles->local_count;
+  int count_left = oob->particle_count_left;
+  int comp_count_left = count_left*num_components;
 
   #pragma acc parallel loop \
     copyin(particles[:1],                   \
@@ -393,20 +395,20 @@ void PackOOBComponents(const struct Communication *const communication,
            particles->v_z[:num_particles],\
            particles->dp_x[:num_particles],\
            particles->dp_y[:num_particles],\
-           particles->dp_z[:num_particles],\
-           particles->w_x[:num_particles],\
-           particles->w_y[:num_particles],\
-           particles->w_z[:num_particles],\
-           particles->density[:num_particles],\
-           particles->lambda[:num_particles], \
-           oob[:1],                          \
-           oob->indices_left[:oob->particle_count_left]) \
-  copyout(packed_send_left[:oob->particle_count_left*num_components]) default(none)
+           particles->dp_z[:num_particles])//,\
+//           particles->w_x[:num_particles],\
+//           particles->w_y[:num_particles],\
+//           particles->w_z[:num_particles])//,\
+//           particles->density[:num_particles],\
+//           particles->lambda[:num_particles], \
+//           oob[:1],                          \
+//           oob->indices_left[:count_left]) \
+//  copyout(packed_send_left[:comp_count_left]) default(none)
   for (int i=0; i<oob->particle_count_left; ++i) {
     const int p_index = oob->indices_left[i];
-    PackParticleToBuffer(particles, p_index, packed_send_left, i*num_components);
+//    PackParticleToBuffer(particles, p_index, packed_send_left, i*num_components);
   }
-
+/*
   #pragma acc parallel loop \
     copyin(particles[:1],                   \
            particles->x_star[:num_particles],\
@@ -428,11 +430,12 @@ void PackOOBComponents(const struct Communication *const communication,
            particles->lambda[:num_particles], \
            oob[:1],                          \
            oob->indices_right[:oob->particle_count_right]) \
-  copyout(packed_send_right[:communication->max_particles*num_components]) default(none)
+  copyout(packed_send_right[:oob->particle_count_right*num_components]) default(none)
   for (int i=0; i<oob->particle_count_right; ++i) {
     const int p_index = oob->indices_right[i];
     PackParticleToBuffer(particles, p_index, packed_send_right, i*num_components);
   }
+*/
 }
 
 void UnpackOOBComponents(const int num_from_left, const int num_from_right,
@@ -565,6 +568,7 @@ void ExchangeOOB(struct Communication *const communication,
   // Use ID component to reorganize particles array
   // Perhaps could do some hashing/sort here before copy, then merge into halo values later
   // This would allow better coalescing
+
   for(int i=0; i<particles->local_count; ++i) {
       const int current_id = particles->id[i];
       CopyParticle(particles, current_id, i);
@@ -612,9 +616,9 @@ void ExchangeOOB(struct Communication *const communication,
   MPI_Get_count(&statuses[1], MPI_DOUBLE, &num_from_right);
   num_from_right /= num_components;
 
-  UnpackOOBComponents(num_from_left, num_from_right,
-                      communication,
-                      particles);
+//  UnpackOOBComponents(num_from_left, num_from_right,
+//                      communication,
+//                      particles);
 
   DEBUG_PRINT("rank %d, OOB: recv %d from %d, %d from %d: count :%d\n",
               rank, num_from_left, proc_to_left, num_from_right, proc_to_right,

@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
     if (n % 10 == 0)
       BalanceNodes(&particles, &params);
 
-//    ExchangeOOB(&communication, &particles, &params);
+    ExchangeOOB(&communication, &particles, &params);
 
 //    ExchangeHalo(&communication, &params, &particles);
 
