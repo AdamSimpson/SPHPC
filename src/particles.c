@@ -288,8 +288,7 @@ void ComputeDensities(struct Particles *const particles,
            particles->z_star[:num_particles], \
            particles->density[:num_particles], \
            neighbors[:1],                     \
-           neighbors->neighbor_buckets[:num_particles] \
-    )
+           neighbors->neighbor_buckets[:num_particles])
     for (int i=0; i<particles->local_count; ++i) {
     const int p_index = i;
     const struct NeighborBucket *const n = &neighbors->neighbor_buckets[i];
@@ -298,6 +297,7 @@ void ComputeDensities(struct Particles *const particles,
     double density = W(0.0, h);
 
     // Neighbor contribution
+    #pragma acc loop seq
     for (int j=0; j<n->count; ++j) {
       const int q_index = n->neighbor_indices[j];
       const double x_diff = particles->x_star[p_index]
