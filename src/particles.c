@@ -658,6 +658,9 @@ void AllocInitParticles(struct Particles *particles,
     particles->density[i] = params->rest_density;
   }
 
+  particles->halo_count_left = 0;
+  particles->halo_count_right = 0;
+
   #pragma acc enter data copyin(particles[:1], \
     particles->x_star[0:num_particles],  \
     particles->y_star[0:num_particles],  \

@@ -103,6 +103,7 @@ void HashParticles(const struct Particles *const particles,
 
   unsigned int *const hash_values = neighbors->hash_values;
   unsigned int *const particle_ids = neighbors->particle_ids;
+
   const int num_particles = particles->local_count
                           + particles->halo_count_left
                           + particles->halo_count_right;
@@ -135,14 +136,10 @@ void SortHash(const struct Particles *particles,
                             + particles->halo_count_left
                             + particles->halo_count_right;
 
-//  #pragma acc data copy(keys[0:num_particles],  \
-                        values[0:num_particles])
-//  {
   #pragma acc host_data use_device(keys, values)
   {
     SortByKey(keys, values, num_particles);
   }
-//  }
 
 }
 
@@ -164,11 +161,6 @@ void FindCellBounds(const struct Particles *particles,
   unsigned int *start_indices = neighbors->start_indices;
   unsigned int *end_indices = neighbors->end_indices;
 
-  // standard data region here didn't produce correct results unless ACC_NOTIFY=10 was set...
-  // weird inconsistent results...absolutely maddening...
-//  #pragma acc enter data create(start_indices[0:length_hash], end_indices[0:length_hash]) \
-//                   copyin(hash_values[0:num_particles])
-
   // Find start and end indices for each
   #pragma acc host_data use_device(hash_values, start_indices, end_indices)
   {
@@ -184,9 +176,6 @@ void FindCellBounds(const struct Particles *particles,
                     end_indices);
 
   }
-
-//  #pragma acc exit data copyout(start_indices[0: length_hash], end_indices[0:length_hash]) \
-//                        delete(hash_values[0:num_particles])
 
 }
 
