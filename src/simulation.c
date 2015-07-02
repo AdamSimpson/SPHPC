@@ -20,10 +20,7 @@ int main(int argc, char *argv[]) {
   struct Particles particles;
   struct Neighbors neighbors;
   struct FileIO file_io;
-/*  #pragma acc enter data create(params, water_volume_global,    \
-                                boundary_global, communication, \
-                                particles, neighbors, file_io)
-*/
+
   SetParameters(&params, &particles, &neighbors,
                 &boundary_global, &water_volume_global);
 
@@ -39,6 +36,9 @@ int main(int argc, char *argv[]) {
 
   WriteParticles(&particles, &params, &file_io);
 
+  // Copy over structs with only scalar values
+  #pragma acc enter data copyin(params, water_volume_global, boundary_global)
+
   for (int n=0; n<params.number_steps; ++n) {
 
     DEBUG_PRINT("Rank %d Entering fluid step %d with %d particles\n",
@@ -48,10 +48,10 @@ int main(int argc, char *argv[]) {
 
     PredictPositions(&particles, &params, &boundary_global);
 
-    if (n % 10 == 0)
-      BalanceNodes(&particles, &params);
+//    if (n % 10 == 0)
+//      BalanceNodes(&particles, &params);
 
-    ExchangeOOB(&communication, &particles, &params);
+//    ExchangeOOB(&communication, &particles, &params);
 
 //    ExchangeHalo(&communication, &params, &particles);
 
@@ -82,8 +82,9 @@ int main(int argc, char *argv[]) {
 
     // Write file at 30 FPS and print average density
     if (n % (int)(1.0/(params.time_step*30.0)) ) {
+      #pragma acc update host(particles.x[:particles.local_count], particles.y[:particles.local_count], particles.z[:particles.local_count])
       WriteParticles(&particles, &params, &file_io);
-      PrintAverageDensity(&particles);
+//      PrintAverageDensity(&particles);
     }
   }
 
@@ -139,8 +140,4 @@ void SetParameters(struct Params *const params,
     params->node_start_x  = boundary_global->min_x;
   if (params->rank == params->proc_count-1)
     params->node_end_x   = boundary_global->max_x;
-
-  neighbors->max_neighbors = 60;
-  neighbors->hash_spacing = params->smoothing_radius;
-
 }

@@ -37,26 +37,25 @@ void AllocInitNeighbors(struct Neighbors *const neighbors,
                                                      sizeof(unsigned int));
   neighbors->particle_ids = (unsigned int*)SAFE_ALLOC(particles->max_local,
                                                       sizeof(unsigned int));
-/*
-  #pragma acc enter data copyin(neighbors->neighbor_buckets[0:particles->max_local], \
+
+  neighbors->hash_spacing = params->smoothing_radius;
+
+  #pragma acc enter data copyin( neighbors[:1],                               \
+                         neighbors->neighbor_buckets[0:particles->max_local], \
                          neighbors->start_indices[0:hash_size],               \
                          neighbors->end_indices[0:hash_size],                 \
                          neighbors->hash_values[0:particles->max_local],      \
                          neighbors->particle_ids[0:particles->max_local])
-  #pragma acc update device(neighbors->hash_size_x, \
-                            neighbors->hash_size_y, \
-                            neighbors->hash_size_z)
-*/
 }
 
 void FinalizeNeighbors(struct Neighbors *neighbors) {
-/*
+
   #pragma acc exit data delete( neighbors->neighbor_buckets, \
     neighbors->start_indices,                                \
     neighbors->end_indices,                                  \
     neighbors->hash_values,                                  \
     neighbors->particle_ids)
-*/
+
   free(neighbors->neighbor_buckets);
   free(neighbors->start_indices);
   free(neighbors->end_indices);
@@ -109,13 +108,13 @@ void HashParticles(const struct Particles *const particles,
                           + particles->halo_count_right;
 
   #pragma acc parallel loop \
-    copyin(particles[:1],                       \
-           particles->x_star[:num_particles], \
-           particles->y_star[:num_particles], \
-           particles->z_star[:num_particles], \
-           neighbors[:1]) \
-    copyout(hash_values[:num_particles], \
-            particle_ids[:num_particles]) default(none)
+    present(particles[:1],                       \
+            particles->x_star[:num_particles], \
+            particles->y_star[:num_particles], \
+            particles->z_star[:num_particles], \
+            neighbors[:1],  \
+            particle_ids[:num_particles], \
+            hash_values[:num_particles])
   for (int i=0; i<num_particles; ++i) {
     hash_values[i] =  HashVal(neighbors,
                               particles->x_star[i],
@@ -136,14 +135,14 @@ void SortHash(const struct Particles *particles,
                             + particles->halo_count_left
                             + particles->halo_count_right;
 
-  #pragma acc data copy(keys[0:num_particles],  \
+//  #pragma acc data copy(keys[0:num_particles],  \
                         values[0:num_particles])
-  {
+//  {
   #pragma acc host_data use_device(keys, values)
   {
     SortByKey(keys, values, num_particles);
   }
-  }
+//  }
 
 }
 
@@ -167,8 +166,8 @@ void FindCellBounds(const struct Particles *particles,
 
   // standard data region here didn't produce correct results unless ACC_NOTIFY=10 was set...
   // weird inconsistent results...absolutely maddening...
-  #pragma acc enter data create(start_indices[0:length_hash], end_indices[0:length_hash]) \
-                   copyin(hash_values[0:num_particles])
+//  #pragma acc enter data create(start_indices[0:length_hash], end_indices[0:length_hash]) \
+//                   copyin(hash_values[0:num_particles])
 
   // Find start and end indices for each
   #pragma acc host_data use_device(hash_values, start_indices, end_indices)
@@ -186,8 +185,8 @@ void FindCellBounds(const struct Particles *particles,
 
   }
 
-  #pragma acc exit data copyout(start_indices[0: length_hash], end_indices[0:length_hash]) \
-                        delete(hash_values[0:num_particles])
+//  #pragma acc exit data copyout(start_indices[0: length_hash], end_indices[0:length_hash]) \
+//                        delete(hash_values[0:num_particles])
 
 }
 
@@ -198,7 +197,6 @@ void FillParticleNeighbors(struct Neighbors *const neighbors,
                            const struct Particles *particles,
                            const unsigned int p_index) {
 
-  const int max_neighbors = neighbors->max_neighbors;
   const double smoothing_radius2 = params->smoothing_radius
                                  * params->smoothing_radius;
   const double spacing = neighbors->hash_spacing;
@@ -253,7 +251,7 @@ void FillParticleNeighbors(struct Neighbors *const neighbors,
             // If inside smoothing radius and enough space
             // in p's neighbor bucket add q
             if(r2<smoothing_radius2 &&
-               neighbor_bucket->count < max_neighbors) {
+               neighbor_bucket->count < MAX_NEIGHBORS) {
                 const int num_neighbors = neighbor_bucket->count;
                 neighbor_bucket->neighbor_indices[num_neighbors] = q_index;
                 ++(neighbor_bucket->count);
@@ -276,7 +274,7 @@ void FillNeighbors(const struct Particles *particles,
 
   // Fill neighbor bucket for all resident particles
   #pragma acc parallel loop \
-    copyin(particles[:1],                     \
+    present(particles[:1],                     \
            particles->x_star[:num_particles], \
            particles->y_star[:num_particles], \
            particles->z_star[:num_particles], \
@@ -284,8 +282,8 @@ void FillNeighbors(const struct Particles *particles,
            neighbors[:1],                      \
            neighbors->start_indices[:hash_size], \
            neighbors->end_indices[:hash_size], \
-           neighbors->particle_ids[:num_particles] \
-    ) copyout(neighbors->neighbor_buckets[:num_particles]) default(none)
+           neighbors->particle_ids[:num_particles], \
+           neighbors->neighbor_buckets[:num_particles])
   for (int i=0; i<num_particles; ++i) {
     FillParticleNeighbors(neighbors,
                           params,

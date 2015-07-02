@@ -21,8 +21,9 @@ void AllocInitFileIO(struct FileIO *const file_io,
   int num_components = 3;
   file_io->write_buffer = SAFE_ALLOC(num_components*particles->max_local,
                                      sizeof(double));
-//  #pragma acc enter data copyin(                                   \
-//    file_io->write_buffer[0:num_components*particles->max_local])
+
+  #pragma acc enter data copyin( file_io[:1],                    \
+    file_io->write_buffer[0:num_components*particles->max_local])
 
   // Get current path
   char current_path[1024];

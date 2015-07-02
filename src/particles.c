@@ -77,23 +77,20 @@ void ApplyVorticityConfinement(struct Particles *const particles,
   const int num_particles = particles->local_count;
 
   // Calculate vorticy at each particle
-  #pragma acc parallel                        \
-    copyin(particles[:1],                     \
-           particles->x_star[:num_particles], \
-           particles->y_star[:num_particles], \
-           particles->z_star[:num_particles], \
-           params[:1],                        \
-           neighbors[:1],                     \
-           neighbors->neighbor_buckets[:num_particles] \
-    ) \
-    create(particles->w_x[:num_particles], \
+  #pragma acc parallel loop                       \
+    present(particles[:1],                     \
+            particles->x_star[:num_particles], \
+            particles->y_star[:num_particles], \
+            particles->z_star[:num_particles], \
+            particles->v_x[:num_particles],  \
+            particles->v_y[:num_particles],  \
+            particles->v_z[:num_particles], \
+            particles->w_x[:num_particles], \
             particles->w_y[:num_particles], \
-            particles->w_z[:num_particles]) \
-    copy(particles->v_x[:num_particles],  \
-          particles->v_y[:num_particles],  \
-          particles->v_z[:num_particles]) default(none)
- {
-  #pragma acc loop
+            particles->w_z[:num_particles], \
+            params[:1],                        \
+            neighbors[:1],                     \
+            neighbors->neighbor_buckets[:num_particles])
   for (int i=0; i<num_particles; ++i) {
     const int p_index = i;
     const struct NeighborBucket *const n = &neighbors->neighbor_buckets[i];
@@ -137,7 +134,20 @@ void ApplyVorticityConfinement(struct Particles *const particles,
   }
 
   // Apply vorticity confinement
-  #pragma acc loop
+  #pragma acc parallel loop                       \
+    present(particles[:1],                     \
+            particles->x_star[:num_particles], \
+            particles->y_star[:num_particles], \
+            particles->z_star[:num_particles], \
+            particles->v_x[:num_particles],  \
+            particles->v_y[:num_particles],  \
+            particles->v_z[:num_particles], \
+            particles->w_x[:num_particles], \
+            particles->w_y[:num_particles], \
+            particles->w_z[:num_particles], \
+            params[:1],                        \
+            neighbors[:1],                     \
+            neighbors->neighbor_buckets[:num_particles])
   for (int i=0; i<particles->local_count; ++i) {
     const int p_index = i;
     const struct NeighborBucket *const n = &neighbors->neighbor_buckets[i];
@@ -146,7 +156,7 @@ void ApplyVorticityConfinement(struct Particles *const particles,
     double eta_y  = 0.0;
     double eta_z  = 0.0;
 
-    #pragma acc loop seq //reduction "neccesary" with seq?
+    #pragma acc loop seq
     for (int j=0; j<n->count; ++j) {
       const int q_index = n->neighbor_indices[j];
 
@@ -194,7 +204,6 @@ void ApplyVorticityConfinement(struct Particles *const particles,
     particles->v_z[p_index] += dt*eps * (N_x*w_y - N_y*w_x);
   }
 
-  } // end acc parallel
 }
 
 void ApplyViscosity(struct Particles *const particles,
@@ -207,18 +216,16 @@ void ApplyViscosity(struct Particles *const particles,
   const int num_particles = particles->local_count;
 
   #pragma acc parallel loop \
-    copyin(particles[:1],                     \
+    present(particles[:1],                     \
            particles->x_star[:num_particles], \
            particles->y_star[:num_particles], \
            particles->z_star[:num_particles], \
+           particles->v_x[:num_particles],  \
+           particles->v_y[:num_particles],  \
+           particles->v_z[:num_particles],   \
            particles->density[:num_particles], \
            neighbors[:1],                     \
-           neighbors->neighbor_buckets[:num_particles] \
-    )                                     \
-    copy(particles->v_x[:num_particles],  \
-         particles->v_y[:num_particles],  \
-         particles->v_z[:num_particles]   \
-     ) default(none)
+           neighbors->neighbor_buckets[:num_particles])
   for (int i=0; i < num_particles; ++i) {
     const int p_index = i;
     const struct NeighborBucket *const n = &neighbors->neighbor_buckets[i];
@@ -275,15 +282,15 @@ void ComputeDensities(struct Particles *const particles,
   const int num_particles = particles->local_count;
 
   #pragma acc parallel loop                   \
-    copyin(particles[:1],                     \
+    present(particles[:1],                     \
            particles->x_star[:num_particles], \
            particles->y_star[:num_particles], \
            particles->z_star[:num_particles], \
+           particles->density[:num_particles], \
            neighbors[:1],                     \
            neighbors->neighbor_buckets[:num_particles] \
-    ) \
-    copyout(particles->density[:num_particles] ) default(none)
-  for (int i=0; i<particles->local_count; ++i) {
+    )
+    for (int i=0; i<particles->local_count; ++i) {
     const int p_index = i;
     const struct NeighborBucket *const n = &neighbors->neighbor_buckets[i];
 
@@ -314,9 +321,7 @@ void ApplyGravity(struct Particles *const particles,
   const double dt = params->time_step;
   const double g = -params->g;
 
-  #pragma acc parallel loop  \
-    copyin(particles[:1])                        \
-    copy(particles->v_y[0:particles->local_count]) default(none)
+  #pragma acc parallel loop present(particles[:1], particles->v_y[0:particles->local_count])
   for (int i=0; i<(particles->local_count); ++i) {
     particles->v_y[i] += g*dt;
   }
@@ -328,15 +333,14 @@ void UpdatePositionStars(struct Particles *const particles,
   const int num_particles = particles->local_count;
 
   #pragma acc parallel loop \
-    copyin(particles[:1],  \
+    present(particles[:1],  \
            boundary_global[:1], \
+           particles->x_star[:num_particles], \
+           particles->y_star[:num_particles], \
+           particles->z_star[:num_particles], \
            particles->dp_x[:num_particles], \
            particles->dp_y[:num_particles], \
-           particles->dp_z[:num_particles]  \
-    ) \
-    copy(particles->x_star[:num_particles], \
-         particles->y_star[:num_particles], \
-         particles->z_star[:num_particles]) default(none)
+           particles->dp_z[:num_particles])
   for (int i=0; i<num_particles; ++i) {
     particles->x_star[i] += particles->dp_x[i];
     particles->y_star[i] += particles->dp_y[i];
@@ -352,15 +356,13 @@ void UpdatePositions(struct Particles *const particles) {
 
   const int num_particles = particles->local_count;
 
-  #pragma acc parallel loop \
-    copyin(particles[:1],  \
+  #pragma acc parallel loop present(particles[:1],  \
            particles->x_star[:num_particles], \
            particles->y_star[:num_particles], \
-           particles->z_star[:num_particles]  \
-    ) \
-    copyout(particles->x[:num_particles], \
-            particles->y[:num_particles], \
-            particles->z[:num_particles]) default(none)
+           particles->z_star[:num_particles],  \
+           particles->x[:num_particles], \
+           particles->y[:num_particles], \
+           particles->z[:num_particles])
   for (int i=0; i<num_particles; ++i) {
     particles->x[i] = particles->x_star[i];
     particles->y[i] = particles->y_star[i];
@@ -375,16 +377,16 @@ void ComputeLambda(struct Particles *const particles,
   const int num_particles = particles->local_count;
 
   #pragma acc parallel loop \
-    copyin(particles[:1],                     \
-           params[:1],                        \
-           particles->x_star[:num_particles], \
-           particles->y_star[:num_particles], \
-           particles->z_star[:num_particles], \
-           particles->density[:num_particles], \
-           neighbors[:1],                     \
-           neighbors->neighbor_buckets[:num_particles] \
-    ) \
-    copyout(particles->lambda[:num_particles]) default(none)
+    present(particles[:1],                     \
+            params[:1],                        \
+            particles->x_star[:num_particles], \
+            particles->y_star[:num_particles], \
+            particles->z_star[:num_particles], \
+            particles->density[:num_particles], \
+            particles->lambda[:num_particles], \
+            neighbors[:1],                     \
+            neighbors->neighbor_buckets[:num_particles] \
+  )
   for (int i=0; i<num_particles; ++i) {
     const int p_index = i;
     const struct NeighborBucket *const n = &neighbors->neighbor_buckets[i];
@@ -445,18 +447,17 @@ void UpdateDPs(struct Particles *const particles,
   const int num_particles = particles->local_count;
 
   #pragma acc parallel loop \
-    copyin(particles[:1],                     \
+    present(particles[:1],                     \
            params[:1],                        \
            particles->x_star[:num_particles], \
            particles->y_star[:num_particles], \
            particles->z_star[:num_particles], \
+           particles->dp_x[:num_particles],  \
+           particles->dp_y[:num_particles], \
+           particles->dp_z[:num_particles], \
            particles->lambda[:num_particles], \
            neighbors[:1],                     \
-           neighbors->neighbor_buckets[:num_particles] \
-    ) \
-    copyout(particles->dp_x[:num_particles],  \
-            particles->dp_y[:num_particles], \
-            particles->dp_z[:num_particles]) default(none)
+           neighbors->neighbor_buckets[:num_particles])
   for (int i=0; i<num_particles; ++i) {
     const int p_index = i;
     const struct NeighborBucket *const n = &neighbors->neighbor_buckets[i];
@@ -505,18 +506,17 @@ void PredictPositions(struct Particles *const particles,
   const int num_particles = particles->local_count;
 
   #pragma acc parallel loop \
-    copyin(particles[:1],                     \
+    present(particles[:1],                     \
            particles->x[:num_particles], \
            particles->y[:num_particles], \
            particles->z[:num_particles], \
            particles->v_x[:num_particles], \
            particles->v_y[:num_particles], \
            particles->v_z[:num_particles], \
-           boundary_global[0:1] \
-    ) \
-    copyout(particles->x_star[:num_particles],  \
-            particles->y_star[:num_particles], \
-            particles->z_star[:num_particles]) default(none)
+           particles->x_star[:num_particles],  \
+           particles->y_star[:num_particles], \
+           particles->z_star[:num_particles], \
+           boundary_global[:1])
   for (int i=0; i<num_particles; ++i) {
     particles->x_star[i] = particles->x[i]
                          +(particles->v_x[i] * dt);
@@ -544,18 +544,16 @@ void UpdateVelocities(struct Particles *const particles,
                       + particles->halo_count_right;
 
   #pragma acc parallel loop \
-    copyin(particles[:1], \
+    present(particles[:1], \
            particles->x[:total_particles], \
            particles->y[:total_particles], \
            particles->z[:total_particles], \
            particles->x_star[:total_particles], \
            particles->y_star[:total_particles], \
-           particles->z_star[:total_particles] \
-    ) \
-    copyout(particles->v_x[:total_particles], \
-            particles->v_y[:total_particles], \
-            particles->v_z[:total_particles] \
-    ) default(none)
+           particles->z_star[:total_particles], \
+           particles->v_x[:total_particles], \
+           particles->v_y[:total_particles], \
+           particles->v_z[:total_particles])
   for(int i=0; i<total_particles; ++i) {
     double v_x = (particles->x_star[i] - particles->x[i])/dt;
     double v_y = (particles->y_star[i] - particles->y[i])/dt;
@@ -659,8 +657,8 @@ void AllocInitParticles(struct Particles *particles,
     particles->z_star[i] = particles->z[i];
     particles->density[i] = params->rest_density;
   }
-/*
-  #pragma acc enter data copyin(           \
+
+  #pragma acc enter data copyin(particles[:1], \
     particles->x_star[0:num_particles],  \
     particles->y_star[0:num_particles],  \
     particles->z_star[0:num_particles],  \
@@ -680,11 +678,11 @@ void AllocInitParticles(struct Particles *particles,
     particles->lambda[0:num_particles],  \
     particles->id[0:num_particles]       \
   )
-*/
+
 }
 
 void FinalizeParticles(struct Particles *particles) {
-/*
+
   #pragma acc exit data delete( \
     particles->x_star,          \
     particles->y_star,          \
@@ -705,7 +703,7 @@ void FinalizeParticles(struct Particles *particles) {
     particles->lambda,          \
     particles->id               \
   )
-*/
+
     free(particles->x_star);
     free(particles->y_star);
     free(particles->z_star);

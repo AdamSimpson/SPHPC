@@ -3,6 +3,8 @@
 
 #include <stdbool.h>
 
+#define MAX_NEIGHBORS 60
+
 // Forward Declarations
 struct Particles;
 struct Params;
@@ -13,7 +15,6 @@ struct Neighbors {
   unsigned int *restrict end_indices;   // End index for hash values
   unsigned int *restrict hash_values;   // Array of hash values
   unsigned int *restrict particle_ids;  // Array of particle id's
-  int max_neighbors;
   int hash_size_x;
   int hash_size_y;
   int hash_size_z;
@@ -22,7 +23,7 @@ struct Neighbors {
 };
 
 struct NeighborBucket {
-    unsigned int neighbor_indices[60];
+    unsigned int neighbor_indices[MAX_NEIGHBORS];
     int count;
 };
 

@@ -38,8 +38,8 @@ void AllocateCommunication(struct Communication *const communication) {
                                                    sizeof(double));
   communication->recv_buffer_right = SAFE_ALLOC(num_buffer_doubles,
                                                    sizeof(double));
-/*
-  #pragma acc enter data copyin(                                        \
+
+  #pragma acc enter data copyin( communication[:1],                   \
     communication->edges.indices_left[0:num_buffer_indices],          \
     communication->edges.indices_right[0:num_buffer_indices],         \
     communication->out_of_bounds.indices_left[0:num_buffer_indices],  \
@@ -49,12 +49,12 @@ void AllocateCommunication(struct Communication *const communication) {
     communication->recv_buffer_left[0:num_buffer_doubles],            \
     communication->recv_buffer_right[0:num_buffer_doubles]            \
   )
-*/
+
 }
 
 void FreeCommunication(struct Communication *const communication) {
-/*
-  #pragma acc exit data delete(                                       \
+
+  #pragma acc exit data delete(                 \
     communication->edges.indices_left,          \
     communication->edges.indices_right,         \
     communication->out_of_bounds.indices_left,  \
@@ -64,7 +64,7 @@ void FreeCommunication(struct Communication *const communication) {
     communication->recv_buffer_left,            \
     communication->recv_buffer_right            \
   )
-*/
+
   free(communication->edges.indices_left);
   free(communication->edges.indices_right);
   free(communication->out_of_bounds.indices_left);
@@ -378,7 +378,7 @@ void PackOOBComponents(const struct Communication *const communication,
   double *const packed_send_left  = communication->send_buffer_left;
   double *const packed_send_right = communication->send_buffer_right;
 
-  int num_particles = particles->local_count;
+  int num_particles = 1;//particles->local_count;
   int count_left = oob->particle_count_left;
   int comp_count_left = count_left*num_components;
 
