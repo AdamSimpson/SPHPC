@@ -48,12 +48,15 @@ int main(int argc, char *argv[]) {
 
     PredictPositions(&particles, &params, &boundary_global);
 
-//    if (n % 10 == 0)
-//      BalanceNodes(&particles, &params);
+    if (n % 10 == 0)
+      BalanceNodes(&particles, &params);
 
-//    ExchangeOOB(&communication, &particles, &params);
+    ExchangeOOB(&communication, &particles, &params);
 
-//    ExchangeHalo(&communication, &params, &particles);
+      #pragma acc update host(particles.x[:particles.local_count], particles.y[:particles.local_count], particles.z[:particles.local_count])
+      WriteParticles(&particles, &params, &file_io);
+
+    ExchangeHalo(&communication, &params, &particles);
 
     FindAllNeighbors(&particles, &params, &neighbors);
 
@@ -74,9 +77,9 @@ int main(int argc, char *argv[]) {
 
     UpdateVelocities(&particles, &params);
 
-    ApplyViscosity(&particles, &params, &neighbors);
+//    ApplyViscosity(&particles, &params, &neighbors);
 
-    ApplyVorticityConfinement(&particles, &params, &neighbors);
+//    ApplyVorticityConfinement(&particles, &params, &neighbors);
 
     UpdatePositions(&particles);
 

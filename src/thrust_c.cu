@@ -1,4 +1,5 @@
 #define restrict __restrict
+#define COMPUTE_POLICY thrust::device
 
 #include "thrust_c.h"
 #include <thrust/execution_policy.h>
@@ -69,8 +70,7 @@ struct OutsideBounds {
 extern "C" void SortByKey(unsigned int *const keys,
                           unsigned int *const values,
                           const int count) {
-  thrust::sort_by_key(thrust::device, keys, keys + count, values);
-
+  thrust::sort_by_key(COMPUTE_POLICY, keys, keys + count, values);
 }
 
 extern "C" void FindLowerBounds(const unsigned int *const hash_values,
@@ -78,7 +78,7 @@ extern "C" void FindLowerBounds(const unsigned int *const hash_values,
                                 const int search_count,
                                 unsigned int *const start_indices) {
 
-  thrust::lower_bound(thrust::device,
+  thrust::lower_bound(COMPUTE_POLICY,
                       hash_values,
                       hash_values + value_count,
                       thrust::make_counting_iterator((unsigned int)0),
@@ -91,7 +91,7 @@ extern "C" void FindUpperBounds(const unsigned int *const hash_values,
                                 const int search_count,
                                 unsigned int *const end_indices) {
 
-  thrust::upper_bound(thrust::device,
+  thrust::upper_bound(COMPUTE_POLICY,
                       hash_values,
                       hash_values + value_count,
                       thrust::make_counting_iterator((unsigned int)0),
@@ -108,7 +108,7 @@ extern "C" void CopyIfLessThan(const double min,
                                int *const output,
                                int *const output_count) {
 
-  int *end_pointer = thrust::copy_if(thrust::device,
+  int *end_pointer = thrust::copy_if(COMPUTE_POLICY,
                                      input,
                                      input + input_count,
                                      stencil,
@@ -125,7 +125,7 @@ extern "C" void CopyIfLessThanOrEqual(const double min,
                                       int *const output,
                                       int *const output_count) {
 
-  int *end_pointer = thrust::copy_if(thrust::device,
+  int *end_pointer = thrust::copy_if(COMPUTE_POLICY,
                                      input,
                                      input + input_count,
                                      stencil,
@@ -142,7 +142,7 @@ extern "C" void CopyIfGreaterThan(const double max,
                                   int *const output,
                                   int *const output_count) {
 
-  int *end_pointer = thrust::copy_if(thrust::device,
+  int *end_pointer = thrust::copy_if(COMPUTE_POLICY,
                                      input,
                                      input + input_count,
                                      stencil,
@@ -159,7 +159,7 @@ extern "C" void CopyIfGreaterThanOrEqual(const double max,
                                          int *const output,
                                          int *const output_count) {
 
-  int *end_pointer = thrust::copy_if(thrust::device,
+  int *end_pointer = thrust::copy_if(COMPUTE_POLICY,
                                      input,
                                      input + input_count,
                                      stencil,
@@ -174,9 +174,9 @@ extern "C" void RemoveIfOutsideBounds(const double min, const double max,
                                       const int input_count,
                                       const double *const stencil) {
 
-  thrust::remove_if(thrust::device,
-                    input,
-                    input + input_count,
-                    stencil,
-                    OutsideBounds(min, max));
+  int *end_pointer = thrust::remove_if(COMPUTE_POLICY,
+                       input,
+                       input + input_count,
+                       stencil,
+                       OutsideBounds(min, max));
 }

@@ -19,7 +19,7 @@
 ///////////////////////////////////////////////////////////////////////////
 
 // (h^2 - r^2)^3 normalized in 3D (poly6)
-#pragma acc routine
+#pragma acc routine seq
 static inline double W(const double r, const double h) {
   if(r > h)
     return 0.0;
@@ -31,7 +31,7 @@ static inline double W(const double r, const double h) {
 
 // Gradient (h-r)^3 normalized in 3D (Spikey) magnitude
 // Need to multiply by r/|r|
-#pragma acc routine
+#pragma acc routine seq
 static inline double DelW(const double r, const double h) {
   if(r > h)
     return 0.0;
@@ -203,7 +203,6 @@ void ApplyVorticityConfinement(struct Particles *const particles,
     particles->v_y[p_index] += dt*eps * (N_z*w_x - N_x*w_z);
     particles->v_z[p_index] += dt*eps * (N_x*w_y - N_y*w_x);
   }
-
 }
 
 void ApplyViscosity(struct Particles *const particles,

@@ -35,6 +35,7 @@ struct Particles {
 };
 
 // Copies particle located at from_index to to_index
+#pragma acc routine seq
 void CopyParticle(struct Particles *const particles,
                   const int from_index, const int to_index);
 

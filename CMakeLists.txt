@@ -12,7 +12,7 @@ endif()
 file(GLOB SRC_FILES src/*.c src/*.cc)
 
 # A bit of a hack to enable easy Thrust/OpenACC compile on Titan
-# Compile thrust/cuda file seperatly
+# Compile thrust/cuda file separately
 find_package(CUDA)
 SET(CUDA_PROPAGATE_HOST_FLAGS OFF)
 set(CUDA_HOST_COMPILER /usr/bin/gcc)
@@ -38,8 +38,8 @@ find_library(M_LIB m)
 target_link_libraries(sph ${M_LIB})
 
 if (OPENACC)
-  set(CMAKE_C_FLAGS "-acc -Minfo -ta=tesla:cc35")
-  set(CMAKE_CXX_FLAGS "-acc -Minfo -ta=tesla:cc35")
+  set(CMAKE_C_FLAGS "-acc -Minfo -O3 -ta=tesla:cc35,time")
+  set(CMAKE_CXX_FLAGS "-acc -Minfo -O3 -ta=tesla:cc35,time")
 endif()
 
 install(TARGETS sph DESTINATION bin)

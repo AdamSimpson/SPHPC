@@ -164,7 +164,6 @@ void FindCellBounds(const struct Particles *particles,
   // Find start and end indices for each
   #pragma acc host_data use_device(hash_values, start_indices, end_indices)
   {
-
     FindLowerBounds(hash_values,
                     num_particles,
                     length_hash,
@@ -174,13 +173,12 @@ void FindCellBounds(const struct Particles *particles,
                     num_particles,
                     length_hash,
                     end_indices);
-
   }
 
 }
 
 // Neighbors are accessed multiple times per step so we keep them in buckets
-#pragma acc routine seq
+#pragma acc routine
 void FillParticleNeighbors(struct Neighbors *const neighbors,
                            const struct Params *const params,
                            const struct Particles *particles,
@@ -262,7 +260,7 @@ void FillNeighbors(const struct Particles *particles,
                    * neighbors->hash_size_z;
 
   // Fill neighbor bucket for all resident particles
-  #pragma acc parallel loop \
+  #pragma acc parallel loop  \
     present(particles[:1],                     \
            particles->x_star[:num_particles], \
            particles->y_star[:num_particles], \
