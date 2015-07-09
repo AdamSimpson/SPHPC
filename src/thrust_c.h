@@ -53,6 +53,16 @@ void FindUpperBounds(const unsigned int *const hash_values,
                                 const int search_count,
                                 unsigned int *const start_indices);
 
+void RemoveIfOutsideBounds2(const double min, const double max,
+                                      int *const input,
+                                      const int input_count);
+
+void RemoveIfOutsideBounds3(const double min, const double max,
+                                      const int count,
+                                      double *x_star, double *y_star, double *z_star,
+                                      double *x, double *y, double *z,
+                                      double *v_x, double *v_y, double *v_z);
+
 #ifdef __cplusplus
 }
 #endif

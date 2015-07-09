@@ -97,13 +97,13 @@ void ExchangeHalo(struct Communication *const communication,
                   struct Params *const params,
                   struct Particles *const particles);
 
-// Updates each halo particles scalar lambda value
-void UpdateHaloLambdas(const struct Communication *const communication,
-                       const struct Params *const params,
-                       struct Particles *const particles);
+void UpdateHaloScalar(const struct Communication *const communication,
+                      const struct  Params *const params,
+                      struct Particles *const particles,
+                      double *scalars);
 
-// Updates each halo particles 3 component position value
-void UpdateHaloPositions(const struct Communication *const communication,
-                         const struct Params *const params,
-                         struct Particles *const particles);
+void UpdateHaloTuple(const struct Communication *const communication,
+                     const struct Params *const params,
+                     struct Particles *const particles,
+                     double *const t1, double *const t2, double *const t3);
 #endif

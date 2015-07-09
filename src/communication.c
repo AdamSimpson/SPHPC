@@ -90,55 +90,6 @@ int get_proc_count() {
   return proc_count;
 }
 
-#pragma acc routine seq
-void PackParticleToBuffer(const struct Particles *const particles,
-                          const int from_index,
-                          double *const to_buffer,
-                          const int to_index) {
-  to_buffer[to_index]      = particles->x_star[from_index];
-  to_buffer[to_index + 1]  = particles->y_star[from_index];
-  to_buffer[to_index + 2]  = particles->z_star[from_index];
-  to_buffer[to_index + 3]  = particles->x[from_index];
-  to_buffer[to_index + 4]  = particles->y[from_index];
-  to_buffer[to_index + 5]  = particles->z[from_index];
-  to_buffer[to_index + 6]  = particles->v_x[from_index];
-  to_buffer[to_index + 7]  = particles->v_y[from_index];
-  to_buffer[to_index + 8]  = particles->v_z[from_index];
-  to_buffer[to_index + 9]  = particles->dp_x[from_index];
-  to_buffer[to_index + 10] = particles->dp_y[from_index];
-  to_buffer[to_index + 11] = particles->dp_z[from_index];
-  to_buffer[to_index + 12] = particles->w_x[from_index];
-  to_buffer[to_index + 13] = particles->w_y[from_index];
-  to_buffer[to_index + 14] = particles->w_z[from_index];
-  to_buffer[to_index + 15] = particles->density[from_index];
-  to_buffer[to_index + 16] = particles->lambda[from_index];
-}
-
-#pragma acc routine seq
-void UnpackBufferToParticle(const double *const from_buffer,
-                            const int from_index,
-                            struct Particles *const particles,
-                            const int to_index) {
-  particles->x_star[to_index]  = from_buffer[from_index];
-  particles->y_star[to_index]  = from_buffer[from_index + 1];
-  particles->z_star[to_index]  = from_buffer[from_index + 2];
-  particles->x[to_index]       = from_buffer[from_index + 3];
-  particles->y[to_index]       = from_buffer[from_index + 4];
-  particles->z[to_index]       = from_buffer[from_index + 5];
-  particles->v_x[to_index]     = from_buffer[from_index + 6];
-  particles->v_y[to_index]     = from_buffer[from_index + 7];
-  particles->v_z[to_index]     = from_buffer[from_index + 8];
-  particles->dp_x[to_index]    = from_buffer[from_index + 9];
-  particles->dp_y[to_index]    = from_buffer[from_index + 10];
-  particles->dp_z[to_index]    = from_buffer[from_index + 11];
-  particles->w_x[to_index]     = from_buffer[from_index + 12];
-  particles->w_y[to_index]     = from_buffer[from_index + 13];
-  particles->w_z[to_index]     = from_buffer[from_index + 14];
-  particles->density[to_index] = from_buffer[from_index + 15];
-  particles->lambda[to_index]  = from_buffer[from_index + 16];
-  particles->id[to_index] = to_index;
-}
-
 // Pack particle struct float components into contiguous memory
 void PackHaloComponents(const struct Communication *const communication,
                         const struct Particles *const particles) {
@@ -151,20 +102,81 @@ void PackHaloComponents(const struct Communication *const communication,
   const int count_left = edges->particle_count_left;
   const int count_right = edges->particle_count_right;
 
-  #pragma acc parallel loop \
-    present(particles[:1], edges[:1], \
-           packed_send_left[:count_left*g_num_components]) default(none)
+  // OpenACC can't reliably handle SoA...
+  double *x_star = particles->x_star;
+  double *y_star = particles->y_star;
+  double *z_star = particles->z_star;
+  double *x      = particles->x;
+  double *y      = particles->y;
+  double *z      = particles->z;
+  double *v_x    = particles->v_x;
+  double *v_y    = particles->v_y;
+  double *v_z    = particles->v_z;
+  double *w_x    = particles->w_x;
+  double *w_y    = particles->w_y;
+  double *w_z    = particles->w_z;
+  double *dp_x   = particles->dp_x;
+  double *dp_y   = particles->dp_y;
+  double *dp_z   = particles->dp_z;
+  double *density = particles->density;
+  double *lambda  = particles->lambda;
+
+  #pragma acc parallel loop present(particles, \
+                                    x_star, y_star, z_star, \
+                                    x, y, z, \
+                                    v_x, v_y, v_z, \
+                                    dp_x, dp_y, dp_z, \
+                                    w_x, w_y, w_z, \
+                                    density, lambda, \
+                                    edges, edges->indices_left, packed_send_left) default(none)
   for (int i=0; i<count_left; ++i) {
     const int p_index = edges->indices_left[i];
-    PackParticleToBuffer(particles, p_index, packed_send_left, i*g_num_components);
+    packed_send_left[i*g_num_components]      = x_star[p_index];
+    packed_send_left[i*g_num_components + 1]  = y_star[p_index];
+    packed_send_left[i*g_num_components + 2]  = z_star[p_index];
+    packed_send_left[i*g_num_components + 3]  = x[p_index];
+    packed_send_left[i*g_num_components + 4]  = y[p_index];
+    packed_send_left[i*g_num_components + 5]  = z[p_index];
+    packed_send_left[i*g_num_components + 6]  = v_x[p_index];
+    packed_send_left[i*g_num_components + 7]  = v_y[p_index];
+    packed_send_left[i*g_num_components + 8]  = v_z[p_index];
+    packed_send_left[i*g_num_components + 9]  = dp_x[p_index];
+    packed_send_left[i*g_num_components + 10] = dp_y[p_index];
+    packed_send_left[i*g_num_components + 11] = dp_z[p_index];
+    packed_send_left[i*g_num_components + 12] = w_x[p_index];
+    packed_send_left[i*g_num_components + 13] = w_y[p_index];
+    packed_send_left[i*g_num_components + 14] = w_z[p_index];
+    packed_send_left[i*g_num_components + 15] = density[p_index];
+    packed_send_left[i*g_num_components + 16] = lambda[p_index];
   }
 
-  #pragma acc parallel loop \
-    present(particles[:1], edges[:1],  \
-           packed_send_right[:count_right*g_num_components]) default(none)
+  #pragma acc parallel loop present(particles, \
+                                    x_star, y_star, z_star, \
+                                    x, y, z, \
+                                    v_x, v_y, v_z, \
+                                    dp_x, dp_y, dp_z, \
+                                    w_x, w_y, w_z, \
+                                    density, lambda, \
+                                    edges, edges->indices_right, packed_send_right) default(none)
   for (int i=0; i<count_right; ++i) {
     const int p_index = edges->indices_right[i];
-    PackParticleToBuffer(particles, p_index, packed_send_right, i*g_num_components);
+    packed_send_right[i*g_num_components]      = x_star[p_index];
+    packed_send_right[i*g_num_components + 1]  = y_star[p_index];
+    packed_send_right[i*g_num_components + 2]  = z_star[p_index];
+    packed_send_right[i*g_num_components + 3]  = x[p_index];
+    packed_send_right[i*g_num_components + 4]  = y[p_index];
+    packed_send_right[i*g_num_components + 5]  = z[p_index];
+    packed_send_right[i*g_num_components + 6]  = v_x[p_index];
+    packed_send_right[i*g_num_components + 7]  = v_y[p_index];
+    packed_send_right[i*g_num_components + 8]  = v_z[p_index];
+    packed_send_right[i*g_num_components + 9]  = dp_x[p_index];
+    packed_send_right[i*g_num_components + 10] = dp_y[p_index];
+    packed_send_right[i*g_num_components + 11] = dp_z[p_index];
+    packed_send_right[i*g_num_components + 12] = w_x[p_index];
+    packed_send_right[i*g_num_components + 13] = w_y[p_index];
+    packed_send_right[i*g_num_components + 14] = w_z[p_index];
+    packed_send_right[i*g_num_components + 15] = density[p_index];
+    packed_send_right[i*g_num_components + 16] = lambda[p_index];
   }
 }
 
@@ -178,20 +190,86 @@ void UnpackHaloComponents(const struct Communication *const communication,
   const int count_left = particles->halo_count_left;
   const int count_right = particles->halo_count_right;
 
+  // OpenACC can't reliably handle SoA...
+  double *x_star = particles->x_star;
+  double *y_star = particles->y_star;
+  double *z_star = particles->z_star;
+  double *x      = particles->x;
+  double *y      = particles->y;
+  double *z      = particles->z;
+  double *v_x    = particles->v_x;
+  double *v_y    = particles->v_y;
+  double *v_z    = particles->v_z;
+  double *w_x    = particles->w_x;
+  double *w_y    = particles->w_y;
+  double *w_z    = particles->w_z;
+  double *dp_x   = particles->dp_x;
+  double *dp_y   = particles->dp_y;
+  double *dp_z   = particles->dp_z;
+  double *density = particles->density;
+  double *lambda  = particles->lambda;
+  int *id         = particles->id;
+
   // Unpack halo particles from left rank first
-  #pragma acc parallel loop \
-    present(particles[:1], packed_recv_left[:count_left*g_num_components]) default(none)
+  #pragma acc parallel loop present(particles, \
+                                    x_star, y_star, z_star, \
+                                    x, y, z, \
+                                    v_x, v_y, v_z, \
+                                    dp_x, dp_y, dp_z, \
+                                    w_x, w_y, w_z, \
+                                    density, lambda, id, \
+                                    packed_recv_left) default(none)
   for (int i=0; i<count_left; ++i) {
     const int p_index = num_local + i;
-    UnpackBufferToParticle(packed_recv_left, i*g_num_components, particles, p_index);
+    x_star[p_index]  = packed_recv_left[i*g_num_components];
+    y_star[p_index]  = packed_recv_left[i*g_num_components + 1];
+    z_star[p_index]  = packed_recv_left[i*g_num_components + 2];
+    x[p_index]       = packed_recv_left[i*g_num_components + 3];
+    y[p_index]       = packed_recv_left[i*g_num_components + 4];
+    z[p_index]       = packed_recv_left[i*g_num_components + 5];
+    v_x[p_index]     = packed_recv_left[i*g_num_components + 6];
+    v_y[p_index]     = packed_recv_left[i*g_num_components + 7];
+    v_z[p_index]     = packed_recv_left[i*g_num_components + 8];
+    dp_x[p_index]    = packed_recv_left[i*g_num_components + 9];
+    dp_y[p_index]    = packed_recv_left[i*g_num_components + 10];
+    dp_z[p_index]    = packed_recv_left[i*g_num_components + 11];
+    w_x[p_index]     = packed_recv_left[i*g_num_components + 12];
+    w_y[p_index]     = packed_recv_left[i*g_num_components + 13];
+    w_z[p_index]     = packed_recv_left[i*g_num_components + 14];
+    density[p_index] = packed_recv_left[i*g_num_components + 15];
+    lambda[p_index]  = packed_recv_left[i*g_num_components + 16];
+    id[p_index] = p_index;
   }
 
   // Unpack halo particles from right rank second
-  #pragma acc parallel loop \
-    present(particles[:1], packed_recv_right[:count_right*g_num_components]) default(none)
+  #pragma acc parallel loop present(particles, \
+                                    x_star, y_star, z_star, \
+                                    x, y, z, \
+                                    v_x, v_y, v_z, \
+                                    dp_x, dp_y, dp_z, \
+                                    w_x, w_y, w_z, \
+                                    density, lambda, id, \
+                                    packed_recv_right) default(none)
   for (int i=0; i<count_right; ++i) {
     const int p_index = num_local + count_left + i;
-    UnpackBufferToParticle(packed_recv_right, i*g_num_components, particles, p_index);
+    x_star[p_index]  = packed_recv_right[i*g_num_components];
+    y_star[p_index]  = packed_recv_right[i*g_num_components + 1];
+    z_star[p_index]  = packed_recv_right[i*g_num_components + 2];
+    x[p_index]       = packed_recv_right[i*g_num_components + 3];
+    y[p_index]       = packed_recv_right[i*g_num_components + 4];
+    z[p_index]       = packed_recv_right[i*g_num_components + 5];
+    v_x[p_index]     = packed_recv_right[i*g_num_components + 6];
+    v_y[p_index]     = packed_recv_right[i*g_num_components + 7];
+    v_z[p_index]     = packed_recv_right[i*g_num_components + 8];
+    dp_x[p_index]    = packed_recv_right[i*g_num_components + 9];
+    dp_y[p_index]    = packed_recv_right[i*g_num_components + 10];
+    dp_z[p_index]    = packed_recv_right[i*g_num_components + 11];
+    w_x[p_index]     = packed_recv_right[i*g_num_components + 12];
+    w_y[p_index]     = packed_recv_right[i*g_num_components + 13];
+    w_z[p_index]     = packed_recv_right[i*g_num_components + 14];
+    density[p_index] = packed_recv_right[i*g_num_components + 15];
+    lambda[p_index]  = packed_recv_right[i*g_num_components + 16];
+    id[p_index] = p_index;
   }
 }
 
@@ -309,16 +387,81 @@ void PackOOBComponents(const struct Communication *const communication,
   int comp_count_left = count_left*g_num_components;
   int comp_count_right = count_right*g_num_components;
 
-  #pragma acc parallel loop present(particles[:1], oob[:1], packed_send_left[:comp_count_left]) default(none)
+  // OpenACC can't reliably handle SoA...
+  double *x_star = particles->x_star;
+  double *y_star = particles->y_star;
+  double *z_star = particles->z_star;
+  double *x      = particles->x;
+  double *y      = particles->y;
+  double *z      = particles->z;
+  double *v_x    = particles->v_x;
+  double *v_y    = particles->v_y;
+  double *v_z    = particles->v_z;
+  double *w_x    = particles->w_x;
+  double *w_y    = particles->w_y;
+  double *w_z    = particles->w_z;
+  double *dp_x   = particles->dp_x;
+  double *dp_y   = particles->dp_y;
+  double *dp_z   = particles->dp_z;
+  double *density = particles->density;
+  double *lambda  = particles->lambda;
+
+  #pragma acc parallel loop present(particles, \
+                                      x_star, y_star, z_star, \
+                                      x, y, z, \
+                                      v_x, v_y, v_z, \
+                                      dp_x, dp_y, dp_z, \
+                                      w_x, w_y, w_z, \
+                                      density, lambda, \
+                                    oob, oob->indices_left, packed_send_left) default(none)
   for (int i=0; i<count_left; ++i) {
     const int p_index = oob->indices_left[i];
-    PackParticleToBuffer(particles, p_index, packed_send_left, i*g_num_components);
+    packed_send_left[i*g_num_components]      = x_star[p_index];
+    packed_send_left[i*g_num_components + 1]  = y_star[p_index];
+    packed_send_left[i*g_num_components + 2]  = z_star[p_index];
+    packed_send_left[i*g_num_components + 3]  = x[p_index];
+    packed_send_left[i*g_num_components + 4]  = y[p_index];
+    packed_send_left[i*g_num_components + 5]  = z[p_index];
+    packed_send_left[i*g_num_components + 6]  = v_x[p_index];
+    packed_send_left[i*g_num_components + 7]  = v_y[p_index];
+    packed_send_left[i*g_num_components + 8]  = v_z[p_index];
+    packed_send_left[i*g_num_components + 9]  = 0.0; //dp_x[p_index];
+    packed_send_left[i*g_num_components + 10] = 0.0; //dp_y[p_index];
+    packed_send_left[i*g_num_components + 11] = 0.0; //dp_z[p_index];
+    packed_send_left[i*g_num_components + 12] = 0.0; //w_x[p_index];
+    packed_send_left[i*g_num_components + 13] = 0.0; //w_y[p_index];
+    packed_send_left[i*g_num_components + 14] = 0.0; //w_z[p_index];
+    packed_send_left[i*g_num_components + 15] = 0.0; //density[p_index];
+    packed_send_left[i*g_num_components + 16] = 0.0; //lambda[p_index];
   }
 
-  #pragma acc parallel loop present(particles[:1], oob[:1], packed_send_right[:comp_count_right]) default(none)
+  #pragma acc parallel loop present(particles, \
+                                      x_star, y_star, z_star, \
+                                      x, y, z, \
+                                      v_x, v_y, v_z, \
+                                      dp_x, dp_y, dp_z, \
+                                      w_x, w_y, w_z, \
+                                      density, lambda, \
+                                    oob, oob->indices_right, packed_send_right) default(none)
   for (int i=0; i<count_right; ++i) {
     const int p_index = oob->indices_right[i];
-    PackParticleToBuffer(particles, p_index, packed_send_right, i*g_num_components);
+    packed_send_right[i*g_num_components]      = x_star[p_index];
+    packed_send_right[i*g_num_components + 1]  = y_star[p_index];
+    packed_send_right[i*g_num_components + 2]  = z_star[p_index];
+    packed_send_right[i*g_num_components + 3]  = x[p_index];
+    packed_send_right[i*g_num_components + 4]  = y[p_index];
+    packed_send_right[i*g_num_components + 5]  = z[p_index];
+    packed_send_right[i*g_num_components + 6]  = v_x[p_index];
+    packed_send_right[i*g_num_components + 7]  = v_y[p_index];
+    packed_send_right[i*g_num_components + 8]  = v_z[p_index];
+    packed_send_right[i*g_num_components + 9]  = 0.0;//dp_x[p_index];
+    packed_send_right[i*g_num_components + 10] = 0.0;//dp_y[p_index];
+    packed_send_right[i*g_num_components + 11] = 0.0;//dp_z[p_index];
+    packed_send_right[i*g_num_components + 12] = 0.0;//w_x[p_index];
+    packed_send_right[i*g_num_components + 13] = 0.0;//w_y[p_index];
+    packed_send_right[i*g_num_components + 14] = 0.0;//w_z[p_index];
+    packed_send_right[i*g_num_components + 15] = 0.0;//density[p_index];
+    packed_send_right[i*g_num_components + 16] = 0.0;//lambda[p_index];
   }
 }
 
@@ -332,18 +475,84 @@ void UnpackOOBComponents(const int num_from_left, const int num_from_right,
 
   int local_count = particles->local_count;
 
-  #pragma acc parallel loop \
-    present(particles[:1], packed_recv_left[:num_from_left*g_num_components]) default(none)
+  // OpenACC can't reliably handle SoA...
+  double *x_star = particles->x_star;
+  double *y_star = particles->y_star;
+  double *z_star = particles->z_star;
+  double *x      = particles->x;
+  double *y      = particles->y;
+  double *z      = particles->z;
+  double *v_x    = particles->v_x;
+  double *v_y    = particles->v_y;
+  double *v_z    = particles->v_z;
+  double *w_x    = particles->w_x;
+  double *w_y    = particles->w_y;
+  double *w_z    = particles->w_z;
+  double *dp_x   = particles->dp_x;
+  double *dp_y   = particles->dp_y;
+  double *dp_z   = particles->dp_z;
+  double *density = particles->density;
+  double *lambda  = particles->lambda;
+  int *id         = particles->id;
+
+  #pragma acc parallel loop present(particles, \
+                                    x_star, y_star, z_star, \
+                                    x, y, z, \
+                                    v_x, v_y, v_z, \
+                                    dp_x, dp_y, dp_z, \
+                                    w_x, w_y, w_z, \
+                                    density, lambda, id, \
+                                    packed_recv_left) default(none)
   for (int i=0; i<num_from_left; ++i) {
     const int p_index = local_count + i;
-    UnpackBufferToParticle(packed_recv_left, i*g_num_components, particles, p_index);
+    x_star[p_index]  = packed_recv_left[i*g_num_components];
+    y_star[p_index]  = packed_recv_left[i*g_num_components + 1];
+    z_star[p_index]  = packed_recv_left[i*g_num_components + 2];
+    x[p_index]       = packed_recv_left[i*g_num_components + 3];
+    y[p_index]       = packed_recv_left[i*g_num_components + 4];
+    z[p_index]       = packed_recv_left[i*g_num_components + 5];
+    v_x[p_index]     = packed_recv_left[i*g_num_components + 6];
+    v_y[p_index]     = packed_recv_left[i*g_num_components + 7];
+    v_z[p_index]     = packed_recv_left[i*g_num_components + 8];
+    dp_x[p_index]    = packed_recv_left[i*g_num_components + 9];
+    dp_y[p_index]    = packed_recv_left[i*g_num_components + 10];
+    dp_z[p_index]    = packed_recv_left[i*g_num_components + 11];
+    w_x[p_index]     = packed_recv_left[i*g_num_components + 12];
+    w_y[p_index]     = packed_recv_left[i*g_num_components + 13];
+    w_z[p_index]     = packed_recv_left[i*g_num_components + 14];
+    density[p_index] = packed_recv_left[i*g_num_components + 15];
+    lambda[p_index]  = packed_recv_left[i*g_num_components + 16];
+    id[p_index] = p_index;
   }
 
-  #pragma acc parallel loop \
-   present(particles[:1], packed_recv_right[:num_from_right*g_num_components]) default(none)
+  #pragma acc parallel loop present(particles, \
+                                    x_star, y_star, z_star, \
+                                    x, y, z, \
+                                    v_x, v_y, v_z, \
+                                    dp_x, dp_y, dp_z, \
+                                    w_x, w_y, w_z, \
+                                    density, lambda, id, \
+                                    packed_recv_right) default(none)
   for (int i=0; i<num_from_right; ++i) {
     const int p_index = local_count + num_from_left + i;
-    UnpackBufferToParticle(packed_recv_right, i*g_num_components, particles, p_index);
+    x_star[p_index]  = packed_recv_right[i*g_num_components];
+    y_star[p_index]  = packed_recv_right[i*g_num_components + 1];
+    z_star[p_index]  = packed_recv_right[i*g_num_components + 2];
+    x[p_index]       = packed_recv_right[i*g_num_components + 3];
+    y[p_index]       = packed_recv_right[i*g_num_components + 4];
+    z[p_index]       = packed_recv_right[i*g_num_components + 5];
+    v_x[p_index]     = packed_recv_right[i*g_num_components + 6];
+    v_y[p_index]     = packed_recv_right[i*g_num_components + 7];
+    v_z[p_index]     = packed_recv_right[i*g_num_components + 8];
+    dp_x[p_index]    = packed_recv_right[i*g_num_components + 9];
+    dp_y[p_index]    = packed_recv_right[i*g_num_components + 10];
+    dp_z[p_index]    = packed_recv_right[i*g_num_components + 11];
+    w_x[p_index]     = packed_recv_right[i*g_num_components + 12];
+    w_y[p_index]     = packed_recv_right[i*g_num_components + 13];
+    w_z[p_index]     = packed_recv_right[i*g_num_components + 14];
+    density[p_index] = packed_recv_right[i*g_num_components + 15];
+    lambda[p_index]  = packed_recv_right[i*g_num_components + 16];
+    id[p_index] = p_index;
   }
 
   particles->local_count += (num_from_left + num_from_right);
@@ -358,38 +567,53 @@ void ExchangeOOB(struct Communication *const communication,
   const int proc_count = params->proc_count;
   struct OOB *const oob = &communication->out_of_bounds;
 
-  // use_device doesn't accept struct pointer members so we unpack
-  int *ids = particles->id;
-  double *x_stars = particles->x_star;
+  // OpenACC can't reliably handle SoA...
+  double *x_star = particles->x_star;
+  double *y_star = particles->y_star;
+  double *z_star = particles->z_star;
+  double *x    = particles->x;
+  double *y    = particles->y;
+  double *z    = particles->z;
+  double *v_x    = particles->v_x;
+  double *v_y    = particles->v_y;
+  double *v_z    = particles->v_z;
+  int *id         = particles->id;
   int *indices_left = oob->indices_left;
   int *indices_right = oob->indices_right;
 
-  #pragma acc host_data use_device(ids, x_stars, indices_left, indices_right)
+  #pragma acc host_data use_device(id, x_star, indices_left, indices_right)
   {
   // Copy OOB particle id's to left node
   CopyIfLessThan(params->node_start_x,
-                 ids,
+                 id,
                  particles->local_count,
-                 x_stars,
+                 x_star,
                  indices_left,
                  &oob->particle_count_left);
 
   // Copy OOB particle id's to right node
   CopyIfGreaterThan(params->node_end_x,
-                    ids,
+                    id,
                     particles->local_count,
-                    x_stars,
+                    x_star,
                     indices_right,
                     &oob->particle_count_right);
-
-  RemoveIfOutsideBounds(params->node_start_x, params->node_end_x,
-                        ids,
-                        particles->local_count,
-                        x_stars);
   }
 
   // Pack removed particle components
   PackOOBComponents(communication, particles);
+
+  #pragma acc host_data use_device(id, x_star, y_star, z_star,  \
+                                   x, y, z, v_x, v_y, v_z)
+  {
+  // Particles->id not correct at this point, but not used...should just remove particles->id
+  RemoveIfOutsideBounds3(params->node_start_x, params->node_end_x,
+                         particles->local_count,
+                         x_star, y_star, z_star,
+                         x, y, z,
+                         v_x, v_y, v_z);
+
+  }
 
   // Set new particle count
   int num_moving_left = oob->particle_count_left;
@@ -397,20 +621,12 @@ void ExchangeOOB(struct Communication *const communication,
 
   particles->local_count -= (num_moving_left + num_moving_right);
 
-  // Use ID component to reorganize particles array
-  // Perhaps could do some hashing/sort here before copy, then merge into sorted halo values later
-  // This would allow better coalescing
-  int num_particles = particles->local_count; // Compiler didn't like using particles->local_count directly
-
-  #pragma acc parallel loop present(particles[:1]) //Lazily not declaring entire particles list as present
-  for(int i=0; i<num_particles; ++i) {
-      const int current_id = particles->id[i];
-      CopyParticle(particles, current_id, i);
-  }
-
-  #pragma acc update host(particles->x[0:num_particles])
-  for(int i=num_particles-100; i<num_particles; i++) {
-      printf("x:%f\n", particles->x[i]);
+  // Must reset id's now
+  // Should get rid of particle ID and use counting iterator
+  const int local_count = particles->local_count;
+  #pragma acc parallel loop present(id)
+  for(int i=0; i<local_count; i++) {
+    id[i] = i;
   }
 
   // Setup nodes to left and right of self
@@ -467,17 +683,16 @@ void ExchangeOOB(struct Communication *const communication,
                       communication,
                       particles);
 
-//  #pragma update device(particles->local_count)
-
   DEBUG_PRINT("rank %d, OOB: recv %d from %d, %d from %d: count :%d\n",
               rank, num_from_left, proc_to_left, num_from_right, proc_to_right,
               particles->local_count);
 
 }
 
-void UpdateHaloLambdas(const struct Communication *const communication,
-                       const struct  Params *const params,
-                       struct Particles *const particles) {
+void UpdateHaloScalar(const struct Communication *const communication,
+                      const struct  Params *const params,
+                      struct Particles *const particles,
+                      double *scalars) {
   const struct Edges *const edges = &communication->edges;
 
   const int rank = params->rank;
@@ -489,68 +704,79 @@ void UpdateHaloLambdas(const struct Communication *const communication,
   const int num_from_left  = particles->halo_count_left;
   const int num_from_right = particles->halo_count_right;
 
-  double *const lambdas_send_left  = communication->send_buffer_left;
-  double *const lambdas_send_right = communication->send_buffer_right;
+  double *const scalars_send_left  = communication->send_buffer_left;
+  double *const scalars_send_right = communication->send_buffer_right;
 
-  // Pack local halo lambdas
+  // Pack local halo scalars
+  #pragma acc parallel loop present(edges, edges->indices_left, scalars_send_left, scalars)
   for (int i=0; i<num_moving_left; ++i) {
     const int p_index = edges->indices_left[i];
-    lambdas_send_left[i] = particles->lambda[p_index];
+    scalars_send_left[i] = scalars[p_index];
   }
+  #pragma acc parallel loop present(edges, edges->indices_right, scalars_send_right, scalars)
   for (int i=0; i<num_moving_right; ++i) {
     const int p_index = edges->indices_right[i];
-    lambdas_send_right[i] = particles->lambda[p_index];
+    scalars_send_right[i] = scalars[p_index];
   }
 
   // Setup nodes to left and right of self
   const int proc_to_left =  (rank == 0 ? MPI_PROC_NULL : rank-1);
   const int proc_to_right = (rank == proc_count-1 ? MPI_PROC_NULL : rank+1);
 
-  // Send lambdas to right and receive from left
+  // Send scalars to right and receive from left
   int tagl = 784;
   int tagr = 456;
   MPI_Request reqs[4];
 
-  double *const lambdas_recv_left  = communication->recv_buffer_left;
-  double *const lambdas_recv_right = communication->recv_buffer_right;
+  double *const scalars_recv_left  = communication->recv_buffer_left;
+  double *const scalars_recv_right = communication->recv_buffer_right;
+
+  #pragma acc host_data use_device(scalars_recv_left, scalars_recv_right, scalars_send_left, scalars_send_right)
+  {
   // Receive packed doubles from left rank
-  MPI_Irecv(lambdas_recv_left, num_from_left, MPI_DOUBLE,
+  MPI_Irecv(scalars_recv_left, num_from_left, MPI_DOUBLE,
             proc_to_left, tagl, MPI_COMM_WORLD, &reqs[0]);
   // Receive packed doubles from right rank
-  MPI_Irecv(lambdas_recv_right, num_from_right, MPI_DOUBLE,
+  MPI_Irecv(scalars_recv_right, num_from_right, MPI_DOUBLE,
             proc_to_right, tagr, MPI_COMM_WORLD, &reqs[1]);
 
   // Send packed doubles to right rank
-  MPI_Isend(lambdas_send_right, num_moving_right, MPI_DOUBLE,
+  MPI_Isend(scalars_send_right, num_moving_right, MPI_DOUBLE,
             proc_to_right, tagl, MPI_COMM_WORLD, &reqs[2]);
   // Send packed doubles to left rank
-  MPI_Isend(lambdas_send_left, num_moving_left, MPI_DOUBLE,
+  MPI_Isend(scalars_send_left, num_moving_left, MPI_DOUBLE,
             proc_to_left, tagr, MPI_COMM_WORLD, &reqs[3]);
+  }
 
   // Wait for transfer to complete
   MPI_Status statuses[4];
   MPI_Waitall(4, reqs, statuses);
 
-  // Unpack halo particle lambdas
+  const int local_count = particles->local_count;
+
+  // Unpack halo particle scalars
+  #pragma acc parallel loop present(scalars_recv_left, scalars)
   for (int i=0; i<num_from_left; ++i) {
-    const int p_index = particles->local_count + i;
-    particles->lambda[p_index] = lambdas_recv_left[i];
+    const int p_index = local_count + i;
+    scalars[p_index] = scalars_recv_left[i];
   }
+  #pragma acc parallel loop present(scalars_recv_right, scalars)
   for (int i=0; i<num_from_right; ++i) {
-    const int p_index = particles->local_count + num_from_left + i;
-    particles->lambda[p_index] = lambdas_recv_right[i];
+    const int p_index = local_count + num_from_left + i;
+    scalars[p_index] = scalars_recv_right[i];
   }
 }
 
-void UpdateHaloPositions(const struct Communication *const communication,
-                         const struct Params *const params,
-                         struct Particles *const particles) {
+void UpdateHaloTuple(const struct Communication *const communication,
+                     const struct Params *const params,
+                     struct Particles *const particles,
+                     double *const t1, double *const t2, double *const t3) {
   const struct Edges *const edges = &communication->edges;
 
   const int rank = params->rank;
   const int proc_count = params->proc_count;
 
-  // x,y,z components required
+  // tuple(t1, t2, t3) components required
   const int double_components = 3;
   const int num_moving_left  = double_components*edges->particle_count_left;
   const int num_moving_right = double_components*edges->particle_count_right;
@@ -559,64 +785,74 @@ void UpdateHaloPositions(const struct Communication *const communication,
   const int num_from_right = double_components*particles->halo_count_right;
 
   // Set send/recv buffers
-  double *const positions_send_left  = communication->send_buffer_left;
-  double *const positions_send_right = communication->send_buffer_right;
+  double *const tuples_send_left  = communication->send_buffer_left;
+  double *const tuples_send_right = communication->send_buffer_right;
 
-  double *const positions_recv_left  = communication->recv_buffer_left;
-  double *const positions_recv_right = communication->recv_buffer_right;
+  double *const tuples_recv_left  = communication->recv_buffer_left;
+  double *const tuples_recv_right = communication->recv_buffer_right;
 
-  // Pack local edge positions
+  // Pack local edge tuples
+  #pragma acc parallel loop present(edges, edges->indices_left, tuples_send_left, t1, t2, t3)
   for (int i=0; i<num_moving_left; i+=3) {
     const int p_index = edges->indices_left[i/3];
-    positions_send_left[i]   = particles->x_star[p_index];
-    positions_send_left[i+1] = particles->y_star[p_index];
-    positions_send_left[i+2] = particles->z_star[p_index];
+    tuples_send_left[i]   = t1[p_index];
+    tuples_send_left[i+1] = t2[p_index];
+    tuples_send_left[i+2] = t3[p_index];
   }
+  #pragma acc parallel loop present(edges, edges->indices_right, tuples_send_right, t1, t2, t3)
   for (int i=0; i<num_moving_right; i+=3) {
     const int p_index = edges->indices_right[i/3];
-    positions_send_right[i]   = particles->x_star[p_index];
-    positions_send_right[i+1] = particles->y_star[p_index];
-    positions_send_right[i+2] = particles->z_star[p_index];
+    tuples_send_right[i]   = t1[p_index];
+    tuples_send_right[i+1] = t2[p_index];
+    tuples_send_right[i+2] = t3[p_index];
   }
 
   // Setup nodes to left and right of self
   const int proc_to_left =  (rank == 0 ? MPI_PROC_NULL : rank-1);
   const int proc_to_right = (rank == proc_count-1 ? MPI_PROC_NULL : rank+1);
 
-  // Send lambdas to right and receive from left
+  // Send tuples to right and receive from left
   int tagl = 874;
   int tagr = 546;
   MPI_Request reqs[4];
+
+  #pragma acc host_data use_device(tuples_recv_left, tuples_recv_right, tuples_send_left, tuples_send_right)
+  {
   // Receive packed doubles from left rank
-  MPI_Irecv(positions_recv_left, num_from_left, MPI_DOUBLE,
+  MPI_Irecv(tuples_recv_left, num_from_left, MPI_DOUBLE,
             proc_to_left, tagl, MPI_COMM_WORLD, &reqs[0]);
   // Receive packed doubles from right rank
-  MPI_Irecv(positions_recv_right, num_from_right, MPI_DOUBLE,
+  MPI_Irecv(tuples_recv_right, num_from_right, MPI_DOUBLE,
             proc_to_right, tagr, MPI_COMM_WORLD, &reqs[1]);
 
   // Send packed doubles to right rank
-  MPI_Isend(positions_send_right, num_moving_right, MPI_DOUBLE,
+  MPI_Isend(tuples_send_right, num_moving_right, MPI_DOUBLE,
             proc_to_right, tagl, MPI_COMM_WORLD, &reqs[2]);
   // Send packed doubles to left rank
-  MPI_Isend(positions_send_left, num_moving_left, MPI_DOUBLE,
+  MPI_Isend(tuples_send_left, num_moving_left, MPI_DOUBLE,
             proc_to_left, tagr, MPI_COMM_WORLD, &reqs[3]);
+  }
 
   // Wait for transfer to complete
   MPI_Status statuses[4];
   MPI_Waitall(4, reqs, statuses);
 
-  // Unpack halo particle positions
+  const int local_count = particles->local_count;
+
+  // Unpack halo particle tuples
+  #pragma acc parallel loop present(tuples_recv_left, t1, t2, t3)
   for (int i=0; i<num_from_left; i+=3) {
-    const int p_index = particles->local_count + i/3;
-    particles->x_star[p_index] = positions_recv_left[i];
-    particles->y_star[p_index] = positions_recv_left[i+1];
-    particles->z_star[p_index] = positions_recv_left[i+2];
+    const int p_index = local_count + i/3;
+    t1[p_index] = tuples_recv_left[i];
+    t2[p_index] = tuples_recv_left[i+1];
+    t3[p_index] = tuples_recv_left[i+2];
   }
+  #pragma acc parallel loop present(tuples_recv_right, t1, t2, t3)
   for (int i=0; i<num_from_right; i+=3) {
-    const int p_index = particles->local_count
+    const int p_index = local_count
                       + num_from_left/3 + i/3;
-    particles->x_star[p_index] = positions_recv_right[i];
-    particles->y_star[p_index] = positions_recv_right[i+1];
-    particles->z_star[p_index] = positions_recv_right[i+2];
+    t1[p_index] = tuples_recv_right[i];
+    t2[p_index] = tuples_recv_right[i+1];
+    t3[p_index] = tuples_recv_right[i+2];
   }
 }

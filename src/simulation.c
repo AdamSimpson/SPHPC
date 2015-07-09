@@ -53,9 +53,6 @@ int main(int argc, char *argv[]) {
 
     ExchangeOOB(&communication, &particles, &params);
 
-      #pragma acc update host(particles.x[:particles.local_count], particles.y[:particles.local_count], particles.z[:particles.local_count])
-      WriteParticles(&particles, &params, &file_io);
-
     ExchangeHalo(&communication, &params, &particles);
 
     FindAllNeighbors(&particles, &params, &neighbors);
@@ -63,16 +60,18 @@ int main(int argc, char *argv[]) {
     const int solve_iterations = 4;
     for (int sub_i=0; sub_i<solve_iterations; ++sub_i) {
       ComputeDensities(&particles, &params, &neighbors);
+      UpdateHaloScalar(&communication, &params, &particles, particles.density);
 
       ComputeLambda(&particles, &params, &neighbors);
-
-//      UpdateHaloLambdas(&communication, &params, &particles);
+      UpdateHaloScalar(&communication, &params, &particles, particles.lambda);
 
       UpdateDPs(&particles, &params, &neighbors);
+      UpdateHaloTuple(&communication, &params, &particles,
+                       particles.dp_x, particles.dp_y, particles.dp_z);
 
       UpdatePositionStars(&particles, &boundary_global);
-
-//      UpdateHaloPositions(&communication, &params, &particles);
+      UpdateHaloTuple(&communication, &params, &particles,
+                       particles.x_star, particles.y_star, particles.z_star);
     }
 
     UpdateVelocities(&particles, &params);

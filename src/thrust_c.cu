@@ -6,6 +6,8 @@
 #include <thrust/version.h>
 #include <thrust/sort.h>
 #include <thrust/copy.h>
+#include <thrust/iterator/zip_iterator.h>
+#include <thrust/remove.h>
 #include <thrust/binary_search.h>
 #include <thrust/device_ptr.h>
 #include <thrust/host_vector.h>
@@ -64,6 +66,19 @@ struct OutsideBounds {
   __host__ __device__
   bool operator()(const double x) {
     return (x < x_min || x > x_max);
+  }
+};
+
+struct RemoveOutsideBounds {
+  RemoveOutsideBounds(double min, double max): x_min(min), x_max(max) {}
+
+  double x_min, x_max;
+
+  template <typename T>
+  __host__ __device__
+  bool operator()(T &tuple) const {
+    const double x_star = thrust::get<0>(tuple);
+    return (x_star < x_min || x_star > x_max);
   }
 };
 
@@ -179,4 +194,35 @@ extern "C" void RemoveIfOutsideBounds(const double min, const double max,
                        input + input_count,
                        stencil,
                        OutsideBounds(min, max));
+}
+// Rename me
+extern "C" void RemoveIfOutsideBounds2(const double min, const double max,
+                                      int *const input,
+                                      const int input_count) {
+
+  int *end_pointer = thrust::remove_if(COMPUTE_POLICY,
+                       input,
+                       input + input_count,
+                       OutsideBounds(min, max));
+}
+
+// Rename me
+extern "C" void RemoveIfOutsideBounds3(const double min, const double max,
+                                      const int count,
+                                      double *x_star, double *y_star, double *z_star,
+                                      double *x, double *y, double *z,
+                                      double *v_x, double *v_y, double *v_z) {
+
+/*  typedef thrust::tuple< double*, double*, double*, double*, double*, double*, double*, double*, double*, int*> TupleIt;
+  typedef thrust::zip_iterator< TupleIt >  ZipIt;
+
+  ZipIt Zend =*/ thrust::remove_if(COMPUTE_POLICY,
+                       thrust::make_zip_iterator(thrust::make_tuple(x_star, y_star, z_star,
+                                                                    x, y, z, v_x, v_y, v_z)),
+                       thrust::make_zip_iterator(thrust::make_tuple(x_star+count, y_star+count, z_star+count,
+                                                                    x+count, y+count, z+count, v_x+count, v_y+count, v_z+count)),
+                       RemoveOutsideBounds(min, max));
+
+/*  TupleIt endTuple = Zend.get_iterator_tuple();
+  printf("num removed: %d\n", x_star + count - thrust::get<0>(endTuple));*/
 }

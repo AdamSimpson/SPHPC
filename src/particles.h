@@ -27,17 +27,22 @@ struct Particles {
   double *restrict lambda;
   int    *restrict id;
 
+/*
+  // Used to copy values into
+  double *restrict x_star_two;
+  double *restrict y_star_two;
+  double *restrict z_star_two;
+  double *restrict v_x_two;
+  double *restrict v_y_two;
+  double *restrict v_z_two;
+*/
+
   int global_count; // Global number of particles in simulation
   int local_count; // Particles within node bounds, excludes halo particles
   int max_local;  // Maximum number of local and halo particles
   int halo_count_left;
   int halo_count_right;
 };
-
-// Copies particle located at from_index to to_index
-#pragma acc routine seq
-void CopyParticle(struct Particles *const particles,
-                  const int from_index, const int to_index);
 
 void ApplyVorticityConfinement(struct Particles *const fluid_particles,
                           const struct Params *const params,
@@ -74,8 +79,7 @@ void PredictPositions(struct Particles *const fluid_particles,
 void UpdateVelocities(struct Particles *const fluid_particles,
                       const struct Params *const params);
 
-void ApplyBoundaryConditions(struct Particles *const fluid_particles,
-                        const unsigned int i,
+void ApplyBoundaryConditions(double *x, double *y, double*z,
                         const struct AABB *const boundary);
 
 void PrintAverageDensity(struct Particles *particles);

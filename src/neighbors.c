@@ -108,19 +108,18 @@ void HashParticles(const struct Particles *const particles,
                           + particles->halo_count_left
                           + particles->halo_count_right;
 
-  #pragma acc parallel loop \
-    present(particles[:1],                       \
-            particles->x_star[:num_particles], \
-            particles->y_star[:num_particles], \
-            particles->z_star[:num_particles], \
-            neighbors[:1],  \
-            particle_ids[:num_particles], \
-            hash_values[:num_particles])
+  // OpenACC can't reliably handle SoA...
+  double *x_star = particles->x_star;
+  double *y_star = particles->y_star;
+  double *z_star = particles->z_star;
+
+  #pragma acc parallel loop present(x_star, y_star, z_star, \
+                                    neighbors, hash_values, particle_ids) default(none)
   for (int i=0; i<num_particles; ++i) {
     hash_values[i] =  HashVal(neighbors,
-                              particles->x_star[i],
-                              particles->y_star[i],
-                              particles->z_star[i]);
+                              x_star[i],
+                              y_star[i],
+                              z_star[i]);
     particle_ids[i] = i;
   }
 }
@@ -174,107 +173,90 @@ void FindCellBounds(const struct Particles *particles,
                     length_hash,
                     end_indices);
   }
-
-}
-
-// Neighbors are accessed multiple times per step so we keep them in buckets
-#pragma acc routine
-void FillParticleNeighbors(struct Neighbors *const neighbors,
-                           const struct Params *const params,
-                           const struct Particles *particles,
-                           const unsigned int p_index) {
-
-  const double smoothing_radius2 = params->smoothing_radius
-                                 * params->smoothing_radius;
-  const double spacing = neighbors->hash_spacing;
-
-  // Get neighbor bucket for particle p
-  struct NeighborBucket *const neighbor_bucket = &neighbors->neighbor_buckets[p_index];
-  neighbor_bucket->count = 0;
-
-  const double px = particles->x_star[p_index];
-  const double py = particles->y_star[p_index];
-  const double pz = particles->z_star[p_index];
-
-  // Go through neighboring grid buckets
-  for (int dz=-1; dz<=1; ++dz) {
-    const double z = pz + dz*spacing;
-    for (int dy=-1; dy<=1; ++dy) {
-      const double y = py + dy*spacing;
-      for (int dx=-1; dx<=1; ++dx) {
-        const double x = px + dx*spacing;
-
-        // Make sure that the position is valid
-        if (floor(x/spacing) > neighbors->hash_size_x-1 || x < 0.0 ||
-            floor(y/spacing) > neighbors->hash_size_y-1 || y < 0.0 ||
-            floor(z/spacing) > neighbors->hash_size_z-1 || z < 0.0)
-          continue;
-
-        // Calculate hash index at neighbor point
-        const int neighbor_index = HashVal(neighbors, x, y, z);
-
-        // Start index for hash value of current neighbor grid bucket
-        const unsigned int start_index = neighbors->start_indices[neighbor_index];
-        const unsigned int end_index = neighbors->end_indices[neighbor_index];
-        // If neighbor grid bucket is not empty
-        if (start_index != end_index) {
-
-          for (int j=start_index; j<end_index; ++j) {
-            const int q_index = neighbors->particle_ids[j];
-
-            // Continue if same particle
-            if (p_index==q_index)
-              continue;
-
-            // Calculate distance squared
-            const double x_diff = particles->x_star[p_index]
-                                - particles->x_star[q_index];
-            const double y_diff = particles->y_star[p_index]
-                                - particles->y_star[q_index];
-            const double z_diff = particles->z_star[p_index]
-                                - particles->z_star[q_index];
-            const double r2 = x_diff*x_diff + y_diff*y_diff + z_diff*z_diff;
-
-            // If inside smoothing radius and enough space
-            // in p's neighbor bucket add q
-            if(r2<smoothing_radius2 &&
-               neighbor_bucket->count < MAX_NEIGHBORS) {
-                const int num_neighbors = neighbor_bucket->count;
-                neighbor_bucket->neighbor_indices[num_neighbors] = q_index;
-                ++(neighbor_bucket->count);
-            }
-          }
-        }
-      } //dx
-    } //dy
-  } //dz
 }
 
 void FillNeighbors(const struct Particles *particles,
                    const struct Params *const params,
                    struct Neighbors *const neighbors) {
+
   const int num_particles = particles->local_count;
 
-  const size_t hash_size = neighbors->hash_size_x
-                   * neighbors->hash_size_y
-                   * neighbors->hash_size_z;
+  const double smoothing_radius2 = params->smoothing_radius
+                                 * params->smoothing_radius;
+  const double spacing = neighbors->hash_spacing;
+
+  double *x_star = particles->x_star;
+  double *y_star = particles->y_star;
+  double *z_star = particles->z_star;
+  struct NeighborBucket *neighbor_buckets = neighbors->neighbor_buckets;
 
   // Fill neighbor bucket for all resident particles
-  #pragma acc parallel loop  \
-    present(particles[:1],                     \
-           particles->x_star[:num_particles], \
-           particles->y_star[:num_particles], \
-           particles->z_star[:num_particles], \
-           params[:1],                        \
-           neighbors[:1],                      \
-           neighbors->start_indices[:hash_size], \
-           neighbors->end_indices[:hash_size], \
-           neighbors->particle_ids[:num_particles], \
-           neighbors->neighbor_buckets[:num_particles])
+  #pragma acc parallel loop present(x_star, y_star, z_star, neighbors, neighbor_buckets)
   for (int i=0; i<num_particles; ++i) {
-    FillParticleNeighbors(neighbors,
-                          params,
-                          particles,
-                          i);
+      const int p_index = i;
+
+      // Get neighbor bucket for particle p
+      struct NeighborBucket *const neighbor_bucket = &neighbor_buckets[p_index];
+      neighbor_bucket->count = 0;
+
+      const double px = x_star[p_index];
+      const double py = y_star[p_index];
+      const double pz = z_star[p_index];
+
+      // Go through neighboring grid buckets
+      #pragma acc loop seq collapse(3)
+      for (int dz=-1; dz<=1; ++dz) {
+        for (int dy=-1; dy<=1; ++dy) {
+          for (int dx=-1; dx<=1; ++dx) {
+
+            const double y = py + dy*spacing;
+            const double z = pz + dz*spacing;
+            const double x = px + dx*spacing;
+
+            // Make sure that the position is valid
+            if (floor(x/spacing) > neighbors->hash_size_x-1 || x < 0.0 ||
+                floor(y/spacing) > neighbors->hash_size_y-1 || y < 0.0 ||
+                floor(z/spacing) > neighbors->hash_size_z-1 || z < 0.0)
+              continue;
+
+            // Calculate hash index at neighbor point
+            const int neighbor_index = HashVal(neighbors, x, y, z);
+
+            // Start index for hash value of current neighbor grid bucket
+            const unsigned int start_index = neighbors->start_indices[neighbor_index];
+            const unsigned int end_index = neighbors->end_indices[neighbor_index];
+            // If neighbor grid bucket is not empty
+            if (start_index != end_index) {
+              for (int j=start_index; j<end_index; ++j) {
+                const int q_index = neighbors->particle_ids[j];
+
+                // Continue if same particle
+                if (p_index==q_index)
+                  continue;
+
+                // Calculate distance squared
+                const double x_diff =x_star[p_index]
+                                    -x_star[q_index];
+                const double y_diff =y_star[p_index]
+                                    -y_star[q_index];
+                const double z_diff =z_star[p_index]
+                                    -z_star[q_index];
+                const double r2 = x_diff*x_diff + y_diff*y_diff + z_diff*z_diff;
+
+                // If inside smoothing radius and enough space
+                // in p's neighbor bucket add q
+                if(r2<smoothing_radius2 &&
+                   neighbor_bucket->count < MAX_NEIGHBORS) {
+                    const int num_neighbors = neighbor_bucket->count;
+                    neighbor_bucket->neighbor_indices[num_neighbors] = q_index;
+                    ++(neighbor_bucket->count);
+                }
+              }
+            }
+         } //dx
+        } //dy
+      } //dz
+
   }
+
 }

@@ -61,11 +61,6 @@ void SortHash(const struct Particles *particles,
 void FindCellBounds(const struct Particles *particles,
                     struct Neighbors *const neighbors);
 
-void FillParticleNeighbors(struct Neighbors *const neighbors,
-                           const struct Params *const params,
-                           const struct Particles *particles,
-                           const unsigned int p_index);
-
 void FillNeighbors(const struct Particles *particles,
                    const struct Params *const params,
                    struct Neighbors *const neighbors);
