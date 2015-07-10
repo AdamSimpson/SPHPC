@@ -9,8 +9,7 @@
 #include <string.h>
 #include "mpi.h"
 
-// Number of double components that need to be communicated per particle
-static const int g_num_components = 17;
+static const int g_num_components = 9;
 
 void InitCommunication(int argc, char *argv[]) {
   MPI_Init(&argc, &argv);
@@ -112,22 +111,11 @@ void PackHaloComponents(const struct Communication *const communication,
   double *v_x    = particles->v_x;
   double *v_y    = particles->v_y;
   double *v_z    = particles->v_z;
-  double *w_x    = particles->w_x;
-  double *w_y    = particles->w_y;
-  double *w_z    = particles->w_z;
-  double *dp_x   = particles->dp_x;
-  double *dp_y   = particles->dp_y;
-  double *dp_z   = particles->dp_z;
-  double *density = particles->density;
-  double *lambda  = particles->lambda;
 
   #pragma acc parallel loop present(particles, \
                                     x_star, y_star, z_star, \
                                     x, y, z, \
                                     v_x, v_y, v_z, \
-                                    dp_x, dp_y, dp_z, \
-                                    w_x, w_y, w_z, \
-                                    density, lambda, \
                                     edges, edges->indices_left, packed_send_left) default(none)
   for (int i=0; i<count_left; ++i) {
     const int p_index = edges->indices_left[i];
@@ -140,23 +128,12 @@ void PackHaloComponents(const struct Communication *const communication,
     packed_send_left[i*g_num_components + 6]  = v_x[p_index];
     packed_send_left[i*g_num_components + 7]  = v_y[p_index];
     packed_send_left[i*g_num_components + 8]  = v_z[p_index];
-    packed_send_left[i*g_num_components + 9]  = dp_x[p_index];
-    packed_send_left[i*g_num_components + 10] = dp_y[p_index];
-    packed_send_left[i*g_num_components + 11] = dp_z[p_index];
-    packed_send_left[i*g_num_components + 12] = w_x[p_index];
-    packed_send_left[i*g_num_components + 13] = w_y[p_index];
-    packed_send_left[i*g_num_components + 14] = w_z[p_index];
-    packed_send_left[i*g_num_components + 15] = density[p_index];
-    packed_send_left[i*g_num_components + 16] = lambda[p_index];
   }
 
   #pragma acc parallel loop present(particles, \
                                     x_star, y_star, z_star, \
                                     x, y, z, \
                                     v_x, v_y, v_z, \
-                                    dp_x, dp_y, dp_z, \
-                                    w_x, w_y, w_z, \
-                                    density, lambda, \
                                     edges, edges->indices_right, packed_send_right) default(none)
   for (int i=0; i<count_right; ++i) {
     const int p_index = edges->indices_right[i];
@@ -169,14 +146,6 @@ void PackHaloComponents(const struct Communication *const communication,
     packed_send_right[i*g_num_components + 6]  = v_x[p_index];
     packed_send_right[i*g_num_components + 7]  = v_y[p_index];
     packed_send_right[i*g_num_components + 8]  = v_z[p_index];
-    packed_send_right[i*g_num_components + 9]  = dp_x[p_index];
-    packed_send_right[i*g_num_components + 10] = dp_y[p_index];
-    packed_send_right[i*g_num_components + 11] = dp_z[p_index];
-    packed_send_right[i*g_num_components + 12] = w_x[p_index];
-    packed_send_right[i*g_num_components + 13] = w_y[p_index];
-    packed_send_right[i*g_num_components + 14] = w_z[p_index];
-    packed_send_right[i*g_num_components + 15] = density[p_index];
-    packed_send_right[i*g_num_components + 16] = lambda[p_index];
   }
 }
 
@@ -200,14 +169,6 @@ void UnpackHaloComponents(const struct Communication *const communication,
   double *v_x    = particles->v_x;
   double *v_y    = particles->v_y;
   double *v_z    = particles->v_z;
-  double *w_x    = particles->w_x;
-  double *w_y    = particles->w_y;
-  double *w_z    = particles->w_z;
-  double *dp_x   = particles->dp_x;
-  double *dp_y   = particles->dp_y;
-  double *dp_z   = particles->dp_z;
-  double *density = particles->density;
-  double *lambda  = particles->lambda;
   int *id         = particles->id;
 
   // Unpack halo particles from left rank first
@@ -215,9 +176,7 @@ void UnpackHaloComponents(const struct Communication *const communication,
                                     x_star, y_star, z_star, \
                                     x, y, z, \
                                     v_x, v_y, v_z, \
-                                    dp_x, dp_y, dp_z, \
-                                    w_x, w_y, w_z, \
-                                    density, lambda, id, \
+                                    id, \
                                     packed_recv_left) default(none)
   for (int i=0; i<count_left; ++i) {
     const int p_index = num_local + i;
@@ -230,14 +189,6 @@ void UnpackHaloComponents(const struct Communication *const communication,
     v_x[p_index]     = packed_recv_left[i*g_num_components + 6];
     v_y[p_index]     = packed_recv_left[i*g_num_components + 7];
     v_z[p_index]     = packed_recv_left[i*g_num_components + 8];
-    dp_x[p_index]    = packed_recv_left[i*g_num_components + 9];
-    dp_y[p_index]    = packed_recv_left[i*g_num_components + 10];
-    dp_z[p_index]    = packed_recv_left[i*g_num_components + 11];
-    w_x[p_index]     = packed_recv_left[i*g_num_components + 12];
-    w_y[p_index]     = packed_recv_left[i*g_num_components + 13];
-    w_z[p_index]     = packed_recv_left[i*g_num_components + 14];
-    density[p_index] = packed_recv_left[i*g_num_components + 15];
-    lambda[p_index]  = packed_recv_left[i*g_num_components + 16];
     id[p_index] = p_index;
   }
 
@@ -246,9 +197,7 @@ void UnpackHaloComponents(const struct Communication *const communication,
                                     x_star, y_star, z_star, \
                                     x, y, z, \
                                     v_x, v_y, v_z, \
-                                    dp_x, dp_y, dp_z, \
-                                    w_x, w_y, w_z, \
-                                    density, lambda, id, \
+                                    id, \
                                     packed_recv_right) default(none)
   for (int i=0; i<count_right; ++i) {
     const int p_index = num_local + count_left + i;
@@ -261,14 +210,6 @@ void UnpackHaloComponents(const struct Communication *const communication,
     v_x[p_index]     = packed_recv_right[i*g_num_components + 6];
     v_y[p_index]     = packed_recv_right[i*g_num_components + 7];
     v_z[p_index]     = packed_recv_right[i*g_num_components + 8];
-    dp_x[p_index]    = packed_recv_right[i*g_num_components + 9];
-    dp_y[p_index]    = packed_recv_right[i*g_num_components + 10];
-    dp_z[p_index]    = packed_recv_right[i*g_num_components + 11];
-    w_x[p_index]     = packed_recv_right[i*g_num_components + 12];
-    w_y[p_index]     = packed_recv_right[i*g_num_components + 13];
-    w_z[p_index]     = packed_recv_right[i*g_num_components + 14];
-    density[p_index] = packed_recv_right[i*g_num_components + 15];
-    lambda[p_index]  = packed_recv_right[i*g_num_components + 16];
     id[p_index] = p_index;
   }
 }
@@ -397,22 +338,11 @@ void PackOOBComponents(const struct Communication *const communication,
   double *v_x    = particles->v_x;
   double *v_y    = particles->v_y;
   double *v_z    = particles->v_z;
-  double *w_x    = particles->w_x;
-  double *w_y    = particles->w_y;
-  double *w_z    = particles->w_z;
-  double *dp_x   = particles->dp_x;
-  double *dp_y   = particles->dp_y;
-  double *dp_z   = particles->dp_z;
-  double *density = particles->density;
-  double *lambda  = particles->lambda;
 
   #pragma acc parallel loop present(particles, \
                                       x_star, y_star, z_star, \
                                       x, y, z, \
                                       v_x, v_y, v_z, \
-                                      dp_x, dp_y, dp_z, \
-                                      w_x, w_y, w_z, \
-                                      density, lambda, \
                                     oob, oob->indices_left, packed_send_left) default(none)
   for (int i=0; i<count_left; ++i) {
     const int p_index = oob->indices_left[i];
@@ -425,23 +355,12 @@ void PackOOBComponents(const struct Communication *const communication,
     packed_send_left[i*g_num_components + 6]  = v_x[p_index];
     packed_send_left[i*g_num_components + 7]  = v_y[p_index];
     packed_send_left[i*g_num_components + 8]  = v_z[p_index];
-    packed_send_left[i*g_num_components + 9]  = 0.0; //dp_x[p_index];
-    packed_send_left[i*g_num_components + 10] = 0.0; //dp_y[p_index];
-    packed_send_left[i*g_num_components + 11] = 0.0; //dp_z[p_index];
-    packed_send_left[i*g_num_components + 12] = 0.0; //w_x[p_index];
-    packed_send_left[i*g_num_components + 13] = 0.0; //w_y[p_index];
-    packed_send_left[i*g_num_components + 14] = 0.0; //w_z[p_index];
-    packed_send_left[i*g_num_components + 15] = 0.0; //density[p_index];
-    packed_send_left[i*g_num_components + 16] = 0.0; //lambda[p_index];
   }
 
   #pragma acc parallel loop present(particles, \
                                       x_star, y_star, z_star, \
                                       x, y, z, \
                                       v_x, v_y, v_z, \
-                                      dp_x, dp_y, dp_z, \
-                                      w_x, w_y, w_z, \
-                                      density, lambda, \
                                     oob, oob->indices_right, packed_send_right) default(none)
   for (int i=0; i<count_right; ++i) {
     const int p_index = oob->indices_right[i];
@@ -454,14 +373,6 @@ void PackOOBComponents(const struct Communication *const communication,
     packed_send_right[i*g_num_components + 6]  = v_x[p_index];
     packed_send_right[i*g_num_components + 7]  = v_y[p_index];
     packed_send_right[i*g_num_components + 8]  = v_z[p_index];
-    packed_send_right[i*g_num_components + 9]  = 0.0;//dp_x[p_index];
-    packed_send_right[i*g_num_components + 10] = 0.0;//dp_y[p_index];
-    packed_send_right[i*g_num_components + 11] = 0.0;//dp_z[p_index];
-    packed_send_right[i*g_num_components + 12] = 0.0;//w_x[p_index];
-    packed_send_right[i*g_num_components + 13] = 0.0;//w_y[p_index];
-    packed_send_right[i*g_num_components + 14] = 0.0;//w_z[p_index];
-    packed_send_right[i*g_num_components + 15] = 0.0;//density[p_index];
-    packed_send_right[i*g_num_components + 16] = 0.0;//lambda[p_index];
   }
 }
 
@@ -485,23 +396,13 @@ void UnpackOOBComponents(const int num_from_left, const int num_from_right,
   double *v_x    = particles->v_x;
   double *v_y    = particles->v_y;
   double *v_z    = particles->v_z;
-  double *w_x    = particles->w_x;
-  double *w_y    = particles->w_y;
-  double *w_z    = particles->w_z;
-  double *dp_x   = particles->dp_x;
-  double *dp_y   = particles->dp_y;
-  double *dp_z   = particles->dp_z;
-  double *density = particles->density;
-  double *lambda  = particles->lambda;
   int *id         = particles->id;
 
   #pragma acc parallel loop present(particles, \
                                     x_star, y_star, z_star, \
                                     x, y, z, \
                                     v_x, v_y, v_z, \
-                                    dp_x, dp_y, dp_z, \
-                                    w_x, w_y, w_z, \
-                                    density, lambda, id, \
+                                    id, \
                                     packed_recv_left) default(none)
   for (int i=0; i<num_from_left; ++i) {
     const int p_index = local_count + i;
@@ -514,14 +415,6 @@ void UnpackOOBComponents(const int num_from_left, const int num_from_right,
     v_x[p_index]     = packed_recv_left[i*g_num_components + 6];
     v_y[p_index]     = packed_recv_left[i*g_num_components + 7];
     v_z[p_index]     = packed_recv_left[i*g_num_components + 8];
-    dp_x[p_index]    = packed_recv_left[i*g_num_components + 9];
-    dp_y[p_index]    = packed_recv_left[i*g_num_components + 10];
-    dp_z[p_index]    = packed_recv_left[i*g_num_components + 11];
-    w_x[p_index]     = packed_recv_left[i*g_num_components + 12];
-    w_y[p_index]     = packed_recv_left[i*g_num_components + 13];
-    w_z[p_index]     = packed_recv_left[i*g_num_components + 14];
-    density[p_index] = packed_recv_left[i*g_num_components + 15];
-    lambda[p_index]  = packed_recv_left[i*g_num_components + 16];
     id[p_index] = p_index;
   }
 
@@ -529,9 +422,7 @@ void UnpackOOBComponents(const int num_from_left, const int num_from_right,
                                     x_star, y_star, z_star, \
                                     x, y, z, \
                                     v_x, v_y, v_z, \
-                                    dp_x, dp_y, dp_z, \
-                                    w_x, w_y, w_z, \
-                                    density, lambda, id, \
+                                    id, \
                                     packed_recv_right) default(none)
   for (int i=0; i<num_from_right; ++i) {
     const int p_index = local_count + num_from_left + i;
@@ -544,14 +435,6 @@ void UnpackOOBComponents(const int num_from_left, const int num_from_right,
     v_x[p_index]     = packed_recv_right[i*g_num_components + 6];
     v_y[p_index]     = packed_recv_right[i*g_num_components + 7];
     v_z[p_index]     = packed_recv_right[i*g_num_components + 8];
-    dp_x[p_index]    = packed_recv_right[i*g_num_components + 9];
-    dp_y[p_index]    = packed_recv_right[i*g_num_components + 10];
-    dp_z[p_index]    = packed_recv_right[i*g_num_components + 11];
-    w_x[p_index]     = packed_recv_right[i*g_num_components + 12];
-    w_y[p_index]     = packed_recv_right[i*g_num_components + 13];
-    w_z[p_index]     = packed_recv_right[i*g_num_components + 14];
-    density[p_index] = packed_recv_right[i*g_num_components + 15];
-    lambda[p_index]  = packed_recv_right[i*g_num_components + 16];
     id[p_index] = p_index;
   }
 
@@ -622,7 +505,7 @@ void ExchangeOOB(struct Communication *const communication,
   particles->local_count -= (num_moving_left + num_moving_right);
 
   // Must reset id's now
-  // Should get rid of particle ID and use counting iterator
+  // Should get rid of particle ID and use counting iterator(?)
   const int local_count = particles->local_count;
   #pragma acc parallel loop present(id)
   for(int i=0; i<local_count; i++) {

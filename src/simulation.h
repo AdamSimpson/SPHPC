@@ -9,6 +9,8 @@ struct AABB;
 struct Params {
   double rest_density;
   double smoothing_radius;
+  double W_norm;
+  double DelW_norm;
   double g;
   double time_step;
   double k;

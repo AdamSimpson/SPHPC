@@ -27,16 +27,6 @@ struct Particles {
   double *restrict lambda;
   int    *restrict id;
 
-/*
-  // Used to copy values into
-  double *restrict x_star_two;
-  double *restrict y_star_two;
-  double *restrict z_star_two;
-  double *restrict v_x_two;
-  double *restrict v_y_two;
-  double *restrict v_z_two;
-*/
-
   int global_count; // Global number of particles in simulation
   int local_count; // Particles within node bounds, excludes halo particles
   int max_local;  // Maximum number of local and halo particles

@@ -78,7 +78,7 @@ int main(int argc, char *argv[]) {
 
 //    ApplyViscosity(&particles, &params, &neighbors);
 
-//    ApplyVorticityConfinement(&particles, &params, &neighbors);
+    ApplyVorticityConfinement(&particles, &params, &neighbors);
 
     UpdatePositions(&particles);
 
@@ -142,4 +142,7 @@ void SetParameters(struct Params *const params,
     params->node_start_x  = boundary_global->min_x;
   if (params->rank == params->proc_count-1)
     params->node_end_x   = boundary_global->max_x;
+
+  params->W_norm = 315.0/(64.0*M_PI*pow(params->smoothing_radius, 9.0));
+  params->DelW_norm = -45.0/(M_PI*pow(params->smoothing_radius, 6.0));
 }

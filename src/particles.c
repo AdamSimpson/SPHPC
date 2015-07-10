@@ -14,51 +14,18 @@
 #define M_PI  3.14159265358979323846
 #endif
 
-// Dirty OpenACC hackery
-void *d_particles;
-void *d_x_star;
-void *d_y_star;
-void *d_z_star;
-void *d_x;
-void *d_y;
-void *d_z;
-void *d_v_x;
-void *d_v_y;
-void *d_v_z;
-void *d_dp_x;
-void *d_dp_y;
-void *d_dp_z;
-void *d_w_x;
-void *d_w_y;
-void *d_w_z;
-void *d_density;
-void *d_lambda;
-void *d_id;
-
-/*
-void *d_two_x_star;
-void *d_two_y_star;
-void *d_two_z_star;
-void *d_two_x;
-void *d_two_y;
-void *d_two_z;
-void *d_two_v_x;
-void *d_two_v_y;
-void *d_two_v_z;
-*/
-
 ///////////////////////////////////////////////////////////////////////////
 // Smoothing Kernels
-// Don't use pow as it's POWerfully slow
 ///////////////////////////////////////////////////////////////////////////
 
 // (h^2 - r^2)^3 normalized in 3D (poly6)
 #pragma acc routine seq
-static inline double W(const double r, const double h) {
+static inline double W(const double r, const struct Params *const params) {
+  const double h = params->smoothing_radius;
   if(r > h)
     return 0.0;
 
-  const double C = 315.0/(64.0*M_PI* h*h*h*h*h*h*h*h*h);
+  const double C = params->W_norm;
   const double W = C*(h*h-r*r)*(h*h-r*r)*(h*h-r*r);
   return W;
 }
@@ -66,11 +33,13 @@ static inline double W(const double r, const double h) {
 // Gradient (h-r)^3 normalized in 3D (Spikey) magnitude
 // Need to multiply by r/|r|
 #pragma acc routine seq
-static inline double DelW(const double r, const double h) {
+static inline double DelW(const double r, const struct Params *const params) {
+  const double h = params->smoothing_radius;
+
   if(r > h)
     return 0.0;
 
-  const double C = -45.0/(M_PI * h*h*h*h*h*h);
+  const double C = params->DelW_norm;
   const double DelW = C*(h-r)*(h-r);
   return DelW;
 }
@@ -80,11 +49,11 @@ static inline double DelW(const double r, const double h) {
 ////////////////////////////////////////////////////////////////////////////
 
 void ApplyVorticityConfinement(struct Particles *const particles,
-                           const struct Params *const params,
-                           const struct Neighbors *const neighbors) {
+                               const struct Params *const params,
+                               const struct Neighbors *const neighbors) {
 
   const double dt = params->time_step;
-  const double eps = 5.0;
+  const double eps = 0.001 * params->smoothing_radius;
 
   const int num_particles = particles->local_count;
 
@@ -119,12 +88,9 @@ void ApplyVorticityConfinement(struct Particles *const particles,
     #pragma acc loop seq
     for (int j=0; j<n->count; ++j) {
       const int q_index = n->neighbor_indices[j];
-      const double x_diff = x_star[p_index]
-                          - x_star[q_index];
-      const double y_diff = y_star[p_index]
-                          - y_star[q_index];
-      const double z_diff = z_star[p_index]
-                          - z_star[q_index];
+      const double x_diff = x_star[p_index] - x_star[q_index];
+      const double y_diff = y_star[p_index] - y_star[q_index];
+      const double z_diff = z_star[p_index] - z_star[q_index];
 
       const double vx_diff = v_x[q_index] - v_x[p_index];
       const double vy_diff = v_y[q_index] - v_y[p_index];
@@ -134,7 +100,7 @@ void ApplyVorticityConfinement(struct Particles *const particles,
       if(r_mag < 0.0001)
         r_mag = 0.0001;
 
-        const double dw = DelW(r_mag, params->smoothing_radius);
+        const double dw = DelW(r_mag, params);
 
         const double dw_x = dw*x_diff/r_mag;
         const double dw_y = dw*y_diff/r_mag;
@@ -166,6 +132,11 @@ void ApplyVorticityConfinement(struct Particles *const particles,
     double eta_y  = 0.0;
     double eta_z  = 0.0;
 
+    // Should this be p_index or q_index???
+    const double vort_mag = sqrt(w_x[p_index]*w_x[p_index]
+                               + w_y[p_index]*w_y[p_index]
+                               + w_z[p_index]*w_z[p_index]);
+
     #pragma acc loop seq
     for (int j=0; j<n->count; ++j) {
       const int q_index = n->neighbor_indices[j];
@@ -181,15 +152,18 @@ void ApplyVorticityConfinement(struct Particles *const particles,
       if(r_mag < 0.0001)
         r_mag = 0.0001;
 
-      const double dw = DelW(r_mag, params->smoothing_radius);
+      const double dw = DelW(r_mag, params);
 
       const double dw_x = dw*x_diff/r_mag;
       const double dw_y = dw*y_diff/r_mag;
       const double dw_z = dw*z_diff/r_mag;
 
+      // Should this be p_index or q_index???
+      /*
       const double vort_mag = sqrt(w_x[q_index]*w_x[q_index]
                                  + w_y[q_index]*w_y[q_index]
                                  + w_z[q_index]*w_z[q_index]);
+      */
 
       eta_x += vort_mag*dw_x;
       eta_y += vort_mag*dw_y;
@@ -208,10 +182,9 @@ void ApplyVorticityConfinement(struct Particles *const particles,
     const double wy = w_y[p_index];
     const double wz = w_z[p_index];
 
-    // Tecnically shou'd write dv to array and then sum after all computed to avoid v_x,y,z race condition
-    v_x[p_index] += dt*eps * (N_y*wz - N_z*wy);
-    v_y[p_index] += dt*eps * (N_z*wx - N_x*wz);
-    v_z[p_index] += dt*eps * (N_x*wy - N_y*wx);
+    v_x[p_index] += eps * (N_y*wz - N_z*wy);
+    v_y[p_index] += eps * (N_z*wx - N_x*wz);
+    v_z[p_index] += eps * (N_x*wy - N_y*wx);
   }
 }
 
@@ -268,7 +241,7 @@ void ApplyViscosity(struct Particles *const particles,
 
       const double r_mag = sqrt(x_diff*x_diff + y_diff*y_diff * z_diff*z_diff);
 
-      const double w = W(r_mag, h);
+      const double w = W(r_mag, params);
 
       // http://mmacklin.com/pbf_sig_preprint.pdf is missing 1/sigma contribution
       // see: http://www.cs.ubc.ca/~rbridson/docs/schechter-siggraph2012-ghostsph.pdf
@@ -281,7 +254,6 @@ void ApplyViscosity(struct Particles *const particles,
     partial_sum_y *= c;
     partial_sum_z *= c;
 
-    // Tecnically shou'd write dv to array and then sum after all computed to avoid v_x,y,z race condition
     v_x[p_index] += partial_sum_x;
     v_y[p_index] += partial_sum_y;
     v_z[p_index] += partial_sum_z;
@@ -315,21 +287,18 @@ void ComputeDensities(struct Particles *const particles,
     const struct NeighborBucket *const n = &neighbor_buckets[i];
 
     // Own contribution to density
-    double tmp_density = W(0.0, h);
+    double tmp_density = W(0.0, params);
 
     // Neighbor contribution
     #pragma acc loop seq
     for (int j=0; j<n->count; ++j) {
       const int q_index = n->neighbor_indices[j];
-      const double x_diff = x_star[p_index]
-                          - x_star[q_index];
-      const double y_diff = y_star[p_index]
-                          - y_star[q_index];
-      const double z_diff = z_star[p_index]
-                          - z_star[q_index];
+      const double x_diff = x_star[p_index] - x_star[q_index];
+      const double y_diff = y_star[p_index] - y_star[q_index];
+      const double z_diff = z_star[p_index] - z_star[q_index];
 
       const double r_mag = sqrt(x_diff*x_diff + y_diff*y_diff + z_diff*z_diff);
-      tmp_density += W(r_mag, h);
+      tmp_density += W(r_mag, params);
     }
 
     // Update particle density
@@ -431,18 +400,15 @@ void ComputeLambda(struct Particles *const particles,
     #pragma acc loop seq
     for (int j=0; j<n->count; ++j) {
       const int q_index = n->neighbor_indices[j];
-      const double x_diff = x_star[p_index]
-                          - x_star[q_index];
-      const double y_diff = y_star[p_index]
-                          - y_star[q_index];
-      const double z_diff = z_star[p_index]
-                          - z_star[q_index];
+      const double x_diff = x_star[p_index] - x_star[q_index];
+      const double y_diff = y_star[p_index] - y_star[q_index];
+      const double z_diff = z_star[p_index] - z_star[q_index];
 
       double r_mag = sqrt(x_diff*x_diff + y_diff*y_diff + z_diff*z_diff);
       if (r_mag < 0.0001)
         r_mag = 0.0001;
 
-      const double grad = DelW(r_mag, params->smoothing_radius);
+      const double grad = DelW(r_mag, params);
 
       const double grad_x = grad*x_diff/r_mag;
       const double grad_y = grad*y_diff/r_mag;
@@ -455,9 +421,9 @@ void ComputeLambda(struct Particles *const particles,
     }
 
     // k = i contribution
-    sum_C += sum_grad_x*sum_grad_x
-           + sum_grad_y*sum_grad_y
-           + sum_grad_z*sum_grad_z;
+    sum_C += (sum_grad_x*sum_grad_x
+            + sum_grad_y*sum_grad_y
+            + sum_grad_z*sum_grad_z);
 
     sum_C *= (1.0/(params->rest_density*params->rest_density));
 
@@ -473,7 +439,7 @@ void UpdateDPs(struct Particles *const particles,
   const double h = params->smoothing_radius;
   const double k = params->k;
   const double dq = params->dq;
-  const double Wdq = W(dq, h);
+  const double Wdq = W(dq, params);
 
   const int num_particles = particles->local_count;
 
@@ -505,22 +471,19 @@ void UpdateDPs(struct Particles *const particles,
     #pragma acc loop seq
     for (int j=0; j<n->count; ++j) {
       const int q_index = n->neighbor_indices[j];
-      const double x_diff = x_star[p_index]
-                          - x_star[q_index];
-      const double y_diff = y_star[p_index]
-                          - y_star[q_index];
-      const double z_diff = z_star[p_index]
-                          - z_star[q_index];
+      const double x_diff = x_star[p_index] - x_star[q_index];
+      const double y_diff = y_star[p_index] - y_star[q_index];
+      const double z_diff = z_star[p_index] - z_star[q_index];
 
       double r_mag = sqrt(x_diff*x_diff + y_diff*y_diff + z_diff*z_diff);
       if(r_mag < 0.0001)
         r_mag = 0.0001;
 
-      const double WdWdq = W(r_mag, h)/Wdq;
+      const double WdWdq = W(r_mag, params)/Wdq;
       const double s_corr = -k*WdWdq*WdWdq*WdWdq*WdWdq;
       const double dp = (lambda[p_index]
                        + lambda[q_index] + s_corr)
-                       * DelW(r_mag, h);
+                       * DelW(r_mag, params);
 
       dpx += dp * x_diff/r_mag;
       dpy += dp * y_diff/r_mag;
@@ -680,14 +643,7 @@ void AllocInitParticles(struct Particles *particles,
   particles->density = SAFE_ALLOC(num_particles, sizeof(double));
   particles->lambda  = SAFE_ALLOC(num_particles, sizeof(double));
   particles->id      = SAFE_ALLOC(num_particles, sizeof(int));
-/*
-  particles->x_star_two = SAFE_ALLOC(num_particles, sizeof(double));
-  particles->y_star_two = SAFE_ALLOC(num_particles, sizeof(double));
-  particles->z_star_two = SAFE_ALLOC(num_particles, sizeof(double));
-  particles->v_x_two    = SAFE_ALLOC(num_particles, sizeof(double));
-  particles->v_y_two    = SAFE_ALLOC(num_particles, sizeof(double));
-  particles->v_z_two    = SAFE_ALLOC(num_particles, sizeof(double));
-*/
+
   ConstructFluidVolume(particles, params, fluid_volume_initial);
 
   // Initialize particle values
@@ -704,92 +660,49 @@ void AllocInitParticles(struct Particles *particles,
   particles->halo_count_left = 0;
   particles->halo_count_right = 0;
 
-  // Allocate and map device data
-  const size_t double_bytes = num_particles*sizeof(double);
-  const size_t int_bytes = num_particles*sizeof(int);
-
-  d_particles = acc_malloc(sizeof(struct Particles));
-  d_x_star = acc_malloc(double_bytes);
-  d_y_star = acc_malloc(double_bytes);
-  d_z_star = acc_malloc(double_bytes);
-  d_x = acc_malloc(double_bytes);
-  d_y = acc_malloc(double_bytes);
-  d_z = acc_malloc(double_bytes);
-  d_v_x = acc_malloc(double_bytes);
-  d_v_y = acc_malloc(double_bytes);
-  d_v_z = acc_malloc(double_bytes);
-  d_dp_x = acc_malloc(double_bytes);
-  d_dp_y = acc_malloc(double_bytes);
-  d_dp_z = acc_malloc(double_bytes);
-  d_w_x = acc_malloc(double_bytes);
-  d_w_y = acc_malloc(double_bytes);
-  d_w_z = acc_malloc(double_bytes);
-  d_density = acc_malloc(double_bytes);
-  d_lambda = acc_malloc(double_bytes);
-  d_id = acc_malloc(int_bytes);
-/*
-  // Secondary buffers for copying particle data
-  d_two_x_star = acc_malloc(double_bytes);
-  d_two_y_star = acc_malloc(double_bytes);
-  d_two_z_star = acc_malloc(double_bytes);
-  d_two_v_x = acc_malloc(double_bytes);
-  d_two_v_y = acc_malloc(double_bytes);
-  d_two_v_z = acc_malloc(double_bytes);
-*/
-  acc_map_data(particles, d_particles, sizeof(struct Particles));
-  acc_map_data(particles->x_star, d_x_star, double_bytes);
-  acc_map_data(particles->y_star, d_y_star, double_bytes);
-  acc_map_data(particles->z_star, d_z_star, double_bytes);
-  acc_map_data(particles->x, d_x, double_bytes);
-  acc_map_data(particles->y, d_y, double_bytes);
-  acc_map_data(particles->z, d_z, double_bytes);
-  acc_map_data(particles->v_x, d_v_x, double_bytes);
-  acc_map_data(particles->v_y, d_v_y, double_bytes);
-  acc_map_data(particles->v_z, d_v_z, double_bytes);
-  acc_map_data(particles->dp_x, d_dp_x, double_bytes);
-  acc_map_data(particles->dp_y, d_dp_y, double_bytes);
-  acc_map_data(particles->dp_z, d_dp_z, double_bytes);
-  acc_map_data(particles->w_x, d_w_x, double_bytes);
-  acc_map_data(particles->w_y, d_w_y, double_bytes);
-  acc_map_data(particles->w_z, d_w_z, double_bytes);
-  acc_map_data(particles->density, d_density, double_bytes);
-  acc_map_data(particles->lambda, d_lambda, double_bytes);
-  acc_map_data(particles->id, d_id, int_bytes);
-
-  #pragma acc update device(particles[:1], \
-                            particles->x[:particles->local_count], \
-                            particles->y[:particles->local_count], \
-                            particles->z[:particles->local_count], \
-                            particles->x_star[:particles->local_count], \
-                            particles->y_star[:particles->local_count], \
-                            particles->z_star[:particles->local_count], \
-                            particles->v_x[:particles->local_count], \
-                            particles->v_y[:particles->local_count], \
-                            particles->v_z[:particles->local_count], \
-                            particles->density[:particles->local_count], \
-                            particles->id[:particles->local_count])
+  #pragma acc enter data copyin(particles[:1], \
+    particles->x_star[0:num_particles],  \
+    particles->y_star[0:num_particles],  \
+    particles->z_star[0:num_particles],  \
+    particles->x[0:num_particles],       \
+    particles->y[0:num_particles],       \
+    particles->z[0:num_particles],       \
+    particles->v_x[0:num_particles],     \
+    particles->v_y[0:num_particles],     \
+    particles->v_z[0:num_particles],     \
+    particles->dp_x[0:num_particles],    \
+    particles->dp_y[0:num_particles],    \
+    particles->dp_z[0:num_particles],    \
+    particles->w_x[0:num_particles],     \
+    particles->w_y[0:num_particles],     \
+    particles->w_z[0:num_particles],     \
+    particles->density[0:num_particles], \
+    particles->lambda[0:num_particles],  \
+    particles->id[0:num_particles]       \
+  )
 }
 
 void FinalizeParticles(struct Particles *particles) {
-/*
-acc_free(d_x_star);
-acc_free(d_y_star);
-acc_free(d_z_star);
-acc_free(d_x);
-acc_free(d_y);
-acc_free(d_z);
-acc_free(d_v_x);
-acc_free(d_v_y);
-acc_free(d_v_z);
-acc_free(d_dp_x);
-acc_free(d_dp_y);
-acc_free(d_dp_z);
-acc_free(d_w_x);
-acc_free(d_w_y);
-acc_free(d_w_z);
-acc_free(d_density);
-acc_free(d_lambda);
-*/
+  #pragma acc exit data delete( \
+    particles->x_star,          \
+    particles->y_star,          \
+    particles->z_star,          \
+    particles->x,               \
+    particles->y,               \
+    particles->z,               \
+    particles->v_x,             \
+    particles->v_y,             \
+    particles->v_z,             \
+    particles->dp_x,            \
+    particles->dp_y,            \
+    particles->dp_z,            \
+    particles->w_x,             \
+    particles->w_y,             \
+    particles->w_z,             \
+    particles->density,         \
+    particles->lambda,          \
+    particles->id               \
+  )
 
   free(particles->x_star);
   free(particles->y_star);
