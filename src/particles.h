@@ -34,6 +34,10 @@ struct Particles {
   int halo_count_right;
 };
 
+void ComputeVorticity(struct Particles *const particles,
+                               const struct Params *const params,
+                               const struct Neighbors *const neighbors);
+
 void ApplyVorticityConfinement(struct Particles *const fluid_particles,
                           const struct Params *const params,
                           const struct Neighbors *const neighbors);

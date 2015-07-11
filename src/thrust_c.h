@@ -48,6 +48,12 @@ void FindLowerBounds(const unsigned int *const hash_values,
                                 const int search_count,
                                 unsigned int *const end_indices);
 
+void SortParticlesByKey(unsigned int *const keys,
+                                 const int count,
+                                 double *x_star, double *y_star, double *z_star,
+                                 double *x, double *y, double *z,
+                                 double *v_x, double *v_y, double *v_z);
+
 void FindUpperBounds(const unsigned int *const hash_values,
                                 const int value_count,
                                 const int search_count,

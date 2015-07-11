@@ -129,17 +129,48 @@ void SortHash(const struct Particles *particles,
               const struct Params *const params,
               struct Neighbors *const neighbors) {
 
-  unsigned int *const keys = neighbors->hash_values;
-  unsigned int *const values = neighbors->particle_ids;
-  const int num_particles = particles->local_count
+  unsigned int *const hash_values = neighbors->hash_values;
+  unsigned int *const particle_ids = neighbors->particle_ids;
+  const int local_count = particles->local_count
                             + particles->halo_count_left
                             + particles->halo_count_right;
 
-  #pragma acc host_data use_device(keys, values)
+  // OpenACC can't reliably handle SoA...
+  double *x_star = particles->x_star;
+  double *y_star = particles->y_star;
+  double *z_star = particles->z_star;
+  double *x    = particles->x;
+  double *y    = particles->y;
+  double *z    = particles->z;
+  double *v_x    = particles->v_x;
+  double *v_y    = particles->v_y;
+  double *v_z    = particles->v_z;
+  int *id         = particles->id;
+
+  #pragma acc host_data use_device(hash_values, particle_ids)
   {
-    SortByKey(keys, values, num_particles);
+    SortByKey(hash_values, particle_ids, local_count);
+  }
+/*
+  // This is broke with -O3...
+  // reorder particles in particle_id order for better memory access
+  // This will fuckup halo indices
+  #pragma acc host_data use_device(hash_values, x_star, y_star, z_star,  \
+                                   x, y, z, v_x, v_y, v_z)
+  {
+  SortParticlesByKey(hash_values,
+                     local_count,
+                     x_star, y_star, z_star,
+                     x, y, z,
+                     v_x, v_y, v_z);
   }
 
+  // Reset particle id's
+  #pragma acc parallel loop present(id)
+  for(int i=0; i<local_count; i++) {
+    id[i] = i;
+  }
+*/
 }
 
 // Find start and end of hash cells

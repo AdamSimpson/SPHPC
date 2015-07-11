@@ -183,6 +183,18 @@ extern "C" void CopyIfGreaterThanOrEqual(const double max,
   *output_count = end_pointer - output;
 }
 
+extern "C" void SortParticlesByKey(unsigned int *const keys,
+                                 const int count,
+                                 double *x_star, double *y_star, double *z_star,
+                                 double *x, double *y, double *z,
+                                 double *v_x, double *v_y, double *v_z) {
+  thrust::sort_by_key(COMPUTE_POLICY,
+                 keys, keys+count,
+                 thrust::make_zip_iterator(thrust::make_tuple(x_star, y_star, z_star,
+                                                              x, y, z, v_x, v_y, v_z))
+                );
+}
+
 // C wrapper function for thrust remove_if with OutsideBounds predicate
 extern "C" void RemoveIfOutsideBounds(const double min, const double max,
                                       int *const input,

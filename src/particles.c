@@ -10,10 +10,6 @@
 #include <math.h>
 #include "openacc.h"
 
-#ifndef M_PI
-#define M_PI  3.14159265358979323846
-#endif
-
 ///////////////////////////////////////////////////////////////////////////
 // Smoothing Kernels
 ///////////////////////////////////////////////////////////////////////////
@@ -48,7 +44,7 @@ static inline double DelW(const double r, const struct Params *const params) {
 // Particle attribute computations
 ////////////////////////////////////////////////////////////////////////////
 
-void ApplyVorticityConfinement(struct Particles *const particles,
+void ComputeVorticity(struct Particles *const particles,
                                const struct Params *const params,
                                const struct Neighbors *const neighbors) {
 
@@ -115,6 +111,27 @@ void ApplyVorticityConfinement(struct Particles *const particles,
     w_y[p_index] = vort_y;
     w_z[p_index] = vort_z;
   }
+}
+
+void ApplyVorticityConfinement(struct Particles *const particles,
+                               const struct Params *const params,
+                               const struct Neighbors *const neighbors) {
+  const double dt = params->time_step;
+  const double eps = 0.001 * params->smoothing_radius;
+
+  const int num_particles = particles->local_count;
+
+  // OpenACC can't reliably handle SoA...
+  double *x_star = particles->x_star;
+  double *y_star = particles->y_star;
+  double *z_star = particles->z_star;
+  double *v_x = particles->v_x;
+  double *v_y = particles->v_y;
+  double *v_z = particles->v_z;
+  double *w_x = particles->w_x;
+  double *w_y = particles->w_y;
+  double *w_z = particles->w_z;
+  struct NeighborBucket *neighbor_buckets = neighbors->neighbor_buckets;
 
   // Apply vorticity confinement
   #pragma acc parallel loop present(particles, \

@@ -505,7 +505,6 @@ void ExchangeOOB(struct Communication *const communication,
   particles->local_count -= (num_moving_left + num_moving_right);
 
   // Must reset id's now
-  // Should get rid of particle ID and use counting iterator(?)
   const int local_count = particles->local_count;
   #pragma acc parallel loop present(id)
   for(int i=0; i<local_count; i++) {

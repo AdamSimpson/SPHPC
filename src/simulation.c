@@ -76,8 +76,13 @@ int main(int argc, char *argv[]) {
 
     UpdateVelocities(&particles, &params);
 
-//    ApplyViscosity(&particles, &params, &neighbors);
+    ApplyViscosity(&particles, &params, &neighbors);
+    UpdateHaloTuple(&communication, &params, &particles,
+                    particles.v_x, particles.v_y, particles.v_z);
 
+    ComputeVorticity(&particles, &params, &neighbors);
+    UpdateHaloTuple(&communication, &params, &particles,
+                    particles.w_x, particles.w_y, particles.w_z);
     ApplyVorticityConfinement(&particles, &params, &neighbors);
 
     UpdatePositions(&particles);
@@ -143,6 +148,9 @@ void SetParameters(struct Params *const params,
   if (params->rank == params->proc_count-1)
     params->node_end_x   = boundary_global->max_x;
 
+  #ifndef M_PI
+    #define M_PI  3.14159265358979323846
+  #endif
   params->W_norm = 315.0/(64.0*M_PI*pow(params->smoothing_radius, 9.0));
   params->DelW_norm = -45.0/(M_PI*pow(params->smoothing_radius, 6.0));
 }
