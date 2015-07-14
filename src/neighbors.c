@@ -5,6 +5,7 @@
 #include "geometry.h"
 #include "simulation.h"
 #include "thrust_c.h"
+#include "openacc.h"
 #include <math.h>
 #include <stdbool.h>
 #include <string.h>
@@ -149,7 +150,9 @@ void SortHash(const struct Particles *particles,
 
   #pragma acc host_data use_device(hash_values, particle_ids)
   {
-    SortByKey(hash_values, particle_ids, local_count);
+    void *cuda_stream = acc_get_cuda_stream(acc_async_sync);
+
+    SortByKey(hash_values, particle_ids, local_count, cuda_stream);
   }
 /*
   // This is broke with -O3...
@@ -158,11 +161,13 @@ void SortHash(const struct Particles *particles,
   #pragma acc host_data use_device(hash_values, x_star, y_star, z_star,  \
                                    x, y, z, v_x, v_y, v_z)
   {
+    void *cuda_stream = acc_get_cuda_stream(acc_async_sync);
+
   SortParticlesByKey(hash_values,
                      local_count,
                      x_star, y_star, z_star,
                      x, y, z,
-                     v_x, v_y, v_z);
+                     v_x, v_y, v_z, cuda_stream);
   }
 
   // Reset particle id's
@@ -194,15 +199,19 @@ void FindCellBounds(const struct Particles *particles,
   // Find start and end indices for each
   #pragma acc host_data use_device(hash_values, start_indices, end_indices)
   {
+        void *cuda_stream = acc_get_cuda_stream(acc_async_sync);
+
     FindLowerBounds(hash_values,
                     num_particles,
                     length_hash,
-                    start_indices);
+                    start_indices,
+                    cuda_stream);
 
     FindUpperBounds(hash_values,
                     num_particles,
                     length_hash,
-                    end_indices);
+                    end_indices,
+                    cuda_stream);
   }
 }
 
@@ -266,11 +275,11 @@ void FillNeighbors(const struct Particles *particles,
                   continue;
 
                 // Calculate distance squared
-                const double x_diff =x_star[p_index]
+                const double x_diff = px
                                     -x_star[q_index];
-                const double y_diff =y_star[p_index]
+                const double y_diff = py
                                     -y_star[q_index];
-                const double z_diff =z_star[p_index]
+                const double z_diff = pz
                                     -z_star[q_index];
                 const double r2 = x_diff*x_diff + y_diff*y_diff + z_diff*z_diff;
 

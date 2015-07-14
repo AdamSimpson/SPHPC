@@ -4,6 +4,7 @@
 #include "debug.h"
 #include "safe_alloc.h"
 #include "thrust_c.h"
+#include "openacc.h"
 #include <stdio.h>
 #include <stddef.h>
 #include <string.h>
@@ -233,19 +234,22 @@ void ExchangeHalo(struct Communication *const communication,
 
   #pragma acc host_data use_device(ids, x_stars, indices_left, indices_right)
   {
+    void *cuda_stream = acc_get_cuda_stream(acc_async_sync);
   // Set edge particle ID's
   CopyIfLessThanOrEqual(h + params->node_start_x,
                         ids,
                         particles->local_count,
                         x_stars,
                         indices_left,
-                        &edges->particle_count_left);
+                        &edges->particle_count_left,
+                        cuda_stream);
   CopyIfGreaterThanOrEqual(params->node_end_x - h,
                            ids,
                            particles->local_count,
                            x_stars,
                            indices_right,
-                           &edges->particle_count_right);
+                           &edges->particle_count_right,
+                           cuda_stream);
   }
 
   int num_moving_left = edges->particle_count_left;
@@ -464,6 +468,8 @@ void ExchangeOOB(struct Communication *const communication,
   int *indices_left = oob->indices_left;
   int *indices_right = oob->indices_right;
 
+  void *cuda_stream = acc_get_cuda_stream(acc_async_sync);
+
   #pragma acc host_data use_device(id, x_star, indices_left, indices_right)
   {
   // Copy OOB particle id's to left node
@@ -472,7 +478,8 @@ void ExchangeOOB(struct Communication *const communication,
                  particles->local_count,
                  x_star,
                  indices_left,
-                 &oob->particle_count_left);
+                 &oob->particle_count_left,
+                 cuda_stream);
 
   // Copy OOB particle id's to right node
   CopyIfGreaterThan(params->node_end_x,
@@ -480,7 +487,8 @@ void ExchangeOOB(struct Communication *const communication,
                     particles->local_count,
                     x_star,
                     indices_right,
-                    &oob->particle_count_right);
+                    &oob->particle_count_right,
+                    cuda_stream);
   }
 
   // Pack removed particle components
@@ -494,7 +502,8 @@ void ExchangeOOB(struct Communication *const communication,
                          particles->local_count,
                          x_star, y_star, z_star,
                          x, y, z,
-                         v_x, v_y, v_z);
+                         v_x, v_y, v_z,
+                         cuda_stream);
 
   }
 
