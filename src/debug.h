@@ -1,6 +1,8 @@
 #ifndef SPH_SRC_DEBUG_H_
 #define SPH_SRC_DEBUG_H_
 
+#define DEBUG
+
 // Macro to print file name, line number, and function information along
 // with standard printf formated string
 #ifdef DEBUG

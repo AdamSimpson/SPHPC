@@ -71,6 +71,19 @@ void WriteParticles(const struct Particles *const particles,
 
   const int num_particles = particles->local_count;
 
+  double *x = particles->x;
+  double *y = particles->y;
+  double *z = particles->z;
+  double *write_buffer = file_io->write_buffer;
+
+  #pragma acc parallel loop vector_length(1024) present(x,y,z,write_buffer)
+  for (int i=0; i<num_particles; ++i) {
+    write_buffer[3*i]   = x[i];
+    write_buffer[3*i+1] = y[i];
+    write_buffer[3*i+2] = z[i];
+  }
+  #pragma acc update host(write_buffer[:num_particles*3])
+
   // How many bytes each process will write
   int rank_write_counts[params->proc_count];
   // alltoall of write counts
@@ -84,14 +97,6 @@ void WriteParticles(const struct Particles *const particles,
     displacement+=rank_write_counts[i];
   // Displacement is in bytes
   displacement*=sizeof(double);
-
-  int index=0;
-  for (int i=0; i<num_particles; ++i) {
-    file_io->write_buffer[index]   = particles->x[i];
-    file_io->write_buffer[index+1] = particles->y[i];
-    file_io->write_buffer[index+2] = particles->z[i];
-    index+=3;
-  }
 
   // Open file
   MPI_File_open(MPI_COMM_WORLD, file_name, MPI_MODE_CREATE | MPI_MODE_WRONLY,

@@ -16,27 +16,22 @@
 
 // (h^2 - r^2)^3 normalized in 3D (poly6)
 #pragma acc routine seq
-static inline double W(const double r, const struct Params *const params) {
-  const double h = params->smoothing_radius;
+static inline double W(const double r, const double h, const double norm) {
   if(r > h)
     return 0.0;
 
-  const double C = params->W_norm;
-  const double W = C*(h*h-r*r)*(h*h-r*r)*(h*h-r*r);
+  const double W = norm*(h*h-r*r)*(h*h-r*r)*(h*h-r*r);
   return W;
 }
 
 // Gradient (h-r)^3 normalized in 3D (Spikey) magnitude
 // Need to multiply by r/|r|
 #pragma acc routine seq
-static inline double DelW(const double r, const struct Params *const params) {
-  const double h = params->smoothing_radius;
-
+static inline double DelW(const double r, const double h, const double norm) {
   if(r > h)
     return 0.0;
 
-  const double C = params->DelW_norm;
-  const double DelW = C*(h-r)*(h-r);
+  const double DelW = norm*(h-r)*(h-r);
   return DelW;
 }
 
@@ -66,7 +61,7 @@ void ComputeVorticity(struct Particles *const particles,
   struct NeighborBucket *neighbor_buckets = neighbors->neighbor_buckets;
 
   // Calculate vorticy at each particle
-  #pragma acc parallel loop present(particles, \
+  #pragma acc parallel loop vector_length(1024) present(particles, \
             x_star, y_star, z_star,            \
             v_x, v_y, v_z,                     \
             w_x, w_y, w_z,                     \
@@ -96,7 +91,7 @@ void ComputeVorticity(struct Particles *const particles,
       if(r_mag < 0.0001)
         r_mag = 0.0001;
 
-        const double dw = DelW(r_mag, params);
+        const double dw = DelW(r_mag, params->smoothing_radius, params->DelW_norm);
 
         const double dw_x = dw*x_diff/r_mag;
         const double dw_y = dw*y_diff/r_mag;
@@ -134,7 +129,7 @@ void ApplyVorticityConfinement(struct Particles *const particles,
   struct NeighborBucket *neighbor_buckets = neighbors->neighbor_buckets;
 
   // Apply vorticity confinement
-  #pragma acc parallel loop present(particles, \
+  #pragma acc parallel loop vector_length(1024) present(particles, \
             x_star, y_star, z_star,            \
             v_x, v_y, v_z,                     \
             w_x, w_y, w_z,                     \
@@ -169,7 +164,7 @@ void ApplyVorticityConfinement(struct Particles *const particles,
       if(r_mag < 0.0001)
         r_mag = 0.0001;
 
-      const double dw = DelW(r_mag, params);
+      const double dw = DelW(r_mag, params->smoothing_radius, params->DelW_norm);
 
       const double dw_x = dw*x_diff/r_mag;
       const double dw_y = dw*y_diff/r_mag;
@@ -224,7 +219,7 @@ void ApplyViscosity(struct Particles *const particles,
   double *density = particles->density;
   struct NeighborBucket *neighbor_buckets = neighbors->neighbor_buckets;
 
-  #pragma acc parallel loop present(particles, \
+  #pragma acc parallel loop vector_length(1024) present(particles, \
             x_star, y_star, z_star,            \
             v_x, v_y, v_z,                     \
             density,                           \
@@ -258,7 +253,7 @@ void ApplyViscosity(struct Particles *const particles,
 
       const double r_mag = sqrt(x_diff*x_diff + y_diff*y_diff * z_diff*z_diff);
 
-      const double w = W(r_mag, params);
+      const double w = W(r_mag, params->smoothing_radius, params->W_norm);
 
       // http://mmacklin.com/pbf_sig_preprint.pdf is missing 1/sigma contribution
       // see: http://www.cs.ubc.ca/~rbridson/docs/schechter-siggraph2012-ghostsph.pdf
@@ -293,7 +288,7 @@ void ComputeDensities(struct Particles *const particles,
   double *density = particles->density;
   struct NeighborBucket *neighbor_buckets = neighbors->neighbor_buckets;
 
-  #pragma acc parallel loop present(particles, \
+  #pragma acc parallel loop vector_length(1024) present(particles, \
             x_star, y_star, z_star,            \
             density,                           \
             params,                            \
@@ -304,7 +299,7 @@ void ComputeDensities(struct Particles *const particles,
     const struct NeighborBucket *const n = &neighbor_buckets[i];
 
     // Own contribution to density
-    double tmp_density = W(0.0, params);
+    double tmp_density = W(0.0, params->smoothing_radius, params->W_norm);
 
     // Neighbor contribution
     #pragma acc loop seq
@@ -315,7 +310,7 @@ void ComputeDensities(struct Particles *const particles,
       const double z_diff = z_star[p_index] - z_star[q_index];
 
       const double r_mag = sqrt(x_diff*x_diff + y_diff*y_diff + z_diff*z_diff);
-      tmp_density += W(r_mag, params);
+      tmp_density += W(r_mag, params->smoothing_radius, params->W_norm);
     }
 
     // Update particle density
@@ -400,7 +395,7 @@ void ComputeLambda(struct Particles *const particles,
   double *lambda = particles->lambda;
   struct NeighborBucket *neighbor_buckets = neighbors->neighbor_buckets;
 
-  #pragma acc parallel loop present(x_star, y_star, z_star, \
+  #pragma acc parallel loop vector_length(1024) present(x_star, y_star, z_star, \
                                     density, lambda,        \
                                     params,                 \
                                     neighbors,              \
@@ -425,7 +420,7 @@ void ComputeLambda(struct Particles *const particles,
       if (r_mag < 0.0001)
         r_mag = 0.0001;
 
-      const double grad = DelW(r_mag, params);
+      const double grad = DelW(r_mag, params->smoothing_radius, params->DelW_norm);
 
       const double grad_x = grad*x_diff/r_mag;
       const double grad_y = grad*y_diff/r_mag;
@@ -456,8 +451,9 @@ void UpdateDPs(struct Particles *const particles,
   const double h = params->smoothing_radius;
   const double k = params->k;
   const double dq = params->dq;
-  const double Wdq = W(dq, params);
-
+  const double Wdq = W(dq, params->smoothing_radius, params->W_norm);
+  const double W_norm = params->W_norm;
+  const double DelW_norm = params->DelW_norm;
   const int num_particles = particles->local_count;
 
   // OpenACC can't reliably handle SoA...
@@ -470,7 +466,7 @@ void UpdateDPs(struct Particles *const particles,
   double *lambda = particles->lambda;
   struct NeighborBucket *neighbor_buckets = neighbors->neighbor_buckets;
 
-  #pragma acc parallel loop present(particles,              \
+  #pragma acc parallel loop vector_length(1024) present(particles,              \
                                     x_star, y_star, z_star, \
                                     dp_x, dp_y, dp_z,       \
                                     lambda,                 \
@@ -496,11 +492,11 @@ void UpdateDPs(struct Particles *const particles,
       if(r_mag < 0.0001)
         r_mag = 0.0001;
 
-      const double WdWdq = W(r_mag, params)/Wdq;
+      const double WdWdq = W(r_mag, h, W_norm)/Wdq;
       const double s_corr = -k*WdWdq*WdWdq*WdWdq*WdWdq;
       const double dp = (lambda[p_index]
                        + lambda[q_index] + s_corr)
-                       * DelW(r_mag, params);
+                       * DelW(r_mag, h, DelW_norm);
 
       dpx += dp * x_diff/r_mag;
       dpy += dp * y_diff/r_mag;

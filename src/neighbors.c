@@ -199,7 +199,7 @@ void FindCellBounds(const struct Particles *particles,
   // Find start and end indices for each
   #pragma acc host_data use_device(hash_values, start_indices, end_indices)
   {
-        void *cuda_stream = acc_get_cuda_stream(acc_async_sync);
+    void *cuda_stream = acc_get_cuda_stream(acc_async_sync);
 
     FindLowerBounds(hash_values,
                     num_particles,
@@ -231,7 +231,7 @@ void FillNeighbors(const struct Particles *particles,
   struct NeighborBucket *neighbor_buckets = neighbors->neighbor_buckets;
 
   // Fill neighbor bucket for all resident particles
-  #pragma acc parallel loop present(x_star, y_star, z_star, neighbors, neighbor_buckets)
+  #pragma acc parallel loop vector_length(1024) present(x_star, y_star, z_star, neighbors, neighbor_buckets)
   for (int i=0; i<num_particles; ++i) {
       const int p_index = i;
 

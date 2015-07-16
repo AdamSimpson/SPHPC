@@ -16,9 +16,11 @@ file(GLOB SRC_FILES src/*.c src/*.cc)
 find_package(CUDA)
 SET(CUDA_PROPAGATE_HOST_FLAGS OFF)
 set(CUDA_HOST_COMPILER /usr/bin/gcc)
+#set(CUDA_NVCC_FLAGS "-O3 -arch sm_35 --compiler-options -Wall")
 file(GLOB NVCC_FILES src/*.cu)
 # Use local thrust library as version currently on Titan has bug in lower/upper bounds
-CUDA_INCLUDE_DIRECTORIES( /ccs/home/atj/SPHPC/thrust/ ${CUDA_INCLUDE_DIRS})
+CUDA_INCLUDE_DIRECTORIES( $ENV{THRUST_INCLUDE} ${CUDA_INCLUDE_DIRS})
+
 cuda_compile(NVCC_OBJECTS ${NVCC_FILES})
 
 add_executable(sph ${SRC_FILES} ${NVCC_OBJECTS})

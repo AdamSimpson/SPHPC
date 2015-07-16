@@ -234,18 +234,18 @@ void ExchangeHalo(struct Communication *const communication,
 
   #pragma acc host_data use_device(ids, x_stars, indices_left, indices_right)
   {
-    void *cuda_stream = acc_get_cuda_stream(acc_async_sync);
+  void *cuda_stream = acc_get_cuda_stream(acc_async_sync);
   // Set edge particle ID's
   CopyIfLessThanOrEqual(h + params->node_start_x,
                         ids,
-                        particles->local_count,
+                        num_particles,
                         x_stars,
                         indices_left,
                         &edges->particle_count_left,
                         cuda_stream);
   CopyIfGreaterThanOrEqual(params->node_end_x - h,
                            ids,
-                           particles->local_count,
+                           num_particles,
                            x_stars,
                            indices_right,
                            &edges->particle_count_right,

@@ -12,6 +12,8 @@
 #include <thrust/host_vector.h>
 #include <thrust/device_vector.h>
 #include <iostream>
+#include <thrust/system_error.h>
+//#include "cuda_runtime.h"
 
 struct LessThan {
   LessThan(double min): x_min(min) {}
@@ -85,7 +87,6 @@ extern "C" void SortByKey(unsigned int *const keys,
                           unsigned int *const values,
                           const int count,
                           const void *const cuda_stream) {
-//  int streamID = acc_get_cuda_stream(acc_async_sync);
   thrust::sort_by_key(thrust::cuda::par.on((cudaStream_t)cuda_stream), keys, keys + count, values);
 }
 
@@ -95,7 +96,6 @@ extern "C" void FindLowerBounds(const unsigned int *const hash_values,
                                 unsigned int *const start_indices,
                                 const void *const cuda_stream) {
 
-//  int streamID = acc_get_cuda_stream(acc_async_sync);
   thrust::lower_bound(thrust::cuda::par.on((cudaStream_t)cuda_stream),
                       hash_values,
                       hash_values + value_count,
@@ -110,7 +110,6 @@ extern "C" void FindUpperBounds(const unsigned int *const hash_values,
                                 unsigned int *const end_indices,
                                 const void *const cuda_stream) {
 
-//  int streamID = acc_get_cuda_stream(acc_async_sync);
   thrust::upper_bound(thrust::cuda::par.on((cudaStream_t)cuda_stream),
                       hash_values,
                       hash_values + value_count,
@@ -129,7 +128,6 @@ extern "C" void CopyIfLessThan(const double min,
                                int *const output_count,
                                const void *const cuda_stream) {
 
-//  int streamID = acc_get_cuda_stream(acc_async_sync);
   int *end_pointer = thrust::copy_if(thrust::cuda::par.on((cudaStream_t)cuda_stream),
                                      input,
                                      input + input_count,
@@ -148,7 +146,6 @@ extern "C" void CopyIfLessThanOrEqual(const double min,
                                       int *const output_count,
                                       const void *const cuda_stream) {
 
-//  int streamID = acc_get_cuda_stream(acc_async_sync);
   int *end_pointer = thrust::copy_if(thrust::cuda::par.on((cudaStream_t)cuda_stream),
                                      input,
                                      input + input_count,
@@ -156,6 +153,7 @@ extern "C" void CopyIfLessThanOrEqual(const double min,
                                      output,
                                      LessThanOrEqual(min));
   *output_count = end_pointer - output;
+
 }
 
 // C wrapper function for thrust copy_if with GreaterThan predicate
@@ -167,7 +165,6 @@ extern "C" void CopyIfGreaterThan(const double max,
                                   int *const output_count,
                                   const void *const cuda_stream) {
 
-//  int streamID = acc_get_cuda_stream(acc_async_sync);
   int *end_pointer = thrust::copy_if(thrust::cuda::par.on((cudaStream_t)cuda_stream),
                                      input,
                                      input + input_count,
@@ -186,7 +183,6 @@ extern "C" void CopyIfGreaterThanOrEqual(const double max,
                                          int *const output_count,
                                          const void *const cuda_stream) {
 
-//  int streamID = acc_get_cuda_stream(acc_async_sync);
   int *end_pointer = thrust::copy_if(thrust::cuda::par.on((cudaStream_t)cuda_stream),
                                      input,
                                      input + input_count,
@@ -203,7 +199,6 @@ extern "C" void SortParticlesByKey(unsigned int *const keys,
                                  double *v_x, double *v_y, double *v_z,
                                  const void *const cuda_stream) {
 
-//  int streamID = acc_get_cuda_stream(acc_async_sync);
   thrust::sort_by_key(thrust::cuda::par.on((cudaStream_t)cuda_stream),
                  keys, keys+count,
                  thrust::make_zip_iterator(thrust::make_tuple(x_star, y_star, z_star,
@@ -218,7 +213,6 @@ extern "C" void RemoveIfOutsideBounds(const double min, const double max,
                                       const double *const stencil,
                                       const void *const cuda_stream) {
 
-//  int streamID = acc_get_cuda_stream(acc_async_sync);
   int *end_pointer = thrust::remove_if(thrust::cuda::par.on((cudaStream_t)cuda_stream),
                        input,
                        input + input_count,
@@ -231,7 +225,6 @@ extern "C" void RemoveIfOutsideBounds2(const double min, const double max,
                                       const int input_count,
                                       const void *const cuda_stream) {
 
-//  int streamID = acc_get_cuda_stream(acc_async_sync);
   int *end_pointer = thrust::remove_if(thrust::cuda::par.on((cudaStream_t)cuda_stream),
                        input,
                        input + input_count,
@@ -245,7 +238,6 @@ extern "C" void RemoveIfOutsideBounds3(const double min, const double max,
                                       double *x, double *y, double *z,
                                       double *v_x, double *v_y, double *v_z,
                                       const void *const cuda_stream) {
-
 /*  typedef thrust::tuple< double*, double*, double*, double*, double*, double*, double*, double*, double*, int*> TupleIt;
   typedef thrust::zip_iterator< TupleIt >  ZipIt;
 */
