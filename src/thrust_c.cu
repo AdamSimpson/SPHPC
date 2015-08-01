@@ -153,7 +153,6 @@ extern "C" void CopyIfLessThanOrEqual(const double min,
                                      output,
                                      LessThanOrEqual(min));
   *output_count = end_pointer - output;
-
 }
 
 // C wrapper function for thrust copy_if with GreaterThan predicate

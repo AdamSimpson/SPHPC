@@ -61,7 +61,7 @@ void ComputeVorticity(struct Particles *const particles,
   struct NeighborBucket *neighbor_buckets = neighbors->neighbor_buckets;
 
   // Calculate vorticy at each particle
-  #pragma acc parallel loop vector_length(1024) present(particles, \
+  #pragma acc parallel loop gang vector present(particles, \
             x_star, y_star, z_star,            \
             v_x, v_y, v_z,                     \
             w_x, w_y, w_z,                     \
@@ -129,7 +129,7 @@ void ApplyVorticityConfinement(struct Particles *const particles,
   struct NeighborBucket *neighbor_buckets = neighbors->neighbor_buckets;
 
   // Apply vorticity confinement
-  #pragma acc parallel loop vector_length(1024) present(particles, \
+  #pragma acc parallel loop gang vector present(particles, \
             x_star, y_star, z_star,            \
             v_x, v_y, v_z,                     \
             w_x, w_y, w_z,                     \
@@ -219,7 +219,7 @@ void ApplyViscosity(struct Particles *const particles,
   double *density = particles->density;
   struct NeighborBucket *neighbor_buckets = neighbors->neighbor_buckets;
 
-  #pragma acc parallel loop vector_length(1024) present(particles, \
+  #pragma acc parallel loop gang vector present(particles, \
             x_star, y_star, z_star,            \
             v_x, v_y, v_z,                     \
             density,                           \
@@ -288,7 +288,7 @@ void ComputeDensities(struct Particles *const particles,
   double *density = particles->density;
   struct NeighborBucket *neighbor_buckets = neighbors->neighbor_buckets;
 
-  #pragma acc parallel loop vector_length(1024) present(particles, \
+  #pragma acc parallel loop gang vector present(particles, \
             x_star, y_star, z_star,            \
             density,                           \
             params,                            \
@@ -395,7 +395,7 @@ void ComputeLambda(struct Particles *const particles,
   double *lambda = particles->lambda;
   struct NeighborBucket *neighbor_buckets = neighbors->neighbor_buckets;
 
-  #pragma acc parallel loop vector_length(1024) present(x_star, y_star, z_star, \
+  #pragma acc parallel loop gang vector present(x_star, y_star, z_star, \
                                     density, lambda,        \
                                     params,                 \
                                     neighbors,              \
@@ -466,7 +466,7 @@ void UpdateDPs(struct Particles *const particles,
   double *lambda = particles->lambda;
   struct NeighborBucket *neighbor_buckets = neighbors->neighbor_buckets;
 
-  #pragma acc parallel loop vector_length(1024) present(particles,              \
+  #pragma acc parallel loop gang vector present(particles,              \
                                     x_star, y_star, z_star, \
                                     dp_x, dp_y, dp_z,       \
                                     lambda,                 \
