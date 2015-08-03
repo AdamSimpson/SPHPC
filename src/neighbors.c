@@ -240,9 +240,9 @@ void FillNeighbors(const struct Particles *restrict particles,
       const struct NeighborBucket *restrict neighbor_bucket = &neighbor_buckets[p_index];
       neighbor_bucket->count = 0;
 
-      const double px = x_star[p_index];
-      const double py = y_star[p_index];
-      const double pz = z_star[p_index];
+      const double x_star_p = x_star[p_index];
+      const double y_star_p = y_star[p_index];
+      const double z_star_p = z_star[p_index];
 
       // Go through neighboring grid buckets
       #pragma acc loop seq collapse(3)
@@ -250,9 +250,9 @@ void FillNeighbors(const struct Particles *restrict particles,
         for (int dy=-1; dy<=1; ++dy) {
           for (int dx=-1; dx<=1; ++dx) {
 
-            const double y = py + dy*spacing;
-            const double z = pz + dz*spacing;
-            const double x = px + dx*spacing;
+            const double x = x_star_p + dx*spacing;
+            const double y = y_star_p + dy*spacing;
+            const double z = z_star_p + dz*spacing;
 
             // Make sure that the position is valid
             if (floor(x/spacing) > neighbors->hash_size_x-1 || x < 0.0 ||
@@ -276,12 +276,9 @@ void FillNeighbors(const struct Particles *restrict particles,
                   continue;
 
                 // Calculate distance squared
-                const double x_diff = px
-                                    -x_star[q_index];
-                const double y_diff = py
-                                    -y_star[q_index];
-                const double z_diff = pz
-                                    -z_star[q_index];
+                const double x_diff = x_star_p - x_star[q_index];
+                const double y_diff = y_star_p - y_star[q_index];
+                const double z_diff = z_star_p - z_star[q_index];
                 const double r2 = x_diff*x_diff + y_diff*y_diff + z_diff*z_diff;
 
                 // If inside smoothing radius and enough space
