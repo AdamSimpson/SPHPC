@@ -39,6 +39,8 @@ int main(int argc, char *argv[]) {
   // Copy over structs with only scalar values
   #pragma acc enter data copyin(params, water_volume_global, boundary_global)
 
+  double start_time = GetTime();
+
   for (int n=0; n<params.number_steps; ++n) {
 
     DEBUG_PRINT("Rank %d Entering fluid step %d with %d particles\n",
@@ -92,6 +94,8 @@ int main(int argc, char *argv[]) {
       WriteParticles(&particles, &params, &file_io);
 
   }
+
+  printf("Total loop time: %f seconds\n", GetTime() - start_time);
 
   FinalizeParticles(&particles);
   FinalizeNeighbors(&neighbors);

@@ -39,59 +39,69 @@ static inline double DelW(const double r, const double h, const double norm) {
 // Particle attribute computations
 ////////////////////////////////////////////////////////////////////////////
 
-void ComputeVorticity(struct Particles *const particles,
-                               const struct Params *const params,
-                               const struct Neighbors *const neighbors) {
+void ComputeVorticity(struct Particles *restrict particles,
+                      const struct Params *restrict params,
+                      const struct Neighbors *restrict neighbors) {
 
   const double dt = params->time_step;
+  const double h = params->smoothing_radius;
   const double eps = 0.001 * params->smoothing_radius;
-
+  const double DelW_norm = params->DelW_norm;
   const int num_particles = particles->local_count;
 
   // OpenACC can't reliably handle SoA...
-  double *x_star = particles->x_star;
-  double *y_star = particles->y_star;
-  double *z_star = particles->z_star;
-  double *v_x = particles->v_x;
-  double *v_y = particles->v_y;
-  double *v_z = particles->v_z;
-  double *w_x = particles->w_x;
-  double *w_y = particles->w_y;
-  double *w_z = particles->w_z;
-  struct NeighborBucket *neighbor_buckets = neighbors->neighbor_buckets;
+  const double *restrict x_star = particles->x_star;
+  const double *restrict y_star = particles->y_star;
+  const double *restrict z_star = particles->z_star;
+  const double *restrict v_x = particles->v_x;
+  const double *restrict v_y = particles->v_y;
+  const double *restrict v_z = particles->v_z;
+  double *restrict w_x = particles->w_x;
+  double *restrict w_y = particles->w_y;
+  double *restrict w_z = particles->w_z;
+  const struct NeighborBucket *restrict neighbor_buckets = neighbors->neighbor_buckets;
 
   // Calculate vorticy at each particle
-  #pragma acc parallel loop gang vector present(particles, \
-            x_star, y_star, z_star,            \
-            v_x, v_y, v_z,                     \
-            w_x, w_y, w_z,                     \
-            params,                            \
-            neighbors,                         \
-            neighbor_buckets)
+  #pragma acc parallel loop gang vector vector_length(64)  \
+                            present(particles,             \
+                            x_star, y_star, z_star,        \
+                            v_x, v_y, v_z,                 \
+                            w_x, w_y, w_z,                 \
+                            params,                        \
+                            neighbors,                     \
+                            neighbor_buckets)
   for (int i=0; i<num_particles; ++i) {
     const int p_index = i;
-    const struct NeighborBucket *const n = &neighbor_buckets[i];
+    const struct NeighborBucket *restrict n = &neighbor_buckets[i];
 
     double vort_x = 0.0;
     double vort_y = 0.0;
     double vort_z = 0.0;
 
+    const double x_star_p = x_star[p_index];
+    const double y_star_p = y_star[p_index];
+    const double z_star_p = z_star[p_index];
+
+    const double v_x_p = v_x[p_index];
+    const double v_y_p = v_y[p_index];
+    const double v_z_p = v_z[p_index];
+
     #pragma acc loop seq
     for (int j=0; j<n->count; ++j) {
       const int q_index = n->neighbor_indices[j];
-      const double x_diff = x_star[p_index] - x_star[q_index];
-      const double y_diff = y_star[p_index] - y_star[q_index];
-      const double z_diff = z_star[p_index] - z_star[q_index];
+      const double x_diff = x_star_p - x_star[q_index];
+      const double y_diff = y_star_p - y_star[q_index];
+      const double z_diff = z_star_p - z_star[q_index];
 
-      const double vx_diff = v_x[q_index] - v_x[p_index];
-      const double vy_diff = v_y[q_index] - v_y[p_index];
-      const double vz_diff = v_z[q_index] - v_z[p_index];
+      const double vx_diff = v_x[q_index] - v_x_p;
+      const double vy_diff = v_y[q_index] - v_y_p;
+      const double vz_diff = v_z[q_index] - v_z_p;
 
       double r_mag = sqrt(x_diff*x_diff + y_diff*y_diff + z_diff*z_diff);
       if(r_mag < 0.0001)
         r_mag = 0.0001;
 
-        const double dw = DelW(r_mag, params->smoothing_radius, params->DelW_norm);
+        const double dw = DelW(r_mag, h, DelW_norm);
 
         const double dw_x = dw*x_diff/r_mag;
         const double dw_y = dw*y_diff/r_mag;
@@ -108,37 +118,39 @@ void ComputeVorticity(struct Particles *const particles,
   }
 }
 
-void ApplyVorticityConfinement(struct Particles *const particles,
-                               const struct Params *const params,
-                               const struct Neighbors *const neighbors) {
+void ApplyVorticityConfinement(struct Particles *restrict particles,
+                               const struct Params *restrict params,
+                               const struct Neighbors *restrict neighbors) {
   const double dt = params->time_step;
   const double eps = 0.001 * params->smoothing_radius;
-
   const int num_particles = particles->local_count;
+  const double h = params->smoothing_radius;
+  const double DelW_norm = params->DelW_norm;
 
   // OpenACC can't reliably handle SoA...
-  double *x_star = particles->x_star;
-  double *y_star = particles->y_star;
-  double *z_star = particles->z_star;
-  double *v_x = particles->v_x;
-  double *v_y = particles->v_y;
-  double *v_z = particles->v_z;
-  double *w_x = particles->w_x;
-  double *w_y = particles->w_y;
-  double *w_z = particles->w_z;
-  struct NeighborBucket *neighbor_buckets = neighbors->neighbor_buckets;
+  const double *restrict x_star = particles->x_star;
+  const double *restrict y_star = particles->y_star;
+  const double *restrict z_star = particles->z_star;
+  double *restrict v_x = particles->v_x;
+  double *restrict v_y = particles->v_y;
+  double *restrict v_z = particles->v_z;
+  const double *restrict w_x = particles->w_x;
+  const double *restrict w_y = particles->w_y;
+  const double *restrict w_z = particles->w_z;
+  const struct NeighborBucket *restrict neighbor_buckets = neighbors->neighbor_buckets;
 
   // Apply vorticity confinement
-  #pragma acc parallel loop gang vector present(particles, \
-            x_star, y_star, z_star,            \
-            v_x, v_y, v_z,                     \
-            w_x, w_y, w_z,                     \
-            params,                            \
-            neighbors,                         \
-            neighbor_buckets)
+  #pragma acc parallel loop gang vector vector_length(64) \
+                            present(particles,            \
+                            x_star, y_star, z_star,       \
+                            v_x, v_y, v_z,                \
+                            w_x, w_y, w_z,                \
+                            params,                       \
+                            neighbors,                    \
+                            neighbor_buckets)
   for (int i=0; i<particles->local_count; ++i) {
     const int p_index = i;
-    const struct NeighborBucket *const n = &neighbor_buckets[i];
+    const struct NeighborBucket *restrict n = &neighbor_buckets[i];
 
     double eta_x  = 0.0;
     double eta_y  = 0.0;
@@ -149,22 +161,23 @@ void ApplyVorticityConfinement(struct Particles *const particles,
                                + w_y[p_index]*w_y[p_index]
                                + w_z[p_index]*w_z[p_index]);
 
+    const double x_star_p = x_star[p_index];
+    const double y_star_p = y_star[p_index];
+    const double z_star_p = z_star[p_index];
+
     #pragma acc loop seq
     for (int j=0; j<n->count; ++j) {
       const int q_index = n->neighbor_indices[j];
 
-      const double x_diff = x_star[p_index]
-                          - x_star[q_index];
-      const double y_diff = y_star[p_index]
-                          - y_star[q_index];
-      const double z_diff = z_star[p_index]
-                          - z_star[q_index];
+      const double x_diff = x_star_p - x_star[q_index];
+      const double y_diff = y_star_p - y_star[q_index];
+      const double z_diff = z_star_p - z_star[q_index];
 
       double r_mag = sqrt(x_diff*x_diff + y_diff*y_diff + z_diff*z_diff);
       if(r_mag < 0.0001)
         r_mag = 0.0001;
 
-      const double dw = DelW(r_mag, params->smoothing_radius, params->DelW_norm);
+      const double dw = DelW(r_mag, h, DelW_norm);
 
       const double dw_x = dw*x_diff/r_mag;
       const double dw_y = dw*y_diff/r_mag;
@@ -200,60 +213,64 @@ void ApplyVorticityConfinement(struct Particles *const particles,
   }
 }
 
-void ApplyViscosity(struct Particles *const particles,
-                   const struct Params *const params,
-                   const struct Neighbors *const neighbors) {
+void ApplyViscosity(struct Particles *restrict particles,
+                   const struct Params *restrict params,
+                   const struct Neighbors *restrict neighbors) {
 
   const double c = params->c;
   const double h = params->smoothing_radius;
+  const double W_norm = params->W_norm;
 
   const int num_particles = particles->local_count;
 
   // OpenACC can't reliably handle SoA...
-  double *x_star = particles->x_star;
-  double *y_star = particles->y_star;
-  double *z_star = particles->z_star;
-  double *v_x = particles->v_x;
-  double *v_y = particles->v_y;
-  double *v_z = particles->v_z;
-  double *density = particles->density;
-  struct NeighborBucket *neighbor_buckets = neighbors->neighbor_buckets;
+  const double *restrict x_star = particles->x_star;
+  const double *restrict y_star = particles->y_star;
+  const double *restrict z_star = particles->z_star;
+  double *restrict v_x = particles->v_x;
+  double *restrict v_y = particles->v_y;
+  double *restrict v_z = particles->v_z;
+  const double *restrict density = particles->density;
+  const struct NeighborBucket *restrict neighbor_buckets = neighbors->neighbor_buckets;
 
-  #pragma acc parallel loop gang vector present(particles, \
-            x_star, y_star, z_star,            \
-            v_x, v_y, v_z,                     \
-            density,                           \
-            params,                            \
-            neighbors,                         \
-            neighbor_buckets)
+  #pragma acc parallel loop gang vector vector_length(64) \
+                            present(particles,            \
+                            x_star, y_star, z_star,       \
+                            v_x, v_y, v_z,                \
+                            density,                      \
+                            params,                       \
+                            neighbors,                    \
+                            neighbor_buckets)
   for (int i=0; i < num_particles; ++i) {
     const int p_index = i;
-    const struct NeighborBucket *const n = &neighbor_buckets[i];
+    const struct NeighborBucket *restrict n = &neighbor_buckets[i];
 
     double partial_sum_x = 0.0;
     double partial_sum_y = 0.0;
     double partial_sum_z = 0.0;
 
+    const double x_star_p = x_star[p_index];
+    const double y_star_p = y_star[p_index];
+    const double z_star_p = z_star[p_index];
+
+    const double v_x_p = v_x[p_index];
+    const double v_y_p = v_y[p_index];
+    const double v_z_p = v_z[p_index];
+
     #pragma acc loop seq
     for (int j=0; j<n->count; ++j) {
       const int q_index = n->neighbor_indices[j];
-      const double x_diff = x_star[p_index]
-                          - x_star[q_index];
-      const double y_diff = y_star[p_index]
-                          - y_star[q_index];
-      const double z_diff = z_star[p_index]
-                          - z_star[q_index];
+      const double x_diff = x_star_p - x_star[q_index];
+      const double y_diff = y_star_p - y_star[q_index];
+      const double z_diff = z_star_p - z_star[q_index];
 
-      const double vx_diff = v_x[q_index]
-                           - v_x[p_index];
-      const double vy_diff = v_y[q_index]
-                           - v_y[p_index];
-      const double vz_diff = v_z[q_index]
-                           - v_z[p_index];
+      const double vx_diff = v_x[q_index] - v_x_p;
+      const double vy_diff = v_y[q_index] - v_y_p;
+      const double vz_diff = v_z[q_index] - v_z_p;
 
       const double r_mag = sqrt(x_diff*x_diff + y_diff*y_diff * z_diff*z_diff);
 
-      const double w = W(r_mag, params->smoothing_radius, params->W_norm);
+      const double w = W(r_mag, h, W_norm);
 
       // http://mmacklin.com/pbf_sig_preprint.pdf is missing 1/sigma contribution
       // see: http://www.cs.ubc.ca/~rbridson/docs/schechter-siggraph2012-ghostsph.pdf
@@ -273,44 +290,50 @@ void ApplyViscosity(struct Particles *const particles,
 
 }
 
-void ComputeDensities(struct Particles *const particles,
-                      const struct Params *const params,
-                      const struct Neighbors *const neighbors) {
+void ComputeDensities(struct Particles *restrict particles,
+                      const struct Params *restrict params,
+                      const struct Neighbors *restrict neighbors) {
 
   const double h = params->smoothing_radius;
-
+  const double W_norm = params->W_norm;
+  const double W_0 = W(0.0, h, W_norm);
   const int num_particles = particles->local_count;
 
   // OpenACC can't reliably handle SoA...
-  double *x_star = particles->x_star;
-  double *y_star = particles->y_star;
-  double *z_star = particles->z_star;
-  double *density = particles->density;
-  struct NeighborBucket *neighbor_buckets = neighbors->neighbor_buckets;
+  const double *restrict x_star = particles->x_star;
+  const double *restrict y_star = particles->y_star;
+  const double *restrict z_star = particles->z_star;
+  const double *restrict density = particles->density;
+  const struct NeighborBucket *restrict neighbor_buckets = neighbors->neighbor_buckets;
 
-  #pragma acc parallel loop gang vector present(particles, \
-            x_star, y_star, z_star,            \
-            density,                           \
-            params,                            \
-            neighbors,                         \
-            neighbor_buckets)
+  #pragma acc parallel loop gang vector vector_length(64) \
+                                        present(particles, \
+                                        x_star, y_star, z_star,            \
+                                        density,                           \
+                                        params,                            \
+                                        neighbors,                         \
+                                        neighbor_buckets)
     for (int i=0; i<particles->local_count; ++i) {
     const int p_index = i;
-    const struct NeighborBucket *const n = &neighbor_buckets[i];
+    const struct NeighborBucket *restrict n = &neighbor_buckets[i];
 
     // Own contribution to density
-    double tmp_density = W(0.0, params->smoothing_radius, params->W_norm);
+    double tmp_density = W_0;
+
+    const double x_star_p = x_star[p_index];
+    const double y_star_p = y_star[p_index];
+    const double z_star_p = z_star[p_index];
 
     // Neighbor contribution
     #pragma acc loop seq
     for (int j=0; j<n->count; ++j) {
       const int q_index = n->neighbor_indices[j];
-      const double x_diff = x_star[p_index] - x_star[q_index];
-      const double y_diff = y_star[p_index] - y_star[q_index];
-      const double z_diff = z_star[p_index] - z_star[q_index];
+      const double x_diff = x_star_p - x_star[q_index];
+      const double y_diff = y_star_p - y_star[q_index];
+      const double z_diff = z_star_p - z_star[q_index];
 
       const double r_mag = sqrt(x_diff*x_diff + y_diff*y_diff + z_diff*z_diff);
-      tmp_density += W(r_mag, params->smoothing_radius, params->W_norm);
+      tmp_density += W(r_mag, h, W_norm);
     }
 
     // Update particle density
@@ -318,8 +341,8 @@ void ComputeDensities(struct Particles *const particles,
   }
 }
 
-void ApplyGravity(struct Particles *const particles,
-                  const struct Params *const params) {
+void ApplyGravity(struct Particles *restrict particles,
+                  const struct Params *restrict params) {
   const double dt = params->time_step;
   const double g = -params->g;
 
@@ -331,8 +354,8 @@ void ApplyGravity(struct Particles *const particles,
   }
 }
 
-void UpdatePositionStars(struct Particles *const particles,
-                         const struct AABB *const boundary_global) {
+void UpdatePositionStars(struct Particles *restrict particles,
+                         const struct AABB *restrict boundary_global) {
 
   const int num_particles = particles->local_count;
 
@@ -359,7 +382,7 @@ void UpdatePositionStars(struct Particles *const particles,
 
 }
 
-void UpdatePositions(struct Particles *const particles) {
+void UpdatePositions(struct Particles *restrict particles) {
 
   const int num_particles = particles->local_count;
 
@@ -381,46 +404,53 @@ void UpdatePositions(struct Particles *const particles) {
   }
 }
 
-void ComputeLambda(struct Particles *const particles,
-                     const struct Params *const params,
-                     const struct Neighbors *const neighbors) {
+void ComputeLambda(struct Particles *restrict particles,
+                   const struct Params *restrict params,
+                   const struct Neighbors *restrict neighbors) {
 
   const int num_particles = particles->local_count;
+  const double rest_density = params->rest_density;
+  const double h = params->smoothing_radius;
+  const double DelW_norm = params->DelW_norm;
 
   // OpenACC can't reliably handle SoA...
-  double *x_star = particles->x_star;
-  double *y_star = particles->y_star;
-  double *z_star = particles->z_star;
-  double *density = particles->density;
-  double *lambda = particles->lambda;
-  struct NeighborBucket *neighbor_buckets = neighbors->neighbor_buckets;
+  const double *restrict x_star = particles->x_star;
+  const double *restrict y_star = particles->y_star;
+  const double *restrict z_star = particles->z_star;
+  const double *restrict density = particles->density;
+  double *restrict lambda = particles->lambda;
+  const struct NeighborBucket *restrict neighbor_buckets = neighbors->neighbor_buckets;
 
-  #pragma acc parallel loop gang vector present(x_star, y_star, z_star, \
-                                    density, lambda,        \
-                                    params,                 \
-                                    neighbors,              \
+  #pragma acc parallel loop gang vector vector_length(64)           \
+                                    present(x_star, y_star, z_star, \
+                                    density, lambda,                \
+                                    params,                         \
+                                    neighbors,                      \
                                     neighbor_buckets )
   for (int i=0; i<num_particles; ++i) {
     const int p_index = i;
-    const struct NeighborBucket *const n = &neighbor_buckets[i];
-    const double Ci = density[p_index]/params->rest_density - 1.0;
+    const struct NeighborBucket *restrict n = &neighbor_buckets[i];
+    const double Ci = density[p_index]/rest_density - 1.0;
     double sum_C = 0.0;
     double sum_grad_x = 0.0;
     double sum_grad_y = 0.0;
     double sum_grad_z = 0.0;
 
-    #pragma acc loop seq
+    const double x_star_p = x_star[p_index];
+    const double y_star_p = y_star[p_index];
+    const double z_star_p = z_star[p_index];
+
     for (int j=0; j<n->count; ++j) {
       const int q_index = n->neighbor_indices[j];
-      const double x_diff = x_star[p_index] - x_star[q_index];
-      const double y_diff = y_star[p_index] - y_star[q_index];
-      const double z_diff = z_star[p_index] - z_star[q_index];
+      const double x_diff = x_star_p - x_star[q_index];
+      const double y_diff = y_star_p - y_star[q_index];
+      const double z_diff = z_star_p - z_star[q_index];
 
       double r_mag = sqrt(x_diff*x_diff + y_diff*y_diff + z_diff*z_diff);
       if (r_mag < 0.0001)
         r_mag = 0.0001;
 
-      const double grad = DelW(r_mag, params->smoothing_radius, params->DelW_norm);
+      const double grad = DelW(r_mag, h, DelW_norm);
 
       const double grad_x = grad*x_diff/r_mag;
       const double grad_y = grad*y_diff/r_mag;
@@ -437,36 +467,39 @@ void ComputeLambda(struct Particles *const particles,
             + sum_grad_y*sum_grad_y
             + sum_grad_z*sum_grad_z);
 
-    sum_C *= (1.0/(params->rest_density*params->rest_density));
+    sum_C *= (1.0/(rest_density * rest_density));
 
     const double epsilon = 1.0;
     lambda[i] = -Ci/(sum_C + epsilon);
   }
 }
 
-void UpdateDPs(struct Particles *const particles,
-               const struct Params *const params,
-               const struct Neighbors *const neighbors) {
+void UpdateDPs(struct Particles *restrict particles,
+               const struct Params *restrict params,
+               const struct Neighbors *restrict neighbors) {
 
   const double h = params->smoothing_radius;
+  const double rest_density = params->rest_density;
   const double k = params->k;
-  const double dq = params->dq;
-  const double Wdq = W(dq, params->smoothing_radius, params->W_norm);
   const double W_norm = params->W_norm;
   const double DelW_norm = params->DelW_norm;
+  const double Wdq = W(params->dq, h, W_norm);
   const int num_particles = particles->local_count;
 
   // OpenACC can't reliably handle SoA...
-  double *x_star  = particles->x_star;
-  double *y_star  = particles->y_star;
-  double *z_star  = particles->z_star;
-  double *dp_x    = particles->dp_x;
-  double *dp_y    = particles->dp_y;
-  double *dp_z    = particles->dp_z;
-  double *lambda = particles->lambda;
-  struct NeighborBucket *neighbor_buckets = neighbors->neighbor_buckets;
+  // PGI should use read only data cache if const restrict is used
+  const double *restrict x_star  = particles->x_star;
+  const double *restrict y_star  = particles->y_star;
+  const double *restrict z_star  = particles->z_star;
+  double *restrict dp_x    = particles->dp_x;
+  double *restrict dp_y    = particles->dp_y;
+  double *restrict dp_z    = particles->dp_z;
+  const double *restrict lambda = particles->lambda;
+  const struct NeighborBucket *restrict neighbor_buckets = neighbors->neighbor_buckets;
 
-  #pragma acc parallel loop gang vector present(particles,              \
+  // acc kernels seems to work just as well
+  #pragma acc parallel loop gang vector vector_length(64)   \
+                                    present(particles,      \
                                     x_star, y_star, z_star, \
                                     dp_x, dp_y, dp_z,       \
                                     lambda,                 \
@@ -475,44 +508,46 @@ void UpdateDPs(struct Particles *const particles,
                                     neighbor_buckets )
   for (int i=0; i<num_particles; ++i) {
     const int p_index = i;
-    const struct NeighborBucket *const n = &neighbor_buckets[i];
+    const struct NeighborBucket *restrict n = &neighbor_buckets[i];
 
     double dpx = 0.0;
     double dpy = 0.0;
     double dpz = 0.0;
 
+    const double x_star_p = x_star[p_index];
+    const double y_star_p = y_star[p_index];
+    const double z_star_p = z_star[p_index];
+
     #pragma acc loop seq
     for (int j=0; j<n->count; ++j) {
       const int q_index = n->neighbor_indices[j];
-      const double x_diff = x_star[p_index] - x_star[q_index];
-      const double y_diff = y_star[p_index] - y_star[q_index];
-      const double z_diff = z_star[p_index] - z_star[q_index];
+      const double x_diff = x_star_p - x_star[q_index];
+      const double y_diff = y_star_p - y_star[q_index];
+      const double z_diff = z_star_p - z_star[q_index];
 
       double r_mag = sqrt(x_diff*x_diff + y_diff*y_diff + z_diff*z_diff);
       if(r_mag < 0.0001)
         r_mag = 0.0001;
 
       const double WdWdq = W(r_mag, h, W_norm)/Wdq;
-      const double s_corr = -k*WdWdq*WdWdq*WdWdq*WdWdq;
-      const double dp = (lambda[p_index]
-                       + lambda[q_index] + s_corr)
-                       * DelW(r_mag, h, DelW_norm);
+      const double delW = DelW(r_mag, h, DelW_norm);
+      const double s_corr = -k * WdWdq*WdWdq*WdWdq*WdWdq;
+      const double dp = (lambda[p_index] + lambda[q_index] + s_corr) * delW;
 
       dpx += dp * x_diff/r_mag;
       dpy += dp * y_diff/r_mag;
       dpz += dp * z_diff/r_mag;
     }
 
-    dp_x[p_index] = dpx/params->rest_density;
-    dp_y[p_index] = dpy/params->rest_density;
-    dp_z[p_index] = dpz/params->rest_density;
+    dp_x[p_index] = dpx/rest_density;
+    dp_y[p_index] = dpy/rest_density;
+    dp_z[p_index] = dpz/rest_density;
   }
-
 }
 
-void PredictPositions(struct Particles *const particles,
-                      const struct Params *const params,
-                      const struct AABB *const boundary_global) {
+void PredictPositions(struct Particles *restrict particles,
+                      const struct Params *restrict params,
+                      const struct AABB *restrict boundary_global) {
   const double dt = params->time_step;
 
   const int num_particles = particles->local_count;
@@ -544,8 +579,8 @@ void PredictPositions(struct Particles *const particles,
 }
 
 // Update particle position and check boundary
-void UpdateVelocities(struct Particles *const particles,
-                      const struct Params *const params) {
+void UpdateVelocities(struct Particles *restrict particles,
+                      const struct Params *restrict params) {
 
   const double dt = params->time_step;
   const double v_max = 30.0;
@@ -599,8 +634,8 @@ void UpdateVelocities(struct Particles *const particles,
 
 // Assume AABB with min point being axis origin
 #pragma acc routine seq
-void ApplyBoundaryConditions(double *x, double *y, double*z,
-                        const struct AABB *const boundary) {
+void ApplyBoundaryConditions(double *restrict x, double *restrict y,
+                             double *restrict z, const struct AABB *restrict boundary) {
 
   // Make sure object is not outside boundary
   // The particle must not be equal to boundary max or
@@ -622,7 +657,7 @@ void ApplyBoundaryConditions(double *x, double *y, double*z,
     *z = boundary->max_z-0.00001;
 }
 
-void PrintAverageDensity(struct Particles *particles) {
+void PrintAverageDensity(struct Particles *restrict particles) {
   double average_density = 0.0;
 
   for (int i=0; i<particles->local_count; ++i) {
@@ -632,9 +667,9 @@ void PrintAverageDensity(struct Particles *particles) {
   printf("average_density: %.16f\n", average_density);
 }
 
-void AllocInitParticles(struct Particles *particles,
-                        struct Params *params,
-                        struct AABB *fluid_volume_initial) {
+void AllocInitParticles(struct Particles *restrict particles,
+                        struct Params *restrict params,
+                        struct AABB *restrict fluid_volume_initial) {
 
   const size_t num_particles = particles->max_local;
 
@@ -695,7 +730,7 @@ void AllocInitParticles(struct Particles *particles,
   )
 }
 
-void FinalizeParticles(struct Particles *particles) {
+void FinalizeParticles(struct Particles *restrict particles) {
   #pragma acc exit data delete( \
     particles->x_star,          \
     particles->y_star,          \

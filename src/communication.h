@@ -106,4 +106,7 @@ void UpdateHaloTuple(const struct Communication *const communication,
                      const struct Params *const params,
                      struct Particles *const particles,
                      double *const t1, double *const t2, double *const t3);
+
+double GetTime();
+
 #endif

@@ -34,54 +34,54 @@ struct Particles {
   int halo_count_right;
 };
 
-void ComputeVorticity(struct Particles *const particles,
-                               const struct Params *const params,
-                               const struct Neighbors *const neighbors);
+void ComputeVorticity(struct Particles *restrict particles,
+                      const struct Params *restrict params,
+                      const struct Neighbors *restrict neighbors);
 
-void ApplyVorticityConfinement(struct Particles *const fluid_particles,
-                          const struct Params *const params,
-                          const struct Neighbors *const neighbors);
+void ApplyVorticityConfinement(struct Particles *restrict fluid_particles,
+                               const struct Params *restrict params,
+                               const struct Neighbors *restrict neighbors);
 
-void ApplyViscosity(struct Particles *const fluid_particles,
-                   const struct Params *const params,
-                   const struct Neighbors *const neighbors);
+void ApplyViscosity(struct Particles *restrict fluid_particles,
+                    const struct Params *restrict params,
+                    const struct Neighbors *restrict neighbors);
 
-void ComputeDensities(struct Particles *const fluid_particles,
-                      const struct Params *const params,
-                      const struct Neighbors *const neighbors);
+void ComputeDensities(struct Particles *restrict fluid_particles,
+                      const struct Params *restrict params,
+                      const struct Neighbors *restrict neighbors);
 
-void ApplyGravity(struct Particles *const fluid_particles,
-                  const struct Params *const params);
+void ApplyGravity(struct Particles *restrict fluid_particles,
+                  const struct Params *restrict params);
 
-void UpdatePositionStars(struct Particles *const fluid_particles,
-                         const struct AABB *const boundary_global);
+void UpdatePositionStars(struct Particles *restrict fluid_particles,
+                         const struct AABB *restrict boundary_global);
 
-void UpdatePositions(struct Particles *const fluid_particles);
+void UpdatePositions(struct Particles *restrict fluid_particles);
 
-void ComputeLambda(struct Particles *const fluid_particles,
-                     const struct Params *const params,
-                     const struct Neighbors *const neighbors);
+void ComputeLambda(struct Particles *restrict fluid_particles,
+                     const struct Params *restrict params,
+                     const struct Neighbors *restrict neighbors);
 
-void UpdateDPs(struct Particles *const fluid_particles,
-               const struct Params *const params,
-               const struct Neighbors *const neighbors);
+void UpdateDPs(struct Particles *restrict fluid_particles,
+               const struct Params *restrict params,
+               const struct Neighbors *restrict neighbors);
 
-void PredictPositions(struct Particles *const fluid_particles,
-                      const struct Params *const params,
-                      const struct AABB *const boundary_global);
+void PredictPositions(struct Particles *restrict fluid_particles,
+                      const struct Params *restrict params,
+                      const struct AABB *restrict boundary_global);
 
-void UpdateVelocities(struct Particles *const fluid_particles,
-                      const struct Params *const params);
+void UpdateVelocities(struct Particles *restrict fluid_particles,
+                      const struct Params *restrict params);
 
-void ApplyBoundaryConditions(double *x, double *y, double*z,
-                        const struct AABB *const boundary);
+void ApplyBoundaryConditions(double *restrict x, double *restrict y, double *restrictz ,
+                             const struct AABB *restrict boundary);
 
-void PrintAverageDensity(struct Particles *particles);
+void PrintAverageDensity(struct Particles *restrict particles);
 
-void AllocInitParticles(struct Particles *particles,
-                        struct Params *params,
-                        struct AABB *fluid_volume_initial);
+void AllocInitParticles(struct Particles *restrict particles,
+                        struct Params *restrict params,
+                        struct AABB *restrict fluid_volume_initial);
 
-void FinalizeParticles(struct Particles *particles);
+void FinalizeParticles(struct Particles *restrict particles);
 
 #endif

@@ -215,9 +215,9 @@ void FindCellBounds(const struct Particles *particles,
   }
 }
 
-void FillNeighbors(const struct Particles *particles,
-                   const struct Params *const params,
-                   struct Neighbors *const neighbors) {
+void FillNeighbors(const struct Particles *restrict particles,
+                   const struct Params *restrict params,
+                   struct Neighbors *restrict neighbors) {
 
   const int num_particles = particles->local_count;
 
@@ -225,18 +225,19 @@ void FillNeighbors(const struct Particles *particles,
                                  * params->smoothing_radius;
   const double spacing = neighbors->hash_spacing;
 
-  double *x_star = particles->x_star;
-  double *y_star = particles->y_star;
-  double *z_star = particles->z_star;
-  struct NeighborBucket *neighbor_buckets = neighbors->neighbor_buckets;
+  const double *restrict x_star = particles->x_star;
+  const double *restrict y_star = particles->y_star;
+  const double *restrict z_star = particles->z_star;
+  struct NeighborBucket *restrict neighbor_buckets = neighbors->neighbor_buckets;
 
   // Fill neighbor bucket for all resident particles
-  #pragma acc parallel loop vector_length(1024) present(x_star, y_star, z_star, neighbors, neighbor_buckets)
+  #pragma acc parallel loop gang vector vector_length(1024) \
+                            present(x_star, y_star, z_star, neighbors, neighbor_buckets)
   for (int i=0; i<num_particles; ++i) {
       const int p_index = i;
 
       // Get neighbor bucket for particle p
-      struct NeighborBucket *const neighbor_bucket = &neighbor_buckets[p_index];
+      const struct NeighborBucket *restrict neighbor_bucket = &neighbor_buckets[p_index];
       neighbor_bucket->count = 0;
 
       const double px = x_star[p_index];
