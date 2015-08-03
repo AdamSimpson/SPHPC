@@ -65,9 +65,9 @@ void FinalizeNeighbors(struct Neighbors *neighbors) {
 }
 
 // Calculate and fill all neighbor particles
-void FindAllNeighbors(const struct Particles *const particles,
-                      const struct Params *const params,
-                      struct Neighbors *const neighbors) {
+void FindAllNeighbors(const struct Particles *restrict particles,
+                      const struct Params *restrict params,
+                      struct Neighbors *restrict neighbors) {
   HashParticles(particles, neighbors);
   SortHash(particles, params, neighbors);
   FindCellBounds(particles, neighbors);
@@ -77,7 +77,7 @@ void FindAllNeighbors(const struct Particles *const particles,
 // Uniform grid hash
 // We don't check if the position is out of bounds so x,y,z must be valid
 #pragma acc routine seq
-unsigned int HashVal(const struct Neighbors *const neighbors,
+unsigned int HashVal(const struct Neighbors *restrict neighbors,
                      const double x,
                      const double y,
                      const double z) {
@@ -99,8 +99,8 @@ unsigned int HashVal(const struct Neighbors *const neighbors,
 }
 
 // Hash all particles
-void HashParticles(const struct Particles *const particles,
-                   struct Neighbors *const neighbors) {
+void HashParticles(const struct Particles *restrict particles,
+                   struct Neighbors *restrict neighbors) {
 
   unsigned int *const hash_values = neighbors->hash_values;
   unsigned int *const particle_ids = neighbors->particle_ids;
@@ -127,8 +127,8 @@ void HashParticles(const struct Particles *const particles,
 
 // Sort list of particle id's based upon what their hash value is
 void SortHash(const struct Particles *particles,
-              const struct Params *const params,
-              struct Neighbors *const neighbors) {
+              const struct Params *restrict params,
+              struct Neighbors *restrict neighbors) {
 
   unsigned int *const hash_values = neighbors->hash_values;
   unsigned int *const particle_ids = neighbors->particle_ids;
