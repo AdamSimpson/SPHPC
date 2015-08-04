@@ -65,9 +65,9 @@ void FinalizeNeighbors(struct Neighbors *neighbors) {
 }
 
 // Calculate and fill all neighbor particles
-void FindAllNeighbors(const struct Particles *const particles,
-                      const struct Params *const params,
-                      struct Neighbors *const neighbors) {
+void FindAllNeighbors(const struct Particles *restrict particles,
+                      const struct Params *restrict params,
+                      struct Neighbors *restrict neighbors) {
   HashParticles(particles, neighbors);
   SortHash(particles, params, neighbors);
   FindCellBounds(particles, neighbors);
@@ -77,7 +77,7 @@ void FindAllNeighbors(const struct Particles *const particles,
 // Uniform grid hash
 // We don't check if the position is out of bounds so x,y,z must be valid
 #pragma acc routine seq
-unsigned int HashVal(const struct Neighbors *const neighbors,
+unsigned int HashVal(const struct Neighbors *restrict neighbors,
                      const double x,
                      const double y,
                      const double z) {
@@ -99,8 +99,8 @@ unsigned int HashVal(const struct Neighbors *const neighbors,
 }
 
 // Hash all particles
-void HashParticles(const struct Particles *const particles,
-                   struct Neighbors *const neighbors) {
+void HashParticles(const struct Particles *restrict particles,
+                   struct Neighbors *restrict neighbors) {
 
   unsigned int *const hash_values = neighbors->hash_values;
   unsigned int *const particle_ids = neighbors->particle_ids;
@@ -127,8 +127,8 @@ void HashParticles(const struct Particles *const particles,
 
 // Sort list of particle id's based upon what their hash value is
 void SortHash(const struct Particles *particles,
-              const struct Params *const params,
-              struct Neighbors *const neighbors) {
+              const struct Params *restrict params,
+              struct Neighbors *restrict neighbors) {
 
   unsigned int *const hash_values = neighbors->hash_values;
   unsigned int *const particle_ids = neighbors->particle_ids;
@@ -215,9 +215,9 @@ void FindCellBounds(const struct Particles *particles,
   }
 }
 
-void FillNeighbors(const struct Particles *particles,
-                   const struct Params *const params,
-                   struct Neighbors *const neighbors) {
+void FillNeighbors(const struct Particles *restrict particles,
+                   const struct Params *restrict params,
+                   struct Neighbors *restrict neighbors) {
 
   const int num_particles = particles->local_count;
 
@@ -225,23 +225,24 @@ void FillNeighbors(const struct Particles *particles,
                                  * params->smoothing_radius;
   const double spacing = neighbors->hash_spacing;
 
-  double *x_star = particles->x_star;
-  double *y_star = particles->y_star;
-  double *z_star = particles->z_star;
-  struct NeighborBucket *neighbor_buckets = neighbors->neighbor_buckets;
+  const double *restrict x_star = particles->x_star;
+  const double *restrict y_star = particles->y_star;
+  const double *restrict z_star = particles->z_star;
+  struct NeighborBucket *restrict neighbor_buckets = neighbors->neighbor_buckets;
 
   // Fill neighbor bucket for all resident particles
-  #pragma acc parallel loop vector_length(1024) present(x_star, y_star, z_star, neighbors, neighbor_buckets)
+  #pragma acc parallel loop gang vector vector_length(1024) \
+                            present(x_star, y_star, z_star, neighbors, neighbor_buckets)
   for (int i=0; i<num_particles; ++i) {
       const int p_index = i;
 
       // Get neighbor bucket for particle p
-      struct NeighborBucket *const neighbor_bucket = &neighbor_buckets[p_index];
+      const struct NeighborBucket *restrict neighbor_bucket = &neighbor_buckets[p_index];
       neighbor_bucket->count = 0;
 
-      const double px = x_star[p_index];
-      const double py = y_star[p_index];
-      const double pz = z_star[p_index];
+      const double x_star_p = x_star[p_index];
+      const double y_star_p = y_star[p_index];
+      const double z_star_p = z_star[p_index];
 
       // Go through neighboring grid buckets
       #pragma acc loop seq collapse(3)
@@ -249,9 +250,9 @@ void FillNeighbors(const struct Particles *particles,
         for (int dy=-1; dy<=1; ++dy) {
           for (int dx=-1; dx<=1; ++dx) {
 
-            const double y = py + dy*spacing;
-            const double z = pz + dz*spacing;
-            const double x = px + dx*spacing;
+            const double x = x_star_p + dx*spacing;
+            const double y = y_star_p + dy*spacing;
+            const double z = z_star_p + dz*spacing;
 
             // Make sure that the position is valid
             if (floor(x/spacing) > neighbors->hash_size_x-1 || x < 0.0 ||
@@ -275,12 +276,9 @@ void FillNeighbors(const struct Particles *particles,
                   continue;
 
                 // Calculate distance squared
-                const double x_diff = px
-                                    -x_star[q_index];
-                const double y_diff = py
-                                    -y_star[q_index];
-                const double z_diff = pz
-                                    -z_star[q_index];
+                const double x_diff = x_star_p - x_star[q_index];
+                const double y_diff = y_star_p - y_star[q_index];
+                const double z_diff = z_star_p - z_star[q_index];
                 const double r2 = x_diff*x_diff + y_diff*y_diff + z_diff*z_diff;
 
                 // If inside smoothing radius and enough space

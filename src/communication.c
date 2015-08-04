@@ -74,6 +74,10 @@ void FreeCommunication(struct Communication *const communication) {
   free(communication->recv_buffer_right);
 }
 
+double GetTime() {
+  return MPI_Wtime();
+}
+
 void FinalizeCommunication() {
   MPI_Finalize();
 }

@@ -39,30 +39,30 @@ void AllocInitNeighbors(struct Neighbors *const neighbors,
 
 void FinalizeNeighbors(struct Neighbors *neighbors);
 
-void FindAllNeighbors(const struct Particles *const particles,
-                      const struct Params *const params,
-                      struct Neighbors *const neighbors);
+void FindAllNeighbors(const struct Particles *restrict particles,
+                      const struct Params *restrict params,
+                      struct Neighbors *restrict neighbors);
 #ifdef __cplusplus
 }
 #endif
 
-unsigned int HashVal(const struct Neighbors *const neighbors,
+unsigned int HashVal(const struct Neighbors *restrict neighbors,
                      const double x,
                      const double y,
                      const double z);
 
-void HashParticles(const struct Particles *const particles,
-                   struct Neighbors *const neighbors);
+void HashParticles(const struct Particles *restrict particles,
+                   struct Neighbors *restrict neighbors);
 
-void SortHash(const struct Particles *particles,
-              const struct Params *const params,
-              struct Neighbors *const neighbors);
+void SortHash(const struct Particles *restrict particles,
+              const struct Params *restrict params,
+              struct Neighbors *restrict neighbors);
 
-void FindCellBounds(const struct Particles *particles,
-                    struct Neighbors *const neighbors);
+void FindCellBounds(const struct Particles *restrict particles,
+                    struct Neighbors *restrict neighbors);
 
-void FillNeighbors(const struct Particles *particles,
-                   const struct Params *const params,
-                   struct Neighbors *const neighbors);
+void FillNeighbors(const struct Particles *restrict particles,
+                   const struct Params *restrict params,
+                   struct Neighbors *restrict neighbors);
 
 #endif
