@@ -36,12 +36,20 @@ find_package(Boost REQUIRED)
 include_directories(${BOOST_INCLUDE_DIRS})
 include_directories(${Boost_INCLUDE_DIR})
 
-find_library(M_LIB m)
-target_link_libraries(sph ${M_LIB})
-
-if (OPENACC)
-  set(CMAKE_C_FLAGS "-acc -Minfo=acc -O3 -ta=tesla:cc35")
-  set(CMAKE_CXX_FLAGS "-acc -Minfo=acc -O3 -ta=tesla:cc35")
+# Machine specific settings
+if (${myhostname} MATCHES "(.*)titan(.*)") #Titan
+  find_library(M_LIB m)
+  target_link_libraries(sph ${M_LIB})
+  if (OPENACC)
+    set(CMAKE_C_FLAGS "-acc -Minfo=acc -O3 -ta=tesla:cc35 -Mcuda")
+    set(CMAKE_CXX_FLAGS "-acc -Minfo=acc -O3 -ta=tesla:cc35 -Mcuda")
+  endif()
+else() # Adam's workstation
+  target_link_libraries(sph ${CUDA_LIBRARIES})
+  if (OPENACC)
+    set(CMAKE_C_FLAGS "-acc -Minfo=acc -O3 -ta=tesla:cuda7.0")
+    set(CMAKE_CXX_FLAGS "-acc -Minfo=acc -O3 -ta=tesla:cuda7.0")
+  endif()
 endif()
 
 install(TARGETS sph DESTINATION bin)
