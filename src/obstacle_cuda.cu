@@ -1,4 +1,5 @@
 #include "obstacle.h"
+#include "print_macros.h"
 #include "cuda_runtime.h"
 #include "obstacle_cuda.h"
 
@@ -8,14 +9,17 @@ void AllocInitObstacle_CUDA(struct Obstacle *obstacle) {
 
   // Allocate 3D array for SDF
   const cudaExtent SDF_size = make_cudaExtent(obstacle->SDF_dim_x,
-                                        obstacle->SDF_dim_y,
-                                        obstacle->SDF_dim_z);
+                                              obstacle->SDF_dim_y,
+                                              obstacle->SDF_dim_z);
 
   const cudaChannelFormatDesc channel_desc = cudaCreateChannelDesc(
-                                               sizeof(float),
+                                               32,
                                                0, 0, 0,
                                                cudaChannelFormatKindFloat);
-  cudaMalloc3DArray(&(obstacle_cuda->SDF_buffer), &channel_desc, SDF_size);
+  cudaError_t err;
+  err = cudaMalloc3DArray(&(obstacle_cuda->SDF_buffer), &channel_desc, SDF_size);
+  if(err != cudaSuccess)
+    EXIT_PRINT("cudaMalloc3DArray error: %d!\n", err);
 
   // Copy 3D array to GPU
   cudaMemcpy3DParms copy_params = {0};
@@ -26,7 +30,9 @@ void AllocInitObstacle_CUDA(struct Obstacle *obstacle) {
   copy_params.dstArray = obstacle_cuda->SDF_buffer;
   copy_params.extent   = SDF_size;
   copy_params.kind     = cudaMemcpyHostToDevice;
-  cudaMemcpy3D(&copy_params);
+  err = cudaMemcpy3D(&copy_params);
+  if(err != cudaSuccess)
+    EXIT_PRINT("cudaMalloc3DArray error! %d\n", err);
 
   // Create texture object
   cudaResourceDesc resource_descriptor;
