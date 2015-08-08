@@ -4,7 +4,7 @@
 #include "particles.h"
 #include "communication.h"
 #include "simulation.h"
-#include "debug.h"
+#include "print_macros.h"
 #include "mpi.h"
 
 ////////////////////////////////////////////////

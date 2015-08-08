@@ -1,5 +1,5 @@
 #include "neighbors.h"
-#include "debug.h"
+#include "print_macros.h"
 #include "safe_alloc.h"
 #include "particles.h"
 #include "geometry.h"

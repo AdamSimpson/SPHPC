@@ -3,7 +3,7 @@
 #include "communication.h"
 #include "neighbors.h"
 #include "geometry.h"
-#include "debug.h"
+#include "print_macros.h"
 #include "safe_alloc.h"
 #include <stdio.h>
 #include <stdlib.h>

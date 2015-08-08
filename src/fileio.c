@@ -3,10 +3,11 @@
 ////////////////////////////////////////////////
 #include "fileio.h"
 #include "simulation.h"
-#include "debug.h"
+#include "print_macros.h"
 #include "safe_alloc.h"
 #include "particles.h"
 #include "mpi.h"
+#include "adios.h"
 #include <stdio.h>
 #include <errno.h>
 #include <inttypes.h>
@@ -18,13 +19,6 @@
 void AllocInitFileIO(struct FileIO *const file_io,
                 const struct Particles *const particles,
                 const struct Params *params) {
-  int num_components = 3;
-  file_io->write_buffer = SAFE_ALLOC(num_components*particles->max_local,
-                                     sizeof(double));
-
-  #pragma acc enter data copyin( file_io[:1],                    \
-    file_io->write_buffer[0:num_components*particles->max_local])
-
   // Get current path
   char current_path[1024];
   getcwd(current_path, sizeof(current_path));
@@ -51,12 +45,17 @@ void AllocInitFileIO(struct FileIO *const file_io,
   strcpy(file_io->output_path, output_path);
 
   file_io->file_num = 0;
+
+  adios_init ("position_config.xml", MPI_COMM_WORLD);
+
+  file_io->adios_handle = NULL;
+
+  file_io->rank = params->rank;
 }
 
 void FinalizeFileIO(struct FileIO *const file_io) {
-//  #pragma acc exit data delete(file_io->write_buffer)
-  free(file_io->write_buffer);
   free(file_io->output_path);
+  adios_finalize(file_io->rank);
 }
 
 // Write boundary in MPI
@@ -64,55 +63,35 @@ void WriteParticles(const struct Particles *const particles,
               const struct Params *const params,
               struct FileIO *const file_io) {
 
-  MPI_File file;
-  MPI_Status status;
   char file_name[1024];
-  sprintf(file_name, "%s/sim-%d.bin", file_io->output_path, file_io->file_num);
+  sprintf(file_name, "%s/sim-%d.bp", file_io->output_path, file_io->file_num);
 
-  const int num_particles = particles->local_count;
+  int particle_count = particles->local_count;
 
-  double *x = particles->x;
-  double *y = particles->y;
-  double *z = particles->z;
-  double *write_buffer = file_io->write_buffer;
+  // Update x,y,z components on host
+  #pragma acc update host(particles->x[:particle_count],  \
+                          particles->y[:particle_count],  \
+                          particles->z[:particle_count]) async
 
-  #pragma acc parallel loop vector_length(1024) present(x,y,z,write_buffer)
-  for (int i=0; i<num_particles; ++i) {
-    write_buffer[3*i]   = x[i];
-    write_buffer[3*i+1] = y[i];
-    write_buffer[3*i+2] = z[i];
-  }
-  #pragma acc update host(write_buffer[:num_particles*3])
+  // Write positions to file
+  int adios_err;
+  uint64_t adios_groupsize, adios_totalsize;
 
-  // How many bytes each process will write
-  int rank_write_counts[params->proc_count];
-  // alltoall of write counts
-  int num_doubles_to_send = 3 * num_particles;
-  MPI_Allgather(&num_doubles_to_send, 1, MPI_INT, rank_write_counts,
-                1, MPI_INT, MPI_COMM_WORLD);
+  adios_open(&file_io->adios_handle, "position", file_name, "w", MPI_COMM_WORLD);
 
-  // Displacement can overflow with int, max size = 8*3*(global num particles)
-  uint64_t displacement=0;
-  for (int i=0; i<params->rank; ++i)
-    displacement+=rank_write_counts[i];
-  // Displacement is in bytes
-  displacement*=sizeof(double);
+  adios_groupsize = sizeof(int)                            // component_count
+                   + 3 * particle_count * sizeof(double);  // (x,y,z) coords
+  adios_group_size(file_io->adios_handle, adios_groupsize, &adios_totalsize);
 
-  // Open file
-  MPI_File_open(MPI_COMM_WORLD, file_name, MPI_MODE_CREATE | MPI_MODE_WRONLY,
-                MPI_INFO_NULL, &file);
+  // Wait for host data update to complete
+  #pragma acc wait
 
-  // write coordinates to file
-  MPI_File_write_at(file, displacement, file_io->write_buffer,
-                    num_doubles_to_send, MPI_DOUBLE, &status);
+  adios_write(file_io->adios_handle, "particle_count", &particle_count);
+  adios_write(file_io->adios_handle, "x", particles->x);
+  adios_write(file_io->adios_handle, "y", particles->y);
+  adios_write(file_io->adios_handle, "z", particles->z);
 
-  int num_bytes;
-  MPI_Get_elements(&status, MPI_CHAR, &num_bytes);
-  DEBUG_PRINT("rank %d wrote %d bytes(%d particles) to output\n",
-              params->rank,num_bytes,num_particles);
-
-  // Close file
-  MPI_File_close(&file);
+  adios_close(file_io->adios_handle);
 
   ++file_io->file_num;
 }

@@ -2,12 +2,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "debug.h"
+#include "print_macros.h"
 #include "communication.h"
 #include "neighbors.h"
 #include "particles.h"
 #include "geometry.h"
 #include "fileio.h"
+#include "obstacle.h"
 #include "input_parser.h"
 
 int main(int argc, char *argv[]) {
@@ -20,6 +21,7 @@ int main(int argc, char *argv[]) {
   struct Particles particles;
   struct Neighbors neighbors;
   struct FileIO file_io;
+  struct Obstacle obstacle;
 
   SetParameters(&params, &particles, &neighbors,
                 &boundary_global, &water_volume_global);
@@ -31,6 +33,8 @@ int main(int argc, char *argv[]) {
   AllocInitNeighbors(&neighbors, &particles, &params, &boundary_global);
 
   AllocateCommunication(&communication);
+
+  AllocInitObstacle(&obstacle, "bunny_watertight.sdf");
 
   AllocInitFileIO(&file_io, &particles, &params);
 

@@ -1,7 +1,7 @@
 #include "communication.h"
 #include "simulation.h"
 #include "particles.h"
-#include "debug.h"
+#include "print_macros.h"
 #include "safe_alloc.h"
 #include "thrust_c.h"
 #include "openacc.h"
