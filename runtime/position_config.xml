@@ -1,7 +1,4 @@
-/* positions_config.xml */
-
 <?xml version="1.0"?>
-
 <adios-config host-language="C">
   <adios-group name="position" coordination-communicator="MPI_COMM_WORLD">
     <var name="particle_count" type="integer"/>
@@ -11,4 +8,5 @@
     <attribute name="description" type="string" value="SPH x,y,z positions"/>
   </adios-group>
 
-<method group="position" method="MPI_LUSTRE"/> <buffer size-MB="100" allocate-time="now"/> </adios-config>
+  <method group="position" method="MPI_LUSTRE"/> <buffer size-MB="100" allocate-time="now"/>
+</adios-config>
