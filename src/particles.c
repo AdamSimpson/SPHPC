@@ -3,6 +3,7 @@
 #include "communication.h"
 #include "neighbors.h"
 #include "geometry.h"
+#include "obstacle.h"
 #include "print_macros.h"
 #include "safe_alloc.h"
 #include <stdio.h>
@@ -303,7 +304,7 @@ void ComputeDensities(struct Particles *restrict particles,
   const double *restrict x_star = particles->x_star;
   const double *restrict y_star = particles->y_star;
   const double *restrict z_star = particles->z_star;
-  const double *restrict density = particles->density;
+  double *restrict density = particles->density;
   const struct NeighborBucket *restrict neighbor_buckets = neighbors->neighbor_buckets;
 
   #pragma acc parallel loop gang vector vector_length(64) \
@@ -547,7 +548,8 @@ void UpdateDPs(struct Particles *restrict particles,
 
 void PredictPositions(struct Particles *restrict particles,
                       const struct Params *restrict params,
-                      const struct AABB *restrict boundary_global) {
+                      const struct AABB *restrict boundary_global,
+                      const struct Obstacle *restrict obstacle) {
   const double dt = params->time_step;
 
   const int num_particles = particles->local_count;
@@ -565,13 +567,21 @@ void PredictPositions(struct Particles *restrict particles,
 
   #pragma acc parallel loop present(x_star, y_star, z_star, \
                                     x, y, z,                \
-                                    v_x, v_y, v_z,          \
-                                    boundary_global)
+                                    v_x, v_y, v_z)
   for (int i=0; i<num_particles; ++i) {
     x_star[i] = x[i] + (v_x[i] * dt);
     y_star[i] = y[i] + (v_y[i] * dt);
     z_star[i] = z[i] + (v_z[i] * dt);
+  }
 
+  #pragma acc host_data use_device(x_star, y_star, z_star)
+  {
+    CalculateParticleCollisions(x_star, y_star, z_star, particles->local_count, *obstacle);
+  }
+
+  #pragma acc parallel loop present(x_star, y_star, z_star, \
+                                    boundary_global)
+  for (int i=0; i<num_particles; ++i) {
     // Enforce boundary conditions before hash
     // Otherwise predicted position can blow up hash
     ApplyBoundaryConditions(&x_star[i], &y_star[i], &z_star[i], boundary_global);

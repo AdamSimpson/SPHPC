@@ -22,6 +22,7 @@ int main(int argc, char *argv[]) {
   struct Neighbors neighbors;
   struct FileIO file_io;
   struct Obstacle obstacle;
+  struct Obstacle_CUDA obstacle_cuda;
 
   SetParameters(&params, &particles, &neighbors,
                 &boundary_global, &water_volume_global);
@@ -52,7 +53,7 @@ int main(int argc, char *argv[]) {
 
     ApplyGravity(&particles, &params);
 
-    PredictPositions(&particles, &params, &boundary_global);
+    PredictPositions(&particles, &params, &boundary_global, &obstacle);
 
     if (n % 10 == 0)
       BalanceNodes(&particles, &params);

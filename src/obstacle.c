@@ -63,6 +63,14 @@ void AllocInitObstacle(struct Obstacle *obstacle, const char *SDF_file_name) {
   free(line);
   fclose(file);
 
+  // This is broken and needs fixed
+  obstacle->world_bounds.min_x = 0.0;
+  obstacle->world_bounds.max_x = 2.0;
+  obstacle->world_bounds.min_y = 0.0;
+  obstacle->world_bounds.max_y = 2.0*obstacle->SDF_dim_y/(float)obstacle->SDF_dim_x;
+  obstacle->world_bounds.min_z = 0.0;
+  obstacle->world_bounds.max_z = 2.0*obstacle->SDF_dim_z/(float)obstacle->SDF_dim_x;
+
   // Initialize CUDA obstacle implimentation
   AllocInitObstacle_CUDA(obstacle);
 }

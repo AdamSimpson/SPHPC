@@ -6,6 +6,7 @@ struct Params;
 struct Neighbors;
 struct AABB;
 struct Communication;
+struct Obstacle;
 
 struct Particles {
   double *restrict x_star;
@@ -66,9 +67,10 @@ void UpdateDPs(struct Particles *restrict fluid_particles,
                const struct Params *restrict params,
                const struct Neighbors *restrict neighbors);
 
-void PredictPositions(struct Particles *restrict fluid_particles,
+void PredictPositions(struct Particles *restrict particles,
                       const struct Params *restrict params,
-                      const struct AABB *restrict boundary_global);
+                      const struct AABB *restrict boundary_global,
+                      const struct Obstacle *restrict obstacle);
 
 void UpdateVelocities(struct Particles *restrict fluid_particles,
                       const struct Params *restrict params);
