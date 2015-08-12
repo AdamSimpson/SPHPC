@@ -54,8 +54,9 @@ void ComputeDensities(struct Particles *restrict fluid_particles,
 void ApplyGravity(struct Particles *restrict fluid_particles,
                   const struct Params *restrict params);
 
-void UpdatePositionStars(struct Particles *restrict fluid_particles,
-                         const struct AABB *restrict boundary_global);
+void UpdatePositionStars(struct Particles *restrict particles,
+                         const struct AABB *restrict boundary_global,
+                         const struct Obstacle *restrict obstacle);
 
 void UpdatePositions(struct Particles *restrict fluid_particles);
 
@@ -69,8 +70,7 @@ void UpdateDPs(struct Particles *restrict fluid_particles,
 
 void PredictPositions(struct Particles *restrict particles,
                       const struct Params *restrict params,
-                      const struct AABB *restrict boundary_global,
-                      const struct Obstacle *restrict obstacle);
+                      const struct AABB *restrict boundary_global);
 
 void UpdateVelocities(struct Particles *restrict fluid_particles,
                       const struct Params *restrict params);

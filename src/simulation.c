@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
 
     ApplyGravity(&particles, &params);
 
-    PredictPositions(&particles, &params, &boundary_global, &obstacle);
+    PredictPositions(&particles, &params, &boundary_global);
 
     if (n % 10 == 0)
       BalanceNodes(&particles, &params);
@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
       UpdateHaloTuple(&communication, &params, &particles,
                        particles.dp_x, particles.dp_y, particles.dp_z);
 
-      UpdatePositionStars(&particles, &boundary_global);
+      UpdatePositionStars(&particles, &boundary_global, &obstacle);
       UpdateHaloTuple(&communication, &params, &particles,
                        particles.x_star, particles.y_star, particles.z_star);
     }
