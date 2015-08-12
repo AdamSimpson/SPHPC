@@ -59,8 +59,8 @@ else() # Adam's workstation
   target_link_libraries(sph ${CUDA_LIBRARIES})
 
   if (OPENACC)
-    set(CMAKE_C_FLAGS "-acc -Minfo=acc -O3 -ta=tesla:cuda7.0")
-    set(CMAKE_CXX_FLAGS "-acc -Minfo=acc -O3 -ta=tesla:cuda7.0")
+    set(CMAKE_C_FLAGS "-acc -Minfo=acc -O3 -ta=tesla:cuda7.0 -Mcuda")
+    set(CMAKE_CXX_FLAGS "-acc -Minfo=acc -O3 -ta=tesla:cuda7.0 -Mcuda")
   endif()
 endif()
 
