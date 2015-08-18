@@ -7,15 +7,17 @@ extern "C" {
 #include "geometry.h"
 #undef restrict
 }
+#include "obstacle.h" // outside of extern "C" to avoid issues with "cuda_runtime.h"
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <iostream>
 
-void ReadParameters(struct Params *const parameters,
+void ReadParameters(struct Params *parameters,
                     struct Particles *particles,
                     struct AABB *boundary_volume,
-                    struct AABB *initial_fluid_volume) {
+                    struct AABB *initial_fluid_volume,
+                    struct Obstacle *obstacle) {
   boost::property_tree::ptree property_tree;
 
   try {
@@ -51,6 +53,14 @@ void ReadParameters(struct Params *const parameters,
         "InitialFluidVolume.max_y");
     initial_fluid_volume->max_z = property_tree.get<double>(
         "InitialFluidVolume.max_z");
+
+    strcpy(obstacle->SDF_file_name, property_tree.get<std::string>(
+                              "Obstacle.SDF_file_name").c_str() );
+    obstacle->world_bounds.min_x = property_tree.get<double>("Obstacle.min_x");
+    obstacle->world_bounds.max_x = property_tree.get<double>("Obstacle.max_x");
+    obstacle->world_bounds.min_y = property_tree.get<double>("Obstacle.min_y");
+    obstacle->world_bounds.min_z = property_tree.get<double>("Obstacle.min_z");
+
   } catch(std::exception const& exception) {
       std::cout << "Aborting: " << exception.what() << std::endl;
       exit(-1);

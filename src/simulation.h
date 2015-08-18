@@ -5,6 +5,7 @@
 struct Particles;
 struct Neighbors;
 struct AABB;
+struct Obstacle;
 
 struct Params {
   double rest_density;
@@ -27,6 +28,7 @@ void SetParameters(struct Params *const params,
                    struct Particles *const particles,
                    struct Neighbors *const neighbors,
                    struct AABB *const boundary_global,
-                   struct AABB *const water_volume_global);
+                   struct AABB *const water_volume_global,
+                   struct Obstacle *const obstacle);
 
 #endif

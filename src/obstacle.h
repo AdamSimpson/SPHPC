@@ -1,15 +1,11 @@
 #ifndef SPH_SRC_OBSTACLE_H_
 #define SPH_SRC_OBSTACLE_H_
 
-// Ehh....use forward declaration everywhere else
-// could just store pointers in Obstacle struct
 #include "obstacle_cuda.h"
 #include "geometry.h"
-// Forward Declaration
-//struct AABB;
-//struct Obstacle_CUDA;
 
 struct Obstacle {
+  char SDF_file_name[128];
   double origin_x;
   double origin_y;
   double origin_z;
@@ -27,7 +23,7 @@ struct Obstacle {
   struct Obstacle_CUDA obstacle_cuda;
 };
 
-void AllocInitObstacle(struct Obstacle *obstacle, const char *SDF_file_name);
+void AllocInitObstacle(struct Obstacle *obstacle);
 void FinalizeObstacle(struct Obstacle *obstacle);
 
 #endif

@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
   struct Obstacle_CUDA obstacle_cuda;
 
   SetParameters(&params, &particles, &neighbors,
-                &boundary_global, &water_volume_global);
+                &boundary_global, &water_volume_global, &obstacle);
 
   SetParticleNumbers(&water_volume_global, &particles, &params, &communication);
 
@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
 
   AllocateCommunication(&communication);
 
-  AllocInitObstacle(&obstacle, "bunny_watertight.sdf");
+  AllocInitObstacle(&obstacle);
 
   AllocInitFileIO(&file_io, &particles, &params);
 
@@ -116,11 +116,12 @@ void SetParameters(struct Params *const params,
                    struct Particles *const particles,
                    struct Neighbors *const neighbors,
                    struct AABB *const boundary_global,
-                   struct AABB *const water_volume_global) {
+                   struct AABB *const water_volume_global,
+                   struct Obstacle *const obstacle) {
   params->rank = get_rank();
   params->proc_count = get_proc_count();
 
-  ReadParameters(params, particles, boundary_global, water_volume_global);
+  ReadParameters(params, particles, boundary_global, water_volume_global, obstacle);
 
   // Cubed volume
   const double volume = (water_volume_global->max_x - water_volume_global->min_x)
