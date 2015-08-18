@@ -23,28 +23,28 @@ __device__ bool InsideObstacleBounds(const struct Obstacle obstacle,
 
     struct AABB world_bounds = obstacle.world_bounds;
 
-    if(x > world_bounds.min_x || x < world_bounds.max_x)
+    if(x > world_bounds.min_x && x < world_bounds.max_x &&
+       y > world_bounds.min_y && y < world_bounds.max_y &&
+       z > world_bounds.min_z && z < world_bounds.max_z)
         return true;
-    else if(y > world_bounds.min_y || y < world_bounds.max_y)
-        return true;
-    else if(z > world_bounds.min_z || z < world_bounds.max_z)
-        return true;
-
-    return false;
+    else
+      return false;
 }
 
-__device__ float3 CalculateNormal(cudaTextureObject_t SDF_tex,
+inline __device__ float3 CalculateNormal(cudaTextureObject_t SDF_tex,
                                   const float x_tex,
                                   const float y_tex,
                                   const float z_tex,
-                                  const float h) {
+                                  const float x_spacing,
+                                  const float y_spacing,
+                                  const float z_spacing) {
   // Calculate gradient of SDF(surface normal)
-  const float x_right = tex3D<float>(SDF_tex, x_tex + h, y_tex, z_tex);
-  const float x_left  = tex3D<float>(SDF_tex, x_tex - h, y_tex, z_tex);
-  const float y_down  = tex3D<float>(SDF_tex, x_tex, y_tex - h, z_tex);
-  const float y_up    = tex3D<float>(SDF_tex, x_tex, y_tex + h, z_tex);
-  const float z_front = tex3D<float>(SDF_tex, x_tex, y_tex, z_tex + h);
-  const float z_back  = tex3D<float>(SDF_tex, x_tex, y_tex, z_tex - h);
+  const float x_right = tex3D<float>(SDF_tex, x_tex + x_spacing, y_tex, z_tex);
+  const float x_left  = tex3D<float>(SDF_tex, x_tex - x_spacing, y_tex, z_tex);
+  const float y_up    = tex3D<float>(SDF_tex, x_tex, y_tex + y_spacing, z_tex);
+  const float y_down  = tex3D<float>(SDF_tex, x_tex, y_tex - y_spacing, z_tex);
+  const float z_front = tex3D<float>(SDF_tex, x_tex, y_tex, z_tex + z_spacing);
+  const float z_back  = tex3D<float>(SDF_tex, x_tex, y_tex, z_tex - z_spacing);
 
   float3 gradient = make_float3(x_right - x_left,
                                 y_up - y_down,
@@ -71,34 +71,39 @@ __global__ void CalculateParticleCollisions_kernel(double *restrict x,
       const struct AABB obstacle_world_bounds = obstacle.world_bounds;
 
       // Compute normalized tex coordinates
-      const double obstacle_world_length = (obstacle_world_bounds.max_x
+      const float obstacle_world_length = (obstacle_world_bounds.max_x
                                           - obstacle_world_bounds.min_x);
-      const double x_tex = (world_x - obstacle_world_bounds.min_x)/obstacle_world_length;
+      const float x_tex = (world_x - obstacle_world_bounds.min_x)/obstacle_world_length;
 
-      const double obstacle_world_height = (obstacle_world_bounds.max_y
+      const float obstacle_world_height = (obstacle_world_bounds.max_y
                                           - obstacle_world_bounds.min_y);
-      const double y_tex = (world_y - obstacle_world_bounds.min_y)/obstacle_world_height;
+      const float y_tex = (world_y - obstacle_world_bounds.min_y)/obstacle_world_height;
 
-      const double obstacle_world_depth = (obstacle_world_bounds.max_z
+      const float obstacle_world_depth = (obstacle_world_bounds.max_z
                                          - obstacle_world_bounds.min_z);
-      const double z_tex = (world_z - obstacle_world_bounds.min_z)/obstacle_world_depth;
+      const float z_tex = (world_z - obstacle_world_bounds.min_z)/obstacle_world_depth;
 
       // Fetch model space distance to surface from texture
       const float surface_model_distance = tex3D<float>(obstacle.obstacle_cuda.SDF_tex, x_tex, y_tex, z_tex);
 
       if(surface_model_distance < 0) {  // If inside object
+        // SDF grid spacing in normalized texture coordinates [0,1]
+        const float x_spacing = 1.0 / (float)obstacle.SDF_dim_x;
+        const float y_spacing = 1.0 / (float)obstacle.SDF_dim_y;
+        const float z_spacing = 1.0 / (float)obstacle.SDF_dim_z;
+
         const float3 model_surface_normal = CalculateNormal(obstacle.obstacle_cuda.SDF_tex,
                                                             x_tex, y_tex, z_tex,
-                                                            obstacle.SDF_spacing);
+                                                            x_spacing, y_spacing, z_spacing);
 
-        // This may not the exact model length as it is an integer multiple of SDF_spacing
-        const double obstacle_model_length = obstacle.SDF_dim_x * obstacle.SDF_spacing;
+        // This may not be the exact model length as it is an integer multiple of SDF_spacing
+        const float obstacle_model_length = obstacle.SDF_dim_x * obstacle.SDF_spacing;
 
-        // Convert distance and normacutil_math.hls in model space to world space
+        // Convert distance and normals in model space to world space
         // This assumes aspect ratio is the same between model and world
-        const double model_to_world = obstacle_world_length / obstacle_model_length;
+        const float model_to_world = obstacle_world_length / obstacle_model_length;
         const float3 surface_world_normal = model_surface_normal;
-        const double surface_world_distance = abs(surface_model_distance * model_to_world);
+        const float surface_world_distance = fabsf(surface_model_distance) * model_to_world;
 
         x[i] += surface_world_distance * surface_world_normal.x;
         y[i] += surface_world_distance * surface_world_normal.y;
@@ -167,6 +172,7 @@ void AllocInitObstacle_CUDA(struct Obstacle *obstacle) {
   tex_descriptor.addressMode[0] = cudaAddressModeClamp;
   tex_descriptor.addressMode[1] = cudaAddressModeClamp;
   tex_descriptor.addressMode[2] = cudaAddressModeClamp;
+  tex_descriptor.normalizedCoords = 1;
   cudaCreateTextureObject(&(obstacle_cuda->SDF_tex), &resource_descriptor,
                           &tex_descriptor, NULL);
 
