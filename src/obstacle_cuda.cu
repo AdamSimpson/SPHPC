@@ -59,57 +59,58 @@ __global__ void CalculateParticleCollisions_kernel(double *restrict x,
                                                    double *restrict z,
                                                    const int particle_count,
                                                    const struct Obstacle obstacle) {
-  int i = blockIdx.x *blockDim.x + threadIdx.x;
+  const int i = blockIdx.x * blockDim.x + threadIdx.x;
   if(i < particle_count) {
     // World coordinates
-    const double world_x = x[i];
-    const double world_y = y[i];
-    const double world_z = z[i];
+    const double x_world = x[i];
+    const double y_world = y[i];
+    const double z_world = z[i];
 
     if(InsideObstacleBounds(obstacle, world_x, world_y, world_z)) {
 
-      const struct AABB obstacle_world_bounds = obstacle.world_bounds;
+      const struct AABB obstacle_bounds_world = obstacle.world_bounds;
 
-      // Compute normalized tex coordinates
-      const float obstacle_world_length = (obstacle_world_bounds.max_x
-                                          - obstacle_world_bounds.min_x);
-      const float x_tex = (world_x - obstacle_world_bounds.min_x)/obstacle_world_length;
-
-      const float obstacle_world_height = (obstacle_world_bounds.max_y
-                                          - obstacle_world_bounds.min_y);
-      const float y_tex = (world_y - obstacle_world_bounds.min_y)/obstacle_world_height;
-
-      const float obstacle_world_depth = (obstacle_world_bounds.max_z
-                                         - obstacle_world_bounds.min_z);
-      const float z_tex = (world_z - obstacle_world_bounds.min_z)/obstacle_world_depth;
+      // Compute normalized [0,1] tex coordinates
+      const float obstacle_length_world = (obstacle_bounds_world.max_x
+                                          - obstacle_bounds_world.min_x);
+      const float x_tex = (x_world - obstacle_bounds_world.min_x)
+                          /obstacle_length_world;
+      const float obstacle_height_world = (obstacle_bounds_world.max_y
+                                          - obstacle_bounds_world.min_y);
+      const float y_tex = (y_world - obstacle_bounds_world.min_y)
+                          /obstacle_height_world;
+      const float obstacle_depth_world = (obstacle_bounds_world.max_z
+                                         - obstacle_bounds_world.min_z);
+      const float z_tex = (z_world - obstacle_bounds_world.min_z)
+                          /obstacle_depth_world;
 
       // Fetch model space distance to surface from texture
-      const float surface_model_distance = tex3D<float>(obstacle.obstacle_cuda.SDF_tex, x_tex, y_tex, z_tex);
+      const float surface_distance_model = tex3D<float>(obstacle.obstacle_cuda.SDF_tex, x_tex, y_tex, z_tex);
 
-      if(surface_model_distance < 0) {  // If inside object
+      if(surface_distance_model < 0) {  // If inside object
         // SDF grid spacing in normalized texture coordinates [0,1]
         const float x_spacing = 1.0 / (float)obstacle.SDF_dim_x;
         const float y_spacing = 1.0 / (float)obstacle.SDF_dim_y;
         const float z_spacing = 1.0 / (float)obstacle.SDF_dim_z;
 
-        const float3 model_surface_normal = CalculateNormal(obstacle.obstacle_cuda.SDF_tex,
+        const float3 surface_normal_model = CalculateNormal(obstacle.obstacle_cuda.SDF_tex,
                                                             x_tex, y_tex, z_tex,
                                                             x_spacing, y_spacing, z_spacing);
 
         // This may not be the exact model length as it is an integer multiple of SDF_spacing
-        const float obstacle_model_length = obstacle.SDF_dim_x * obstacle.SDF_spacing;
+        const float obstacle_length_model = obstacle.SDF_dim_x * obstacle.SDF_spacing;
 
         // Convert distance and normals in model space to world space
         // This assumes aspect ratio is the same between model and world
-        const float model_to_world = obstacle_world_length / obstacle_model_length;
-        const float3 surface_world_normal = model_surface_normal;
-        const float surface_world_distance = fabsf(surface_model_distance) * model_to_world;
+        const float model_to_world = obstacle_length_world / obstacle_length_model;
+        const float3 surface_world_normal = surface_normal_model;
+        const float surface_distance_world = fabsf(surface_distance_model)
+                                           * model_to_world;
 
-        x[i] += surface_world_distance * surface_world_normal.x;
-        y[i] += surface_world_distance * surface_world_normal.y;
-        z[i] += surface_world_distance * surface_world_normal.z;
-      }
-
+        y[i] += surface_distance_world * surface_normal_world.y;
+        x[i] += surface_distance_world * surface_normal_world.x;
+        z[i] += surface_distance_world * surface_normal_world.z;
+      } // Inside obstacle
     } // Inside obstacle bounding box
   }
 }
@@ -122,7 +123,7 @@ extern "C" void CalculateParticleCollisions(double *restrict x,
   int blockSize = 1024;
   int gridSize = (int)ceil((float)particle_count/blockSize);
 
-  CalculateParticleCollisions_kernel<<<gridSize, blockSize>>>(x,y,z,
+  CalculateParticleCollisions_kernel<<<gridSize, blockSize>>>(x, y, z,
                                                               particle_count,
                                                               obstacle);
 
@@ -137,6 +138,7 @@ void AllocInitObstacle_CUDA(struct Obstacle *obstacle) {
                                               obstacle->SDF_dim_y,
                                               obstacle->SDF_dim_z);
 
+  // Single channel of single precision float format
   const cudaChannelFormatDesc channel_desc = cudaCreateChannelDesc(
                                                32,
                                                0, 0, 0,

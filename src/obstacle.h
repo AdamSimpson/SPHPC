@@ -10,6 +10,10 @@ struct Obstacle {
   double origin_y;
   double origin_z;
 
+  double model_length;
+  double model_width;
+  double model_height;
+
   struct AABB world_bounds; // Bounding box world dimensions
 
   double SDF_spacing; // Spacing of signed distance field cells
