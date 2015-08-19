@@ -347,11 +347,11 @@ void ApplyGravity(struct Particles *restrict particles,
   const double dt = params->time_step;
   const double g = -params->g;
 
-  double *v_y = particles->v_y;
+  double *v_z = particles->v_z;
 
-  #pragma acc parallel loop present(v_y)
+  #pragma acc parallel loop present(v_z)
   for (int i=0; i<(particles->local_count); ++i) {
-    v_y[i] += g*dt;
+    v_z[i] += g*dt;
   }
 }
 
