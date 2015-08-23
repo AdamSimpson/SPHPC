@@ -66,7 +66,7 @@ __global__ void CalculateParticleCollisions_kernel(double *restrict x,
     const double y_world = y[i];
     const double z_world = z[i];
 
-    if(InsideObstacleBounds(obstacle, world_x, world_y, world_z)) {
+    if(InsideObstacleBounds(obstacle, x_world, y_world, z_world)) {
 
       const struct AABB obstacle_bounds_world = obstacle.world_bounds;
 
@@ -103,7 +103,7 @@ __global__ void CalculateParticleCollisions_kernel(double *restrict x,
         // Convert distance and normals in model space to world space
         // This assumes aspect ratio is the same between model and world
         const float model_to_world = obstacle_length_world / obstacle_length_model;
-        const float3 surface_world_normal = surface_normal_model;
+        const float3 surface_normal_world = surface_normal_model;
         const float surface_distance_world = fabsf(surface_distance_model)
                                            * model_to_world;
 
