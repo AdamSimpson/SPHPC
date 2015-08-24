@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
     UpdatePositions(&particles);
 
     // Write file at 30 FPS
-    if (n % (int)(1.0/(params.time_step*30.0)) )
+    if (!(n % (int)(1.0/(params.time_step*30.0))))
       WriteParticles(&particles, &params, &file_io);
 
   }
