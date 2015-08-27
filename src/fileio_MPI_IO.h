@@ -1,5 +1,5 @@
-#ifndef SPH_SRC_FILEIO_H_
-#define SPH_SRC_FILEIO_H_
+#ifndef SPH_SRC_FILEIO_MPI_IO_H_
+#define SPH_SRC_FILEIO_MPI_IO_H_
 
 // Forward Declaration
 struct Particles;

@@ -3,7 +3,8 @@ project(sph)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/CMake/)
 
-option(OPENACC "Enable OpenACC support" ON)
+option(USE_OPENACC "Enable OpenACC support" ON)
+option(USE_ADIOS "Enable Adios file writing" OFF)
 
 set(CMAKE_C_STANDARD 99)
 
@@ -12,6 +13,16 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
 endif()
 
 file(GLOB SRC_FILES src/*.c src/*.cc)
+
+# Remove adios files from glob if not set
+if (${USE_ADIOS})
+  file(GLOB MPI_IO_REMOVE src/fileio_MPI_IO.c)
+  list(REMOVE_ITEM SRC_FILES ${MPI_IO_REMOVE})
+  add_definitions( -DUSE_ADIOS )
+else()
+  file(GLOB ADIOS_REMOVE src/fileio_adios.c)
+  list(REMOVE_ITEM SRC_FILES ${ADIOS_REMOVE})
+endif()
 
 # A bit of a hack to enable easy Thrust/OpenACC compile on Titan
 # Compile thrust/cuda file separately
@@ -48,7 +59,7 @@ if (${myhostname} MATCHES "(.*)titan(.*)" OR ${myhostname} MATCHES "(.*)chester(
   find_library(M_LIB m)
   target_link_libraries(sph ${M_LIB})
 
-  if (OPENACC)
+  if (USE_OPENACC)
     set(ACC_FLAGS "-acc -Minfo=acc -O3 -ta=tesla:cuda6.5,cc35 -Mcuda")
   endif()
 
@@ -58,7 +69,7 @@ if (${myhostname} MATCHES "(.*)titan(.*)" OR ${myhostname} MATCHES "(.*)chester(
 else() # Adam's workstation
   target_link_libraries(sph ${CUDA_LIBRARIES})
 
-  if (OPENACC)
+  if (USE_OPENACC)
     set(CMAKE_C_FLAGS "-acc -Minfo=acc -O3 -ta=tesla:cuda7.0 -Mcuda")
     set(CMAKE_CXX_FLAGS "-acc -Minfo=acc -O3 -ta=tesla:cuda7.0 -Mcuda")
   endif()

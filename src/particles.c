@@ -22,6 +22,9 @@ static inline double W(const double r, const double h, const double norm) {
     return 0.0;
 
   const double W = norm*(h*h-r*r)*(h*h-r*r)*(h*h-r*r);
+
+//  const double q = r/h;
+//  const double W = norm*(1-q*q)*(1-q*q)*(1-q*q);
   return W;
 }
 
@@ -32,6 +35,8 @@ static inline double DelW(const double r, const double h, const double norm) {
   if(r > h)
     return 0.0;
 
+//  const double q = r/h;
+//  const double DelW = norm*(1-q)*(1-q);
   const double DelW = norm*(h-r)*(h-r);
   return DelW;
 }

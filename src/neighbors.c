@@ -237,7 +237,7 @@ void FillNeighbors(const struct Particles *restrict particles,
       const int p_index = i;
 
       // Get neighbor bucket for particle p
-      const struct NeighborBucket *restrict neighbor_bucket = &neighbor_buckets[p_index];
+      struct NeighborBucket *restrict neighbor_bucket = &neighbor_buckets[p_index];
       neighbor_bucket->count = 0;
 
       const double x_star_p = x_star[p_index];

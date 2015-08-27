@@ -1,8 +1,10 @@
 #ifndef SPH_SRC_OBSTACLE_H_
 #define SPH_SRC_OBSTACLE_H_
 
-#include "obstacle_cuda.h"
 #include "geometry.h"
+
+// Forward Declaration
+struct Obstacle_CUDA;
 
 struct Obstacle {
   char SDF_file_name[128];
@@ -24,7 +26,7 @@ struct Obstacle {
 
   float *SDF_buffer;
 
-  struct Obstacle_CUDA obstacle_cuda;
+  struct Obstacle_CUDA *obstacle_cuda;
 };
 
 void AllocInitObstacle(struct Obstacle *obstacle);

@@ -16,7 +16,6 @@ inline __device__ float3 normalize(float3 v) {
     return make_float3(v.x*inv_length, v.y*inv_length, v.z*inv_length);
 }
 
-
 // Test if inside obstacle bounding box
 __device__ bool InsideObstacleBounds(const struct Obstacle obstacle,
                                const double x, const double y, const double z) {
@@ -58,7 +57,8 @@ __global__ void CalculateParticleCollisions_kernel(double *restrict x,
                                                    double *restrict y,
                                                    double *restrict z,
                                                    const int particle_count,
-                                                   const struct Obstacle obstacle) {
+                                                   const struct Obstacle obstacle,
+                                                   const struct Obstacle_CUDA obstacle_cuda) {
   const int i = blockIdx.x * blockDim.x + threadIdx.x;
   if(i < particle_count) {
     // World coordinates
@@ -85,7 +85,7 @@ __global__ void CalculateParticleCollisions_kernel(double *restrict x,
                           /obstacle_depth_world;
 
       // Fetch model space distance to surface from texture
-      const float surface_distance_model = tex3D<float>(obstacle.obstacle_cuda.SDF_tex, x_tex, y_tex, z_tex);
+      const float surface_distance_model = tex3D<float>(obstacle_cuda.SDF_tex, x_tex, y_tex, z_tex);
 
       if(surface_distance_model < 0) {  // If inside object
         // SDF grid spacing in normalized texture coordinates [0,1]
@@ -93,7 +93,7 @@ __global__ void CalculateParticleCollisions_kernel(double *restrict x,
         const float y_spacing = 1.0 / (float)obstacle.SDF_dim_y;
         const float z_spacing = 1.0 / (float)obstacle.SDF_dim_z;
 
-        const float3 surface_normal_model = CalculateNormal(obstacle.obstacle_cuda.SDF_tex,
+        const float3 surface_normal_model = CalculateNormal(obstacle_cuda.SDF_tex,
                                                             x_tex, y_tex, z_tex,
                                                             x_spacing, y_spacing, z_spacing);
 
@@ -125,13 +125,15 @@ extern "C" void CalculateParticleCollisions(double *restrict x,
 
   CalculateParticleCollisions_kernel<<<gridSize, blockSize>>>(x, y, z,
                                                               particle_count,
-                                                              obstacle);
+                                                              obstacle,
+                                                              *obstacle.obstacle_cuda);
 
 }
 
 void AllocInitObstacle_CUDA(struct Obstacle *obstacle) {
 
-  struct Obstacle_CUDA* obstacle_cuda = &(obstacle->obstacle_cuda);
+  obstacle->obstacle_cuda = (struct Obstacle_CUDA*)malloc(sizeof(Obstacle_CUDA));
+  struct Obstacle_CUDA* obstacle_cuda = obstacle->obstacle_cuda;
 
   // Allocate 3D array for SDF
   const cudaExtent SDF_size = make_cudaExtent(obstacle->SDF_dim_x,
@@ -183,4 +185,5 @@ void AllocInitObstacle_CUDA(struct Obstacle *obstacle) {
 void FinalizeObstacle_CUDA(struct Obstacle_CUDA *obstacle_cuda) {
   cudaFreeArray(obstacle_cuda->SDF_buffer);
   cudaDestroyTextureObject(obstacle_cuda->SDF_tex);
+  free(obstacle_cuda);
 }

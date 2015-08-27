@@ -7,9 +7,14 @@
 #include "neighbors.h"
 #include "particles.h"
 #include "geometry.h"
-#include "fileio.h"
 #include "obstacle.h"
 #include "input_parser.h"
+#ifdef USE_ADIOS
+#include "fileio_adios.h"
+#else
+#include "fileio_MPI_IO.h"
+#endif
+
 
 int main(int argc, char *argv[]) {
   InitCommunication(argc, argv);
@@ -79,6 +84,8 @@ int main(int argc, char *argv[]) {
       UpdatePositionStars(&particles, &boundary_global, &obstacle);
       UpdateHaloTuple(&communication, &params, &particles,
                        particles.x_star, particles.y_star, particles.z_star);
+
+      // Put collision detection here explicity
     }
 
     UpdateVelocities(&particles, &params);
@@ -159,6 +166,12 @@ void SetParameters(struct Params *const params,
   #ifndef M_PI
     #define M_PI  3.14159265358979323846
   #endif
+
+  // Normalization for poly6 and del_spily using W(r,h)
   params->W_norm = 315.0/(64.0*M_PI*pow(params->smoothing_radius, 9.0));
   params->DelW_norm = -45.0/(M_PI*pow(params->smoothing_radius, 6.0));
+
+  // Normalization for poly6 and del_spiky uing W(q) where q = r/h
+//  params->W_norm = 315.0/(64.0*M_PI*pow(params->smoothing_radius, 3.0));
+//  params->DelW_norm = -45.0/(M_PI*pow(params->smoothing_radius, 3.0));
 }

@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////
 // Utility Functions
 ////////////////////////////////////////////////
-#include "fileio.h"
+#include "fileio_MPI_IO.h"
 #include "simulation.h"
 #include "print_macros.h"
 #include "safe_alloc.h"
@@ -59,7 +59,7 @@ void FinalizeFileIO(struct FileIO *const file_io) {
   free(file_io->output_path);
 }
 
-// Write boundary in MPI
+// Write particle coordinates in MPI
 void WriteParticles(const struct Particles *const particles,
               const struct Params *const params,
               struct FileIO *const file_io) {

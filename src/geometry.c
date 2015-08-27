@@ -58,6 +58,12 @@ void ConstructFluidVolume(struct Particles *const particles,
   DEBUG_PRINT("rank %d: min fluid: %f max fluid x: %f\n",
               params->rank, min_x + spacing/2.0,
               min_x + num_x*spacing + spacing/2.0);
+
+  // Update global particle count
+  MPI_Allreduce(&particles->local_count, &particles->global_count, 1,
+                MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+
+  // Should the density also be updated at this point as it's not quite right?
 }
 
 // Sets upper bound on number of particles, used for memory allocation
