@@ -21,10 +21,8 @@ static inline double W(const double r, const double h, const double norm) {
   if(r > h)
     return 0.0;
 
-  const double W = norm*(h*h-r*r)*(h*h-r*r)*(h*h-r*r);
-
-//  const double q = r/h;
-//  const double W = norm*(1-q*q)*(1-q*q)*(1-q*q);
+  const double q = r/h;
+  const double W = norm*(1.0-q*q)*(1.0-q*q)*(1.0-q*q);
   return W;
 }
 
@@ -35,9 +33,8 @@ static inline double DelW(const double r, const double h, const double norm) {
   if(r > h)
     return 0.0;
 
-//  const double q = r/h;
-//  const double DelW = norm*(1-q)*(1-q);
-  const double DelW = norm*(h-r)*(h-r);
+  const double q = r/h;
+  const double DelW = norm*(1.0-q)*(1.0-q);
   return DelW;
 }
 
@@ -104,8 +101,8 @@ void ComputeVorticity(struct Particles *restrict particles,
       const double vz_diff = v_z[q_index] - v_z_p;
 
       double r_mag = sqrt(x_diff*x_diff + y_diff*y_diff + z_diff*z_diff);
-      if(r_mag < 0.0001)
-        r_mag = 0.0001;
+      if(r_mag < h*0.0001)
+        r_mag = h*0.0001;
 
         const double dw = DelW(r_mag, h, DelW_norm);
 
@@ -180,8 +177,8 @@ void ApplyVorticityConfinement(struct Particles *restrict particles,
       const double z_diff = z_star_p - z_star[q_index];
 
       double r_mag = sqrt(x_diff*x_diff + y_diff*y_diff + z_diff*z_diff);
-      if(r_mag < 0.0001)
-        r_mag = 0.0001;
+      if(r_mag < h*0.0001)
+        r_mag = h*0.0001;
 
       const double dw = DelW(r_mag, h, DelW_norm);
 
@@ -202,8 +199,8 @@ void ApplyVorticityConfinement(struct Particles *restrict particles,
     }
 
     double eta_mag = sqrt(eta_x*eta_x + eta_y*eta_y + eta_z*eta_z);
-    if(eta_mag < 0.0001)
-      eta_mag = 0.0001;
+      if(eta_mag < h*0.0001)
+        eta_mag = h*0.0001;
 
     const double N_x = eta_x/eta_mag;
     const double N_y = eta_y/eta_mag;
@@ -303,6 +300,7 @@ void ComputeDensities(struct Particles *restrict particles,
   const double h = params->smoothing_radius;
   const double W_norm = params->W_norm;
   const double W_0 = W(0.0, h, W_norm);
+  const double rest_mass = particles->rest_mass;
   const int num_particles = particles->local_count;
 
   // OpenACC can't reliably handle SoA...
@@ -343,7 +341,7 @@ void ComputeDensities(struct Particles *restrict particles,
     }
 
     // Update particle density
-    density[p_index] = tmp_density;
+    density[p_index] = rest_mass*tmp_density;
   }
 }
 
@@ -362,7 +360,8 @@ void ApplyGravity(struct Particles *restrict particles,
 
 void UpdatePositionStars(struct Particles *restrict particles,
                          const struct AABB *restrict boundary_global,
-                         const struct Obstacle *restrict obstacle) {
+                         const struct Obstacle *restrict obstacle,
+                         const struct Params *params) {
 
   const int num_particles = particles->local_count;
 
@@ -384,7 +383,8 @@ void UpdatePositionStars(struct Particles *restrict particles,
     z_star[i] += dp_z[i];
 
     // Enforce boundary conditions
-    ApplyBoundaryConditions(&x_star[i], &y_star[i], &z_star[i], boundary_global);
+    ApplyBoundaryConditions(&x_star[i], &y_star[i], &z_star[i], boundary_global,
+                            params);
   }
 
   #pragma acc host_data use_device(x_star, y_star, z_star)
@@ -421,7 +421,7 @@ void ComputeLambda(struct Particles *restrict particles,
                    const struct Neighbors *restrict neighbors) {
 
   const int num_particles = particles->local_count;
-  const double rest_density = params->rest_density;
+  const double rest_density = particles->rest_density;
   const double h = params->smoothing_radius;
   const double DelW_norm = params->DelW_norm;
 
@@ -459,8 +459,8 @@ void ComputeLambda(struct Particles *restrict particles,
       const double z_diff = z_star_p - z_star[q_index];
 
       double r_mag = sqrt(x_diff*x_diff + y_diff*y_diff + z_diff*z_diff);
-      if (r_mag < 0.0001)
-        r_mag = 0.0001;
+      if(r_mag < h*0.0001)
+        r_mag = h*0.0001;
 
       const double grad = DelW(r_mag, h, DelW_norm);
 
@@ -491,7 +491,7 @@ void UpdateDPs(struct Particles *restrict particles,
                const struct Neighbors *restrict neighbors) {
 
   const double h = params->smoothing_radius;
-  const double rest_density = params->rest_density;
+  const double rest_density = particles->rest_density;
   const double k = params->k;
   const double W_norm = params->W_norm;
   const double DelW_norm = params->DelW_norm;
@@ -538,8 +538,8 @@ void UpdateDPs(struct Particles *restrict particles,
       const double z_diff = z_star_p - z_star[q_index];
 
       double r_mag = sqrt(x_diff*x_diff + y_diff*y_diff + z_diff*z_diff);
-      if(r_mag < 0.0001)
-        r_mag = 0.0001;
+      if(r_mag < h*0.0001)
+        r_mag = h*0.0001;
 
       const double WdWdq = W(r_mag, h, W_norm)/Wdq;
       const double delW = DelW(r_mag, h, DelW_norm);
@@ -586,7 +586,8 @@ void PredictPositions(struct Particles *restrict particles,
 
     // Enforce boundary conditions before hash
     // Otherwise predicted position can blow up hash
-    ApplyBoundaryConditions(&x_star[i], &y_star[i], &z_star[i], boundary_global);
+    ApplyBoundaryConditions(&x_star[i], &y_star[i], &z_star[i], boundary_global,
+                            params);
   }
 
 }
@@ -648,7 +649,11 @@ void UpdateVelocities(struct Particles *restrict particles,
 // Assume AABB with min point being axis origin
 #pragma acc routine seq
 void ApplyBoundaryConditions(double *restrict x, double *restrict y,
-                             double *restrict z, const struct AABB *restrict boundary) {
+                             double *restrict z, const struct AABB *restrict boundary,
+                             const struct Params *params) {
+
+  const double h = params->smoothing_radius;
+  const double epsion = h*0.0001;
 
   // Make sure object is not outside boundary
   // The particle must not be equal to boundary max or
@@ -657,17 +662,17 @@ void ApplyBoundaryConditions(double *restrict x, double *restrict y,
   if (*x < boundary->min_x)
     *x = boundary->min_x;
   else if(*x  > boundary->max_x)
-    *x = boundary->max_x-0.00001;
+    *x = boundary->max_x-epsion;
 
   if(*y < boundary->min_y)
     *y = boundary->min_y;
   else if(*y  > boundary->max_y)
-    *y = boundary->max_y-0.00001;
+    *y = boundary->max_y-epsion;
 
   if(*z < boundary->min_z)
     *z = boundary->min_z;
   else if(*z > boundary->max_z)
-    *z = boundary->max_z-0.00001;
+    *z = boundary->max_z-epsion;
 }
 
 void PrintAverageDensity(struct Particles *restrict particles) {
@@ -707,6 +712,16 @@ void AllocInitParticles(struct Particles *restrict particles,
 
   ConstructFluidVolume(particles, params, fluid_volume_initial);
 
+  // Set particle density and mass
+  particles->rest_density = 1000.0;
+  printf("rest density: %f\n", particles->rest_density);
+
+  // Mass of each particle
+  const double volume = (fluid_volume_initial->max_x - fluid_volume_initial->min_x)
+                      * (fluid_volume_initial->max_y - fluid_volume_initial->min_y)
+                      * (fluid_volume_initial->max_z - fluid_volume_initial->min_z);
+  particles->rest_mass = volume*particles->rest_density/particles->global_count;
+
   // Initialize particle values
   for (int i=0; i<particles->local_count; ++i) {
     particles->v_x[i] = 0.0;
@@ -715,7 +730,7 @@ void AllocInitParticles(struct Particles *restrict particles,
     particles->x_star[i] = particles->x[i];
     particles->y_star[i] = particles->y[i];
     particles->z_star[i] = particles->z[i];
-    particles->density[i] = params->rest_density;
+    particles->density[i] = particles->rest_density;
   }
 
   particles->halo_count_left = 0;

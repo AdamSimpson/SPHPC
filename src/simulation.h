@@ -8,7 +8,6 @@ struct AABB;
 struct Obstacle;
 
 struct Params {
-  double rest_density;
   double smoothing_radius;
   double W_norm;
   double DelW_norm;

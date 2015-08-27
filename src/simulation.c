@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
       UpdateHaloTuple(&communication, &params, &particles,
                        particles.dp_x, particles.dp_y, particles.dp_z);
 
-      UpdatePositionStars(&particles, &boundary_global, &obstacle);
+      UpdatePositionStars(&particles, &boundary_global, &obstacle, &params);
       UpdateHaloTuple(&communication, &params, &particles,
                        particles.x_star, particles.y_star, particles.z_star);
 
@@ -130,17 +130,13 @@ void SetParameters(struct Params *const params,
 
   ReadParameters(params, particles, boundary_global, water_volume_global, obstacle);
 
-  // Cubed volume
+  // Initial liquid volume
   const double volume = (water_volume_global->max_x - water_volume_global->min_x)
                       * (water_volume_global->max_y - water_volume_global->min_y)
                       * (water_volume_global->max_z - water_volume_global->min_z);
 
   // Initial spacing between particles
   const float spacing_particle = pow(volume/particles->global_count, 1.0/3.0);
-
-  // Let mass of each particle equal 1
-  params->rest_density = particles->global_count/volume;
-  printf("rest density: %f\n", params->rest_density);
 
   // Smoothing radius, h
   params->smoothing_radius = 2.0*spacing_particle;
@@ -168,10 +164,10 @@ void SetParameters(struct Params *const params,
   #endif
 
   // Normalization for poly6 and del_spily using W(r,h)
-  params->W_norm = 315.0/(64.0*M_PI*pow(params->smoothing_radius, 9.0));
-  params->DelW_norm = -45.0/(M_PI*pow(params->smoothing_radius, 6.0));
+//  params->W_norm = 315.0/(64.0*M_PI*pow(params->smoothing_radius, 9.0));
+//  params->DelW_norm = -45.0/(M_PI*pow(params->smoothing_radius, 6.0));
 
   // Normalization for poly6 and del_spiky uing W(q) where q = r/h
-//  params->W_norm = 315.0/(64.0*M_PI*pow(params->smoothing_radius, 3.0));
-//  params->DelW_norm = -45.0/(M_PI*pow(params->smoothing_radius, 3.0));
+  params->W_norm = 315.0/(64.0*M_PI*pow(params->smoothing_radius, 3.0));
+  params->DelW_norm = -45.0/(M_PI*pow(params->smoothing_radius, 3.0));
 }

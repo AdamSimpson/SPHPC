@@ -28,6 +28,8 @@ struct Particles {
   double *restrict lambda;
   int    *restrict id;
 
+  double rest_density;
+  double rest_mass;
   int global_count; // Global number of particles in simulation
   int local_count; // Particles within node bounds, excludes halo particles
   int max_local;  // Maximum number of local and halo particles
@@ -56,7 +58,8 @@ void ApplyGravity(struct Particles *restrict fluid_particles,
 
 void UpdatePositionStars(struct Particles *restrict particles,
                          const struct AABB *restrict boundary_global,
-                         const struct Obstacle *restrict obstacle);
+                         const struct Obstacle *restrict obstacle,
+                         const struct Params *params);
 
 void UpdatePositions(struct Particles *restrict fluid_particles);
 
@@ -76,7 +79,8 @@ void UpdateVelocities(struct Particles *restrict fluid_particles,
                       const struct Params *restrict params);
 
 void ApplyBoundaryConditions(double *restrict x, double *restrict y, double *restrictz ,
-                             const struct AABB *restrict boundary);
+                             const struct AABB *restrict boundary,
+                             const struct Params *params);
 
 void PrintAverageDensity(struct Particles *restrict particles);
 
