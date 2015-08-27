@@ -125,7 +125,7 @@ void ApplyVorticityConfinement(struct Particles *restrict particles,
                                const struct Params *restrict params,
                                const struct Neighbors *restrict neighbors) {
   const double dt = params->time_step;
-  const double eps = 0.001 * params->smoothing_radius;
+  const double eps = 0.1 * params->smoothing_radius;
   const int num_particles = particles->local_count;
   const double h = params->smoothing_radius;
   const double DelW_norm = params->DelW_norm;
@@ -199,8 +199,8 @@ void ApplyVorticityConfinement(struct Particles *restrict particles,
     }
 
     double eta_mag = sqrt(eta_x*eta_x + eta_y*eta_y + eta_z*eta_z);
-      if(eta_mag < h*0.0001)
-        eta_mag = h*0.0001;
+    if(eta_mag < h*0.0001)
+      eta_mag = h*0.0001;
 
     const double N_x = eta_x/eta_mag;
     const double N_y = eta_y/eta_mag;
@@ -210,9 +210,9 @@ void ApplyVorticityConfinement(struct Particles *restrict particles,
     const double wy = w_y[p_index];
     const double wz = w_z[p_index];
 
-    v_x[p_index] += eps * (N_y*wz - N_z*wy);
-    v_y[p_index] += eps * (N_z*wx - N_x*wz);
-    v_z[p_index] += eps * (N_x*wy - N_y*wx);
+    v_x[p_index] += dt * eps * (N_y*wz - N_z*wy);
+    v_y[p_index] += dt * eps * (N_z*wx - N_x*wz);
+    v_z[p_index] += dt * eps * (N_x*wy - N_y*wx);
   }
 }
 
@@ -221,6 +221,7 @@ void ApplyViscosity(struct Particles *restrict particles,
                    const struct Neighbors *restrict neighbors) {
 
   const double c = params->c;
+  const double rest_mass = particles->rest_mass;
   const double h = params->smoothing_radius;
   const double W_norm = params->W_norm;
 
@@ -277,9 +278,9 @@ void ApplyViscosity(struct Particles *restrict particles,
 
       // http://mmacklin.com/pbf_sig_preprint.pdf is missing 1/sigma contribution
       // see: http://www.cs.ubc.ca/~rbridson/docs/schechter-siggraph2012-ghostsph.pdf
-      partial_sum_x += vx_diff * w / density[q_index];
-      partial_sum_y += vy_diff * w / density[q_index];
-      partial_sum_z += vz_diff * w / density[q_index];
+      partial_sum_x += vx_diff * w * rest_mass / density[q_index];
+      partial_sum_y += vy_diff * w * rest_mass / density[q_index];
+      partial_sum_z += vz_diff * w * rest_mass / density[q_index];
     }
 
     partial_sum_x *= c;
@@ -493,6 +494,7 @@ void UpdateDPs(struct Particles *restrict particles,
 
   const double h = params->smoothing_radius;
   const double rest_density = particles->rest_density;
+  const double rest_mass = particles->rest_mass;
   const double k = params->k;
   const double W_norm = params->W_norm;
   const double DelW_norm = params->DelW_norm;
@@ -544,7 +546,8 @@ void UpdateDPs(struct Particles *restrict particles,
 
       const double WdWdq = W(r_mag, h, W_norm)/Wdq;
       const double delW = DelW(r_mag, h, DelW_norm);
-      const double s_corr = -k * WdWdq*WdWdq*WdWdq*WdWdq;
+      // rest_mass added although not explicitly stated in paper
+      const double s_corr = -k * rest_mass * WdWdq*WdWdq*WdWdq*WdWdq;
       const double dp = (lambda[p_index] + lambda[q_index] + s_corr) * delW;
 
       dpx += dp * x_diff/r_mag;
@@ -678,12 +681,17 @@ void ApplyBoundaryConditions(double *restrict x, double *restrict y,
 }
 
 void PrintAverageDensity(struct Particles *restrict particles) {
-  double average_density = 0.0;
 
-  for (int i=0; i<particles->local_count; ++i) {
-    average_density += particles->density[i];
+  const int local_count = particles->local_count;
+  const double *density = particles->density;
+
+  double average_density = 0.0;
+  #pragma acc parallel loop reduction(+:average_density) present(density)
+  for (int i=0; i<local_count; ++i) {
+    average_density += density[i];
   }
-  average_density /= (double)particles->local_count;
+
+  average_density /= (double)local_count;
   printf("average_density: %.16f\n", average_density);
 }
 
@@ -722,7 +730,8 @@ void AllocInitParticles(struct Particles *restrict particles,
   const double volume = (fluid_volume_initial->max_x - fluid_volume_initial->min_x)
                       * (fluid_volume_initial->max_y - fluid_volume_initial->min_y)
                       * (fluid_volume_initial->max_z - fluid_volume_initial->min_z);
-  particles->rest_mass = volume*particles->rest_density/particles->global_count;
+  particles->rest_mass = volume*particles->rest_density/(double)particles->global_count;
+  printf("rest mass: %f\n", particles->rest_mass);
 
   // Initialize particle values
   for (int i=0; i<particles->local_count; ++i) {
