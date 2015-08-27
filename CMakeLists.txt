@@ -49,9 +49,11 @@ find_package(Boost REQUIRED)
 include_directories(${BOOST_INCLUDE_DIRS})
 include_directories(${Boost_INCLUDE_DIR})
 
+if (${USE_ADIOS})
 find_package(ADIOS REQUIRED)
 include_directories(${ADIOS_INCLUDE_DIRS})
 target_link_libraries(sph ${ADIOS_LIBRARIES})
+endif()
 
 # Machine specific settings
 SITE_NAME(myhostname)
