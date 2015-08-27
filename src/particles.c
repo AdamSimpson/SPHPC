@@ -376,7 +376,8 @@ void UpdatePositionStars(struct Particles *restrict particles,
   #pragma acc parallel loop present(particles, \
             x_star, y_star, z_star,            \
             dp_x, dp_y, dp_z,                  \
-            boundary_global)
+            boundary_global,                   \
+            params)
   for (int i=0; i<num_particles; ++i) {
     x_star[i] += dp_x[i];
     y_star[i] += dp_y[i];
@@ -481,7 +482,7 @@ void ComputeLambda(struct Particles *restrict particles,
 
     sum_C *= (1.0/(rest_density * rest_density));
 
-    const double epsilon = 1.0;
+    const double epsilon = h * 0.1 ;
     lambda[i] = -Ci/(sum_C + epsilon);
   }
 }
@@ -578,7 +579,8 @@ void PredictPositions(struct Particles *restrict particles,
   #pragma acc parallel loop present(x_star, y_star, z_star, \
                                     x, y, z,                \
                                     v_x, v_y, v_z,          \
-                                    boundary_global)
+                                    boundary_global,        \
+                                    params)
   for (int i=0; i<num_particles; ++i) {
     x_star[i] = x[i] + (v_x[i] * dt);
     y_star[i] = y[i] + (v_y[i] * dt);
