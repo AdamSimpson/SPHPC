@@ -1,0 +1,22 @@
+cmake_minimum_required(VERSION 3.1)
+project(sph_post)
+
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/../CMake/)
+
+set(CMAKE_C_STANDARD 99)
+
+file(GLOB SRC_FILES src/*.c src/*.cc)
+
+add_executable(sph_post ${SRC_FILES})
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../Common)
+
+find_package(OpenVDB REQUIRED)
+include_directories(${OPENVDB_INCLUDE_PATH})
+target_link_libraries(sph_post ${OPENVDB_LIBRARIES})
+
+find_package(Boost REQUIRED)
+include_directories(${BOOST_INCLUDE_DIRS})
+include_directories(${Boost_INCLUDE_DIR})
+
+install(TARGETS sph_post DESTINATION bin)
