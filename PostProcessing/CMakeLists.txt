@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 2.8)
 project(sph_post)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/../CMake/)
@@ -12,7 +12,7 @@ add_executable(sph_post ${SRC_FILES})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../Common)
 
 find_package(OpenVDB REQUIRED)
-include_directories(${OPENVDB_INCLUDE_PATH})
+include_directories(${OPENVDB_INCLUDE_DIRS})
 target_link_libraries(sph_post ${OPENVDB_LIBRARIES})
 
 find_package(Boost REQUIRED)
