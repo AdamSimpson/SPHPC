@@ -10,8 +10,8 @@ find_package(PkgConfig)
 pkg_check_modules(PC_OPENVDB QUIET openvdb)
 set(OPENVDB_DEFINITIONS ${PC_OPENVDB_CFLAGS_OTHER})
 
-find_package(Ilmbase)
-find_package(TBB)
+find_package(Ilmbase REQUIRED)
+find_package(TBB REQUIRED)
 
 find_path(OPENVDB_INCLUDE_DIR openvdb/openvdb.h
           HINTS ${PC_OPENVDB_INCLUDEDIR} ${PC_OPENVDB_INCLUDE_DIRS}
@@ -21,7 +21,7 @@ find_library(OPENVDB_LIBRARY NAMES openvdb
              HINTS ${PC_OPENVDB_LIBDIR} ${PC_OPENVDB_LIBRARY_DIRS} )
 
 set(OPENVDB_LIBRARIES ${OPENVDB_LIBRARY} ${TBB_LIBRARIES} ${ILMBASE_LIBRARIES})
-set(OPENVDB_INCLUDE_DIRS ${OPENVDB_INCLUDE_DIR} ${TBB_INCLUDE_DIR} ${ILMBASE_INCLUDE_DIR})
+set(OPENVDB_INCLUDE_DIRS ${OPENVDB_INCLUDE_DIR} ${TBB_INCLUDE_DIRS} ${ILMBASE_INCLUDE_DIRS})
 
 include(FindPackageHandleStandardArgs)
 # handle the QUIETLY and REQUIRED arguments and set OPENVDB_FOUND to TRUE

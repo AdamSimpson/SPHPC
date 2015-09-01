@@ -15,8 +15,8 @@ find_package(OpenVDB REQUIRED)
 include_directories(${OPENVDB_INCLUDE_DIRS})
 target_link_libraries(sph_post ${OPENVDB_LIBRARIES})
 
-find_package(Boost REQUIRED)
-include_directories(${BOOST_INCLUDE_DIRS})
-include_directories(${Boost_INCLUDE_DIR})
+find_package(Boost 1.58.0 REQUIRED)
+include_directories(${Boost_INCLUDE_DIRS})
+Message("${Boost_INCLUDE_DIRS}")
 
 install(TARGETS sph_post DESTINATION bin)
