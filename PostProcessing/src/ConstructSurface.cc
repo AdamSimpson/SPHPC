@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include "openvdb/openvdb.h"
 #include "openvdb/tools/ParticlesToLevelSet.h"
@@ -10,6 +11,7 @@ class Particles {
     std::vector<openvdb::Vec3R> particles;
     openvdb::Real radius;
   public:
+    typedef openvdb::Vec3R  value_type;
     Particles(const openvdb::Real &radius) : radius(radius) {};
     void add(const openvdb::Vec3R &coord) {this->particles.push_back(coord); }
     void getPos(size_t n, openvdb::Vec3R &pos) const { pos = particles[n]; }
