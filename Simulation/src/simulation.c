@@ -82,10 +82,6 @@ int main(int argc, char *argv[]) {
       UpdateHaloTuple(&communication, &params, &particles,
                        particles.dp_x, particles.dp_y, particles.dp_z);
 
-//      #pragma acc update host(particles.dp_x[0:100])
-//      for(int i=0; i<100; i++)
-//      printf("dp_x[%d] = %f\n", i, particles.dp_x[i]);
-
       UpdatePositionStars(&particles, &boundary_global, &obstacle, &params);
       UpdateHaloTuple(&communication, &params, &particles,
                        particles.x_star, particles.y_star, particles.z_star);

@@ -485,7 +485,7 @@ void ComputeLambda(struct Particles *restrict particles,
 
     sum_C /= (rest_density * rest_density);
 
-    const double epsilon = 0.01;
+    const double epsilon = 1.0;
     lambda[i] = -Ci/(sum_C + epsilon);
   }
 }
@@ -729,15 +729,15 @@ void AllocInitParticles(struct Particles *restrict particles,
   particles->rest_mass = 1.0;
   printf("Rest mass: %f\n", particles->rest_mass);
 
-  const double fluid_volume = (fluid_volume_initial->max_x - fluid_volume_initial->min_x)
-                             *(fluid_volume_initial->max_y - fluid_volume_initial->min_y)
-                             *(fluid_volume_initial->max_z - fluid_volume_initial->min_z);
+//  const double fluid_volume = (fluid_volume_initial->max_x - fluid_volume_initial->min_x)
+//                             *(fluid_volume_initial->max_y - fluid_volume_initial->min_y)
+//                             *(fluid_volume_initial->max_z - fluid_volume_initial->min_z);
 
-  particles->rest_density = particles->global_count / fluid_volume;
+  particles->rest_density = 3.2;//particles->rest_mass / (4.0/3.0*M_PI*pow(params->smoothing_radius,3.0));
   //particles->rest_mass / pow(2.0*particles->rest_radius,3);
   printf("Rest Density: %f\n", particles->rest_density);
 
-  // Initialize particle values
+  // Initialize particle values`
   for (int i=0; i<particles->local_count; ++i) {
     particles->v_x[i] = 0.0;
     particles->v_y[i] = 0.0;
