@@ -20,7 +20,7 @@ void ConstructFluidVolume(struct Particles *const particles,
                           struct Params *const params,
                           const struct AABB *const fluid) {
 
-  const double spacing = params->smoothing_radius/2.0;
+  const double spacing = 2.0*particles->rest_radius;
 
   // Start node particles at integer multiple of spacing
   double min_x;
@@ -72,7 +72,7 @@ void SetParticleNumbers(const struct AABB *const fluid_global,
                         struct Params *const params,
                         struct Communication *const communication) {
 
-  const double spacing = params->smoothing_radius/2.0;
+  const double spacing = 2.0*particles->rest_radius;
 
   // Get some baseline numbers useful to define maximum particle numbers
   const int num_x = floor((fluid_global->max_x - fluid_global->min_x ) / spacing);

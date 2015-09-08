@@ -30,6 +30,7 @@ struct Particles {
 
   double rest_density;
   double rest_mass;
+  double rest_radius;
   int global_count; // Global number of particles in simulation
   int local_count; // Particles within node bounds, excludes halo particles
   int max_local;  // Maximum number of local and halo particles
@@ -69,7 +70,8 @@ void ComputeLambda(struct Particles *restrict fluid_particles,
 
 void UpdateDPs(struct Particles *restrict fluid_particles,
                const struct Params *restrict params,
-               const struct Neighbors *restrict neighbors);
+               const struct Neighbors *restrict neighbors,
+               const int substep);
 
 void PredictPositions(struct Particles *restrict particles,
                       const struct Params *restrict params,

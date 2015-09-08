@@ -12,15 +12,16 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
   add_definitions(-DDEBUG -DTHRUST_DEBUG)
 endif()
 
-file(GLOB SRC_FILES Simulation/*.c Simulation/*.cc)
-
+file(GLOB SRC_FILES src/*.c src/*.cc)
+include_directories(../Common)
+ 
 # Remove adios files from glob if not set
 if (${USE_ADIOS})
-  file(GLOB MPI_IO_REMOVE Simulation/fileio_MPI_IO.c)
+  file(GLOB MPI_IO_REMOVE src/fileio_MPI_IO.c)
   list(REMOVE_ITEM SRC_FILES ${MPI_IO_REMOVE})
   add_definitions( -DUSE_ADIOS )
 else()
-  file(GLOB ADIOS_REMOVE Simulation/fileio_adios.c)
+  file(GLOB ADIOS_REMOVE src/fileio_adios.c)
   list(REMOVE_ITEM SRC_FILES ${ADIOS_REMOVE})
 endif()
 
@@ -62,7 +63,7 @@ if (${myhostname} MATCHES "(.*)titan(.*)" OR ${myhostname} MATCHES "(.*)chester(
   target_link_libraries(sph_sim ${M_LIB})
 
   if (USE_OPENACC)
-    set(ACC_FLAGS "-acc -Minfo=acc -O3 -ta=tesla:cuda6.5,cc35 -Mcuda")
+    set(ACC_FLAGS "-acc -Minfo=acc -O3 -ta=tesla:cc50 -Mcuda")
   endif()
 
   set(CMAKE_C_FLAGS "${ACC_FLAGS}")

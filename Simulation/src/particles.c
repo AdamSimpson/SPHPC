@@ -23,6 +23,7 @@ static inline double W(const double r, const double h, const double norm) {
 
   const double q = r/h;
   const double W = norm*(1.0-q*q)*(1.0-q*q)*(1.0-q*q);
+//  const double W = norm*(h*h - r*r)*(h*h - r*r)*(h*h - r*r);
   return W;
 }
 
@@ -35,6 +36,7 @@ static inline double DelW(const double r, const double h, const double norm) {
 
   const double q = r/h;
   const double DelW = norm*(1.0-q)*(1.0-q);
+//  const double DelW = norm*(h-r) * (h-r);
   return DelW;
 }
 
@@ -221,7 +223,6 @@ void ApplyViscosity(struct Particles *restrict particles,
                    const struct Neighbors *restrict neighbors) {
 
   const double c = params->c;
-  const double rest_mass = particles->rest_mass;
   const double h = params->smoothing_radius;
   const double W_norm = params->W_norm;
 
@@ -278,9 +279,9 @@ void ApplyViscosity(struct Particles *restrict particles,
 
       // http://mmacklin.com/pbf_sig_preprint.pdf is missing 1/sigma contribution
       // see: http://www.cs.ubc.ca/~rbridson/docs/schechter-siggraph2012-ghostsph.pdf
-      partial_sum_x += vx_diff * w * rest_mass / density[q_index];
-      partial_sum_y += vy_diff * w * rest_mass / density[q_index];
-      partial_sum_z += vz_diff * w * rest_mass / density[q_index];
+      partial_sum_x += vx_diff * w  / density[q_index];
+      partial_sum_y += vy_diff * w  / density[q_index];
+      partial_sum_z += vz_diff * w  / density[q_index];
     }
 
     partial_sum_x *= c;
@@ -299,9 +300,9 @@ void ComputeDensities(struct Particles *restrict particles,
                       const struct Neighbors *restrict neighbors) {
 
   const double h = params->smoothing_radius;
+  const double rest_mass = particles->rest_mass;
   const double W_norm = params->W_norm;
   const double W_0 = W(0.0, h, W_norm);
-  const double rest_mass = particles->rest_mass;
   const int num_particles = particles->local_count;
 
   // OpenACC can't reliably handle SoA...
@@ -454,6 +455,7 @@ void ComputeLambda(struct Particles *restrict particles,
     const double y_star_p = y_star[p_index];
     const double z_star_p = z_star[p_index];
 
+    #pragma acc loop seq
     for (int j=0; j<n->count; ++j) {
       const int q_index = n->neighbor_indices[j];
       const double x_diff = x_star_p - x_star[q_index];
@@ -481,20 +483,20 @@ void ComputeLambda(struct Particles *restrict particles,
             + sum_grad_y*sum_grad_y
             + sum_grad_z*sum_grad_z);
 
-    sum_C *= (1.0/(rest_density * rest_density));
+    sum_C /= (rest_density * rest_density);
 
-    const double epsilon = h * 0.1 ;
+    const double epsilon = 0.01;
     lambda[i] = -Ci/(sum_C + epsilon);
   }
 }
 
 void UpdateDPs(struct Particles *restrict particles,
                const struct Params *restrict params,
-               const struct Neighbors *restrict neighbors) {
+               const struct Neighbors *restrict neighbors,
+               const int substep) {
 
   const double h = params->smoothing_radius;
   const double rest_density = particles->rest_density;
-  const double rest_mass = particles->rest_mass;
   const double k = params->k;
   const double W_norm = params->W_norm;
   const double DelW_norm = params->DelW_norm;
@@ -511,6 +513,9 @@ void UpdateDPs(struct Particles *restrict particles,
   double *restrict dp_z    = particles->dp_z;
   const double *restrict lambda = particles->lambda;
   const struct NeighborBucket *restrict neighbor_buckets = neighbors->neighbor_buckets;
+
+  const double k_stiff = 0.95;
+  const double stiffness = 1.0 - pow((1.0-k_stiff), 1.0/substep);
 
   // acc kernels seems to work just as well
   #pragma acc parallel loop gang vector vector_length(64)   \
@@ -545,9 +550,8 @@ void UpdateDPs(struct Particles *restrict particles,
         r_mag = h*0.0001;
 
       const double WdWdq = W(r_mag, h, W_norm)/Wdq;
+      const double s_corr = -k * WdWdq*WdWdq*WdWdq*WdWdq;
       const double delW = DelW(r_mag, h, DelW_norm);
-      // rest_mass added although not explicitly stated in paper
-      const double s_corr = -k * rest_mass * WdWdq*WdWdq*WdWdq*WdWdq;
       const double dp = (lambda[p_index] + lambda[q_index] + s_corr) * delW;
 
       dpx += dp * x_diff/r_mag;
@@ -555,9 +559,9 @@ void UpdateDPs(struct Particles *restrict particles,
       dpz += dp * z_diff/r_mag;
     }
 
-    dp_x[p_index] = dpx/rest_density;
-    dp_y[p_index] = dpy/rest_density;
-    dp_z[p_index] = dpz/rest_density;
+    dp_x[p_index] = stiffness*dpx/rest_density;
+    dp_y[p_index] = stiffness*dpy/rest_density;
+    dp_z[p_index] = stiffness*dpz/rest_density;
   }
 }
 
@@ -602,7 +606,7 @@ void UpdateVelocities(struct Particles *restrict particles,
                       const struct Params *restrict params) {
 
   const double dt = params->time_step;
-  const double v_max = 30.0;
+  const double v_max = 300.0;
 
   // Update local and halo particles, update halo so that XSPH visc. is correct
   // NEED TO RETHINK THIS
@@ -722,16 +726,16 @@ void AllocInitParticles(struct Particles *restrict particles,
 
   ConstructFluidVolume(particles, params, fluid_volume_initial);
 
-  // Set particle density and mass
-  particles->rest_density = 1000.0;
-  printf("rest density: %f\n", particles->rest_density);
+  particles->rest_mass = 1.0;
+  printf("Rest mass: %f\n", particles->rest_mass);
 
-  // Mass of each particle
-  const double volume = (fluid_volume_initial->max_x - fluid_volume_initial->min_x)
-                      * (fluid_volume_initial->max_y - fluid_volume_initial->min_y)
-                      * (fluid_volume_initial->max_z - fluid_volume_initial->min_z);
-  particles->rest_mass = volume*particles->rest_density/(double)particles->global_count;
-  printf("rest mass: %f\n", particles->rest_mass);
+  const double fluid_volume = (fluid_volume_initial->max_x - fluid_volume_initial->min_x)
+                             *(fluid_volume_initial->max_y - fluid_volume_initial->min_y)
+                             *(fluid_volume_initial->max_z - fluid_volume_initial->min_z);
+
+  particles->rest_density = particles->global_count / fluid_volume;
+  //particles->rest_mass / pow(2.0*particles->rest_radius,3);
+  printf("Rest Density: %f\n", particles->rest_density);
 
   // Initialize particle values
   for (int i=0; i<particles->local_count; ++i) {

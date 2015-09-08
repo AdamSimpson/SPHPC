@@ -294,7 +294,6 @@ void FillNeighbors(const struct Particles *restrict particles,
          } //dx
         } //dy
       } //dz
-
   }
 
 }

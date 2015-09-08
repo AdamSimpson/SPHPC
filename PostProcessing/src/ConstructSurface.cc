@@ -1,5 +1,4 @@
 #include <iostream>
-#include <fstream>
 #include <vector>
 #include "openvdb/openvdb.h"
 #include "openvdb/tools/ParticlesToLevelSet.h"
@@ -11,7 +10,6 @@ class Particles {
     std::vector<openvdb::Vec3R> particles;
     openvdb::Real radius;
   public:
-    typedef openvdb::Vec3R  value_type;
     Particles(const openvdb::Real &radius) : radius(radius) {};
     void add(const openvdb::Vec3R &coord) {this->particles.push_back(coord); }
     void getPos(size_t n, openvdb::Vec3R &pos) const { pos = particles[n]; }
@@ -57,7 +55,7 @@ int main(int argc, char **argv) {
   // Smooth level set
   filter.gaussian();
 //  filter.laplacian();
-  openvdb::FloatGrid::Ptr grid = level_set;//raster.getSdfGrid();
+  openvdb::FloatGrid::Ptr grid = level_set;
 
   // Erode level set
   filter.offset(particle_radius);

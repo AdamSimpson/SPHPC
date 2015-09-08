@@ -69,17 +69,22 @@ int main(int argc, char *argv[]) {
 
     FindAllNeighbors(&particles, &params, &neighbors);
 
-    const int solve_iterations = 4;
+    const int solve_iterations = 10;
     for (int sub_i=0; sub_i<solve_iterations; ++sub_i) {
       ComputeDensities(&particles, &params, &neighbors);
+      PrintAverageDensity(&particles);
       UpdateHaloScalar(&communication, &params, &particles, particles.density);
 
       ComputeLambda(&particles, &params, &neighbors);
       UpdateHaloScalar(&communication, &params, &particles, particles.lambda);
 
-      UpdateDPs(&particles, &params, &neighbors);
+      UpdateDPs(&particles, &params, &neighbors, sub_i);
       UpdateHaloTuple(&communication, &params, &particles,
                        particles.dp_x, particles.dp_y, particles.dp_z);
+
+//      #pragma acc update host(particles.dp_x[0:100])
+//      for(int i=0; i<100; i++)
+//      printf("dp_x[%d] = %f\n", i, particles.dp_x[i]);
 
       UpdatePositionStars(&particles, &boundary_global, &obstacle, &params);
       UpdateHaloTuple(&communication, &params, &particles,
@@ -90,18 +95,18 @@ int main(int argc, char *argv[]) {
 
     UpdateVelocities(&particles, &params);
 
-    ApplyViscosity(&particles, &params, &neighbors);
-    UpdateHaloTuple(&communication, &params, &particles,
-                    particles.v_x, particles.v_y, particles.v_z);
+//    ApplyViscosity(&particles, &params, &neighbors);
+//    UpdateHaloTuple(&communication, &params, &particles,
+//                    particles.v_x, particles.v_y, particles.v_z);
 
-    ComputeVorticity(&particles, &params, &neighbors);
-    UpdateHaloTuple(&communication, &params, &particles,
-                    particles.w_x, particles.w_y, particles.w_z);
-    ApplyVorticityConfinement(&particles, &params, &neighbors);
+//    ComputeVorticity(&particles, &params, &neighbors);
+//    UpdateHaloTuple(&communication, &params, &particles,
+//                    particles.w_x, particles.w_y, particles.w_z);
+//    ApplyVorticityConfinement(&particles, &params, &neighbors);
 
     UpdatePositions(&particles);
 
-    PrintAverageDensity(&particles);
+//    PrintAverageDensity(&particles);
 
     // Write file at 30 FPS
     if (n % (int)(1.0/(params.time_step*30.0)) == 0)
@@ -139,12 +144,14 @@ void SetParameters(struct Params *const params,
 
   // Initial spacing between particles
   const float spacing_particle = pow(volume/particles->global_count, 1.0/3.0);
+  particles->rest_radius = spacing_particle/2.0;
+  printf("particle radius: %f\n", particles->rest_radius);
 
   // Smoothing radius, h
-  params->smoothing_radius = 2.0*spacing_particle;
-  params->dq = 0.1*params->smoothing_radius;
-
+  params->smoothing_radius = 1.3*spacing_particle;
   printf("smoothing radius: %f\n", params->smoothing_radius);
+
+  params->dq = 0.1*params->smoothing_radius;
 
   // Set initial node boundaries
   // Equally divide water volume between all ranks
@@ -164,6 +171,8 @@ void SetParameters(struct Params *const params,
   #ifndef M_PI
     #define M_PI  3.14159265358979323846
   #endif
+//  params->W_norm = 315.0/(64.0*M_PI*pow(params->smoothing_radius, 9.0));
+//  params->DelW_norm = -45.0/(M_PI*pow(params->smoothing_radius, 6.0));
 
   // Normalization for poly6 and del_spiky uing W(q) where q = r/h
   params->W_norm = 315.0/(64.0*M_PI*pow(params->smoothing_radius, 3.0));
