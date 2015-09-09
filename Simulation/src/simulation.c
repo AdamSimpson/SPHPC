@@ -167,10 +167,10 @@ void SetParameters(struct Params *const params,
   #ifndef M_PI
     #define M_PI  3.14159265358979323846
   #endif
-//  params->W_norm = 315.0/(64.0*M_PI*pow(params->smoothing_radius, 9.0));
-//  params->DelW_norm = -45.0/(M_PI*pow(params->smoothing_radius, 6.0));
+  params->W_norm = 315.0/(64.0*M_PI*pow(params->smoothing_radius, 9.0));
+  params->DelW_norm = -45.0/(M_PI*pow(params->smoothing_radius, 6.0));
 
   // Normalization for poly6 and del_spiky uing W(q) where q = r/h
-  params->W_norm = 315.0/(64.0*M_PI*pow(params->smoothing_radius, 3.0));
-  params->DelW_norm = -45.0/(M_PI*pow(params->smoothing_radius, 3.0));
+//  params->W_norm = 315.0/(64.0*M_PI*pow(params->smoothing_radius, 3.0));
+//  params->DelW_norm = -45.0/(M_PI*pow(params->smoothing_radius, 3.0));
 }

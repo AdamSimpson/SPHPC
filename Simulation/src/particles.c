@@ -21,9 +21,9 @@ static inline double W(const double r, const double h, const double norm) {
   if(r > h)
     return 0.0;
 
-  const double q = r/h;
-  const double W = norm*(1.0-q*q)*(1.0-q*q)*(1.0-q*q);
-//  const double W = norm*(h*h - r*r)*(h*h - r*r)*(h*h - r*r);
+//  const double q = r/h;
+//  const double W = norm*(1.0-q*q)*(1.0-q*q)*(1.0-q*q);
+  const double W = norm*(h*h - r*r)*(h*h - r*r)*(h*h - r*r);
   return W;
 }
 
@@ -34,9 +34,9 @@ static inline double DelW(const double r, const double h, const double norm) {
   if(r > h)
     return 0.0;
 
-  const double q = r/h;
-  const double DelW = norm*(1.0-q)*(1.0-q);
-//  const double DelW = norm*(h-r) * (h-r);
+//  const double q = r/h;
+//  const double DelW = norm*(1.0-q)*(1.0-q);
+  const double DelW = norm*(h-r) * (h-r);
   return DelW;
 }
 
@@ -485,7 +485,7 @@ void ComputeLambda(struct Particles *restrict particles,
 
     sum_C /= (rest_density * rest_density);
 
-    const double epsilon = 1.0;
+    const double epsilon = 1.0; // Jiggle this around orders of magnitude depending on problem
     lambda[i] = -Ci/(sum_C + epsilon);
   }
 }
@@ -733,8 +733,7 @@ void AllocInitParticles(struct Particles *restrict particles,
 //                             *(fluid_volume_initial->max_y - fluid_volume_initial->min_y)
 //                             *(fluid_volume_initial->max_z - fluid_volume_initial->min_z);
 
-  particles->rest_density = 3.2;//particles->rest_mass / (4.0/3.0*M_PI*pow(params->smoothing_radius,3.0));
-  //particles->rest_mass / pow(2.0*particles->rest_radius,3);
+  particles->rest_density = particles->rest_mass / pow(2.0*particles->rest_radius,3.0);
   printf("Rest Density: %f\n", particles->rest_density);
 
   // Initialize particle values`
