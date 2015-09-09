@@ -21,8 +21,6 @@ static inline double W(const double r, const double h, const double norm) {
   if(r > h)
     return 0.0;
 
-//  const double q = r/h;
-//  const double W = norm*(1.0-q*q)*(1.0-q*q)*(1.0-q*q);
   const double W = norm*(h*h - r*r)*(h*h - r*r)*(h*h - r*r);
   return W;
 }
@@ -34,9 +32,7 @@ static inline double DelW(const double r, const double h, const double norm) {
   if(r > h)
     return 0.0;
 
-//  const double q = r/h;
-//  const double DelW = norm*(1.0-q)*(1.0-q);
-  const double DelW = norm*(h-r) * (h-r);
+  const double DelW = norm*(h-r)*(h-r);
   return DelW;
 }
 
@@ -292,7 +288,6 @@ void ApplyViscosity(struct Particles *restrict particles,
     v_y[p_index] += partial_sum_y;
     v_z[p_index] += partial_sum_z;
   }
-
 }
 
 void ComputeDensities(struct Particles *restrict particles,
@@ -445,7 +440,10 @@ void ComputeLambda(struct Particles *restrict particles,
   for (int i=0; i<num_particles; ++i) {
     const int p_index = i;
     const struct NeighborBucket *restrict n = &neighbor_buckets[i];
-    const double Ci = density[p_index]/rest_density - 1.0;
+
+    double Constraint = density[p_index]/rest_density - 1.0;
+    const double Ci = (Constraint < 0.0 ? 0.0 : Constraint);
+
     double sum_C = 0.0;
     double sum_grad_x = 0.0;
     double sum_grad_y = 0.0;
@@ -485,7 +483,7 @@ void ComputeLambda(struct Particles *restrict particles,
 
     sum_C /= (rest_density * rest_density);
 
-    const double epsilon = 1.0; // Jiggle this around orders of magnitude depending on problem
+    const double epsilon = 0.01; // Jiggle this around orders of magnitude depending on problem
     lambda[i] = -Ci/(sum_C + epsilon);
   }
 }
@@ -606,7 +604,7 @@ void UpdateVelocities(struct Particles *restrict particles,
                       const struct Params *restrict params) {
 
   const double dt = params->time_step;
-  const double v_max = 300.0;
+  const double v_max = 3.0; // Change to ~sqrt(2*h_max/g)
 
   // Update local and halo particles, update halo so that XSPH visc. is correct
   // NEED TO RETHINK THIS
@@ -699,6 +697,66 @@ void PrintAverageDensity(struct Particles *restrict particles) {
   printf("average_density: %.16f\n", average_density);
 }
 
+void PrintAverageDp(struct Particles *restrict particles) {
+
+  const int local_count = particles->local_count;
+  const double *dp_x = particles->dp_x;
+  const double *dp_y = particles->dp_y;
+  const double *dp_z = particles->dp_z;
+
+  double average_dp_x, average_dp_y, average_dp_z = 0.0;
+  #pragma acc parallel loop reduction(+:average_dp_x,average_dp_y,average_dp_z) present(dp_x, dp_y, dp_z)
+  for (int i=0; i<local_count; ++i) {
+    average_dp_x += dp_x[i];
+    average_dp_y += dp_y[i];
+    average_dp_z += dp_z[i];
+  }
+
+  average_dp_x /= (double)local_count;
+  average_dp_y /= (double)local_count;
+  average_dp_z /= (double)local_count;
+
+  printf("average_dp: (%.16f, %.16f, %.16f)\n", average_dp_x, average_dp_y, average_dp_z);
+}
+
+void PrintAverageLambda(struct Particles *restrict particles) {
+
+  const int local_count = particles->local_count;
+  const double *lambda = particles->lambda;
+
+  double average_lambda = 0.0;
+  #pragma acc parallel loop reduction(+:average_lambda) present(lambda)
+  for (int i=0; i<local_count; ++i) {
+    average_lambda += lambda[i];
+  }
+
+  average_lambda /= (double)local_count;
+
+  printf("average_lambda: %.16f\n", average_lambda);
+}
+
+void PrintAverageV(struct Particles *restrict particles) {
+
+  const int local_count = particles->local_count;
+  const double *v_x = particles->v_x;
+  const double *v_y = particles->v_y;
+  const double *v_z = particles->v_z;
+
+  double average_v_x, average_v_y, average_v_z = 0.0;
+  #pragma acc parallel loop reduction(+:average_v_x,average_v_y,average_v_z) present(v_x, v_y, v_z)
+  for (int i=0; i<local_count; ++i) {
+    average_v_x += v_x[i];
+    average_v_y += v_y[i];
+    average_v_z += v_z[i];
+  }
+
+  average_v_x /= (double)local_count;
+  average_v_y /= (double)local_count;
+  average_v_z /= (double)local_count;
+
+  printf("average_v: (%.16f, %.16f, %.16f)\n", average_v_x, average_v_y, average_v_z);
+}
+
 void AllocInitParticles(struct Particles *restrict particles,
                         struct Params *restrict params,
                         struct AABB *restrict fluid_volume_initial) {
@@ -727,14 +785,11 @@ void AllocInitParticles(struct Particles *restrict particles,
   ConstructFluidVolume(particles, params, fluid_volume_initial);
 
   particles->rest_mass = 1.0;
-  printf("Rest mass: %f\n", particles->rest_mass);
-
-//  const double fluid_volume = (fluid_volume_initial->max_x - fluid_volume_initial->min_x)
-//                             *(fluid_volume_initial->max_y - fluid_volume_initial->min_y)
-//                             *(fluid_volume_initial->max_z - fluid_volume_initial->min_z);
-
   particles->rest_density = particles->rest_mass / pow(2.0*particles->rest_radius,3.0);
+
+  printf("Rest mass: %f\n", particles->rest_mass);
   printf("Rest Density: %f\n", particles->rest_density);
+
 
   // Initialize particle values`
   for (int i=0; i<particles->local_count; ++i) {

@@ -76,9 +76,11 @@ int main(int argc, char *argv[]) {
       UpdateHaloScalar(&communication, &params, &particles, particles.density);
 
       ComputeLambda(&particles, &params, &neighbors);
+      PrintAverageLambda(&particles);
       UpdateHaloScalar(&communication, &params, &particles, particles.lambda);
 
       UpdateDPs(&particles, &params, &neighbors, sub_i);
+      PrintAverageDp(&particles);
       UpdateHaloTuple(&communication, &params, &particles,
                        particles.dp_x, particles.dp_y, particles.dp_z);
 
@@ -90,6 +92,7 @@ int main(int argc, char *argv[]) {
     }
 
     UpdateVelocities(&particles, &params);
+    PrintAverageV(&particles);
 
 //    ApplyViscosity(&particles, &params, &neighbors);
 //    UpdateHaloTuple(&communication, &params, &particles,
@@ -169,8 +172,4 @@ void SetParameters(struct Params *const params,
   #endif
   params->W_norm = 315.0/(64.0*M_PI*pow(params->smoothing_radius, 9.0));
   params->DelW_norm = -45.0/(M_PI*pow(params->smoothing_radius, 6.0));
-
-  // Normalization for poly6 and del_spiky uing W(q) where q = r/h
-//  params->W_norm = 315.0/(64.0*M_PI*pow(params->smoothing_radius, 3.0));
-//  params->DelW_norm = -45.0/(M_PI*pow(params->smoothing_radius, 3.0));
 }

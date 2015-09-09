@@ -85,6 +85,9 @@ void ApplyBoundaryConditions(double *restrict x, double *restrict y, double *res
                              const struct Params *params);
 
 void PrintAverageDensity(struct Particles *restrict particles);
+void PrintAverageDp(struct Particles *restrict particles);
+void PrintAverageLambda(struct Particles *restrict particles);
+void PrintAverageV(struct Particles *restrict particles);
 
 void AllocInitParticles(struct Particles *restrict particles,
                         struct Params *restrict params,

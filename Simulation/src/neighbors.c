@@ -75,7 +75,6 @@ void FindAllNeighbors(const struct Particles *restrict particles,
 }
 
 // Uniform grid hash
-// We don't check if the position is out of bounds so x,y,z must be valid
 #pragma acc routine seq
 unsigned int HashVal(const struct Neighbors *restrict neighbors,
                      const double x,
