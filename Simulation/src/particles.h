@@ -24,6 +24,9 @@ struct Particles {
   double *restrict w_x;
   double *restrict w_y;
   double *restrict w_z;
+  double *restrict color_x;
+  double *restrict color_y;
+  double *restrict color_z;
   double *restrict density;
   double *restrict lambda;
   int    *restrict id;
@@ -68,6 +71,10 @@ void ComputeLambda(struct Particles *restrict fluid_particles,
                      const struct Params *restrict params,
                      const struct Neighbors *restrict neighbors);
 
+void ComputeSurfaceTension(struct Particles *restrict particles,
+                           const struct Params *restrict params,
+                           const struct Neighbors *restrict neighbors);
+
 void UpdateDPs(struct Particles *restrict fluid_particles,
                const struct Params *restrict params,
                const struct Neighbors *restrict neighbors,
@@ -85,9 +92,13 @@ void ApplyBoundaryConditions(double *restrict x, double *restrict y, double *res
                              const struct Params *params);
 
 void PrintAverageDensity(struct Particles *restrict particles);
+void PrintDensity(struct Particles *restrict particles, const int id);
 void PrintAverageDp(struct Particles *restrict particles);
+void PrintDp(struct Particles *restrict particles, const int id);
+void PrintAverageLambda(struct Particles *restrict particles);
 void PrintAverageLambda(struct Particles *restrict particles);
 void PrintAverageV(struct Particles *restrict particles);
+void PrintVelocity(struct Particles *restrict particles, const int id);
 
 void AllocInitParticles(struct Particles *restrict particles,
                         struct Params *restrict params,

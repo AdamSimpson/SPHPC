@@ -40,6 +40,164 @@ static inline double DelW(const double r, const double h, const double norm) {
 // Particle attribute computations
 ////////////////////////////////////////////////////////////////////////////
 
+// http://cg.informatik.uni-freiburg.de/publications/siggraphasia2013/2013_SIGGRAPHASIA_surface_tension_adhesion.pdf
+#pragma acc routine seq
+static inline double C(const double r, const double h, const double norm) {
+  double C;
+
+  if(r > h)
+    C = 0.0;
+  else if(r <= h/2.0)
+    C = 2.0*(h-r)*(h-r)*(h-r)*r*r*r - (h*h*h*h*h*h/64.0);
+  else // r/2 < h < h
+    C = (h-r)*(h-r)*(h-r)*r*r*r;
+
+  return norm*C;
+}
+
+void ComputeSurfaceTension(struct Particles *restrict particles,
+                           const struct Params *restrict params,
+                           const struct Neighbors *restrict neighbors) {
+  const double rest_density = particles->rest_density;
+  const double h = params->smoothing_radius;
+  const double DelW_norm = params->DelW_norm;
+  const double dt = params->time_step;
+  const int num_particles = particles->local_count;
+
+  // Cohesion Term
+  const double C_norm = 32.0/(M_PI*pow(h,9));
+  const double gama = params->k;
+
+    // OpenACC can't reliably handle SoA...
+    const double *restrict x_star = particles->x_star;
+    const double *restrict y_star = particles->y_star;
+    const double *restrict z_star = particles->z_star;
+    double *restrict v_x = particles->v_x;
+    double *restrict v_y = particles->v_y;
+    double *restrict v_z = particles->v_z;
+    double *restrict color_x = particles->color_x;
+    double *restrict color_y = particles->color_y;
+    double *restrict color_z = particles->color_z;
+    const double *restrict density = particles->density;
+    const struct NeighborBucket *restrict neighbor_buckets = neighbors->neighbor_buckets;
+
+    //Calculate color for each particle
+    #pragma acc parallel loop gang vector vector_length(64)  \
+                              present(particles,             \
+                              x_star, y_star, z_star,        \
+                              color_x, color_y, color_z,     \
+                              density,                       \
+                              params,                        \
+                              neighbors,                     \
+                              neighbor_buckets)
+    for (int i=0; i<num_particles; ++i) {
+      const int p_index = i;
+      const struct NeighborBucket *restrict n = &neighbor_buckets[i];
+
+      double color_dx = 0.0;
+      double color_dy = 0.0;
+      double color_dz = 0.0;
+
+      const double x_star_p = x_star[p_index];
+      const double y_star_p = y_star[p_index];
+      const double z_star_p = z_star[p_index];
+
+      const double density_p = density[p_index];
+
+      #pragma acc loop seq
+      for (int j=0; j<n->count; ++j) {
+        const int q_index = n->neighbor_indices[j];
+        const double x_diff = x_star_p - x_star[q_index];
+        const double y_diff = y_star_p - y_star[q_index];
+        const double z_diff = z_star_p - z_star[q_index];
+
+        double r_mag = sqrt(x_diff*x_diff + y_diff*y_diff + z_diff*z_diff);
+        if(r_mag < h*0.0001)
+          r_mag = h*0.0001;
+
+          const double grad = DelW(r_mag, h, DelW_norm);
+
+          color_dx += h / density[q_index] * grad * x_diff/r_mag;
+          color_dy += h / density[q_index] * grad * y_diff/r_mag;
+          color_dz += h / density[q_index] * grad * z_diff/r_mag;
+      }
+
+      color_x[p_index] = color_dx;
+      color_y[p_index] = color_dy;
+      color_z[p_index] = color_dz;
+    }
+
+    // Calculate surface tension at each particle
+    #pragma acc parallel loop gang vector vector_length(64)  \
+                              present(particles,             \
+                              x_star, y_star, z_star,        \
+                              v_x, v_y, v_z,                 \
+                              color_x, color_y, color_z,     \
+                              density,                       \
+                              params,                        \
+                              neighbors,                     \
+                              neighbor_buckets)
+    for (int i=0; i<num_particles; ++i) {
+      const int p_index = i;
+      const struct NeighborBucket *restrict n = &neighbor_buckets[i];
+
+      double F_surface_x = 0.0;
+      double F_surface_y = 0.0;
+      double F_surface_z = 0.0;
+
+      double F_cohesion_x = 0.0;
+      double F_cohesion_y = 0.0;
+      double F_cohesion_z = 0.0;
+
+      double F_curvature_x = 0.0;
+      double F_curvature_y = 0.0;
+      double F_curvature_z = 0.0;
+
+      const double x_star_p = x_star[p_index];
+      const double y_star_p = y_star[p_index];
+      const double z_star_p = z_star[p_index];
+
+      const double density_p = density[p_index];
+
+      const double color_x_p = color_x[p_index];
+      const double color_y_p = color_y[p_index];
+      const double color_z_p = color_z[p_index];
+
+      #pragma acc loop seq
+      for (int j=0; j<n->count; ++j) {
+        const int q_index = n->neighbor_indices[j];
+        const double x_diff = x_star_p - x_star[q_index];
+        const double y_diff = y_star_p - y_star[q_index];
+        const double z_diff = z_star_p - z_star[q_index];
+
+        double r_mag = sqrt(x_diff*x_diff + y_diff*y_diff + z_diff*z_diff);
+        if(r_mag < h*0.0001)
+          r_mag = h*0.0001;
+
+          const double c = C(r_mag, h, C_norm);
+          F_cohesion_x -= gama * c * x_diff/r_mag;
+          F_cohesion_y -= gama * c * y_diff/r_mag;
+          F_cohesion_z -= gama * c * z_diff/r_mag;
+
+          F_curvature_x -= gama/5000.0 * (color_x_p - color_x[q_index]);
+          F_curvature_y -= gama/5000.0 * (color_y_p - color_y[q_index]);
+          F_curvature_z -= gama/5000.0 * (color_z_p - color_z[q_index]);
+
+          const double K = 2.0*rest_density / (density_p + density[q_index]);
+          F_surface_x += K * (F_cohesion_x + F_curvature_x);
+          F_surface_y += K * (F_cohesion_y + F_curvature_y);
+          F_surface_z += K * (F_cohesion_z + F_curvature_z);
+
+      }
+
+      // Apply force to particle i velocity(?)
+    v_x[p_index] += dt * F_surface_x / density_p;
+    v_y[p_index] += dt * F_surface_y / density_p;
+    v_z[p_index] += dt * F_surface_z / density_p;
+
+    }
+}
+
 void ComputeVorticity(struct Particles *restrict particles,
                       const struct Params *restrict params,
                       const struct Neighbors *restrict neighbors) {
@@ -442,7 +600,7 @@ void ComputeLambda(struct Particles *restrict particles,
     const struct NeighborBucket *restrict n = &neighbor_buckets[i];
 
     double Constraint = density[p_index]/rest_density - 1.0;
-    const double Ci = Constraint;//(Constraint < 0.0 ? 0.0 : Constraint);
+    const double Ci = (Constraint < 0.0 ? 0.0 : Constraint);
 
     double sum_C = 0.0;
     double sum_grad_x = 0.0;
@@ -495,7 +653,7 @@ void UpdateDPs(struct Particles *restrict particles,
 
   const double h = params->smoothing_radius;
   const double rest_density = particles->rest_density;
-  const double k = params->k;
+  const double k = 0.0;//params->k;
   const double W_norm = params->W_norm;
   const double DelW_norm = params->DelW_norm;
   const double Wdq = W(params->dq, h, W_norm);
@@ -606,7 +764,7 @@ void UpdateVelocities(struct Particles *restrict particles,
                       const struct Params *restrict params) {
 
   const double dt = params->time_step;
-  const double v_max = 30.0; // Change to ~sqrt(2*h_max/g)
+  const double v_max = 30.0; // Change to ~sqrt(2*h_max/g) or smoothing_radis/timestep or something
 
   // Update local and halo particles, update halo so that XSPH visc. is correct
   // NEED TO RETHINK THIS
@@ -699,6 +857,14 @@ void PrintAverageDensity(struct Particles *restrict particles) {
   printf("average_density: %.16f\n", average_density);
 }
 
+void PrintDensity(struct Particles *restrict particles, const int id) {
+  const double *density = particles->density;
+
+  #pragma acc update host(density[id:1])
+
+  printf("density[%d]: %.16f\n", id, density[id]);
+}
+
 void PrintAverageDp(struct Particles *restrict particles) {
 
   const int local_count = particles->local_count;
@@ -721,6 +887,16 @@ void PrintAverageDp(struct Particles *restrict particles) {
   printf("average_dp: (%.16f, %.16f, %.16f)\n", average_dp_x, average_dp_y, average_dp_z);
 }
 
+void PrintDp(struct Particles *restrict particles, const int id) {
+  const double *dp_x = particles->dp_x;
+  const double *dp_y = particles->dp_y;
+  const double *dp_z = particles->dp_z;
+
+  #pragma acc update host(dp_x[id:1], dp_y[id:1], dp_z[id:1])
+
+  printf("dp[%d]: (%.16f, %.16f, %.16f)\n", id, dp_x[id], dp_y[id], dp_z[id]);
+}
+
 void PrintAverageLambda(struct Particles *restrict particles) {
 
   const int local_count = particles->local_count;
@@ -735,6 +911,14 @@ void PrintAverageLambda(struct Particles *restrict particles) {
   average_lambda /= (double)local_count;
 
   printf("average_lambda: %.16f\n", average_lambda);
+}
+
+void PrintLambda(struct Particles *restrict particles, const int id) {
+  const double *lambda = particles->lambda;
+
+  #pragma acc update host(lambda[id:1])
+
+  printf("lambda[%d]: %.16f\n", id, lambda[id]);
 }
 
 void PrintAverageV(struct Particles *restrict particles) {
@@ -759,6 +943,16 @@ void PrintAverageV(struct Particles *restrict particles) {
   printf("average_v: (%.16f, %.16f, %.16f)\n", average_v_x, average_v_y, average_v_z);
 }
 
+void PrintVelocity(struct Particles *restrict particles, const int id) {
+  const double *v_x = particles->v_x;
+  const double *v_y = particles->v_y;
+  const double *v_z = particles->v_z;
+
+  #pragma acc update host(v_x[id:1], v_y[id:1], v_z[id:1])
+
+  printf("v[%d]: (%.16f, %.16f, %.16f)\n", id, v_x[id], v_y[id], v_z[id]);
+}
+
 void AllocInitParticles(struct Particles *restrict particles,
                         struct Params *restrict params,
                         struct AABB *restrict fluid_volume_initial) {
@@ -780,6 +974,9 @@ void AllocInitParticles(struct Particles *restrict particles,
   particles->w_x    = SAFE_ALLOC(num_particles, sizeof(double));
   particles->w_y    = SAFE_ALLOC(num_particles, sizeof(double));
   particles->w_z    = SAFE_ALLOC(num_particles, sizeof(double));
+  particles->color_x    = SAFE_ALLOC(num_particles, sizeof(double));
+  particles->color_y    = SAFE_ALLOC(num_particles, sizeof(double));
+  particles->color_z    = SAFE_ALLOC(num_particles, sizeof(double));
   particles->density = SAFE_ALLOC(num_particles, sizeof(double));
   particles->lambda  = SAFE_ALLOC(num_particles, sizeof(double));
   particles->id      = SAFE_ALLOC(num_particles, sizeof(int));
@@ -823,6 +1020,9 @@ void AllocInitParticles(struct Particles *restrict particles,
     particles->w_x[0:num_particles],     \
     particles->w_y[0:num_particles],     \
     particles->w_z[0:num_particles],     \
+    particles->color_x[0:num_particles],     \
+    particles->color_y[0:num_particles],     \
+    particles->color_z[0:num_particles],     \
     particles->density[0:num_particles], \
     particles->lambda[0:num_particles],  \
     particles->id[0:num_particles]       \
@@ -846,6 +1046,9 @@ void FinalizeParticles(struct Particles *restrict particles) {
     particles->w_x,             \
     particles->w_y,             \
     particles->w_z,             \
+    particles->color_x,             \
+    particles->color_y,             \
+    particles->color_z,             \
     particles->density,         \
     particles->lambda,          \
     particles->id               \
@@ -866,6 +1069,9 @@ void FinalizeParticles(struct Particles *restrict particles) {
   free(particles->w_x);
   free(particles->w_y);
   free(particles->w_z);
+  free(particles->color_x);
+  free(particles->color_y);
+  free(particles->color_z);
   free(particles->lambda);
   free(particles->density);
   free(particles->id);

@@ -72,15 +72,12 @@ int main(int argc, char *argv[]) {
     const int solve_iterations = 10;
     for (int sub_i=0; sub_i<solve_iterations; ++sub_i) {
       ComputeDensities(&particles, &params, &neighbors);
-      PrintAverageDensity(&particles);
       UpdateHaloScalar(&communication, &params, &particles, particles.density);
 
       ComputeLambda(&particles, &params, &neighbors);
-      PrintAverageLambda(&particles);
       UpdateHaloScalar(&communication, &params, &particles, particles.lambda);
 
       UpdateDPs(&particles, &params, &neighbors, sub_i);
-      PrintAverageDp(&particles);
       UpdateHaloTuple(&communication, &params, &particles,
                        particles.dp_x, particles.dp_y, particles.dp_z);
 
@@ -91,8 +88,12 @@ int main(int argc, char *argv[]) {
       // Put collision detection here explicity
     }
 
+    PrintAverageDensity(&particles);
+
     UpdateVelocities(&particles, &params);
-    PrintAverageV(&particles);
+//    PrintAverageV(&particles);
+
+    ComputeSurfaceTension(&particles, &params, &neighbors);
 
 //    ApplyViscosity(&particles, &params, &neighbors);
 //    UpdateHaloTuple(&communication, &params, &particles,
