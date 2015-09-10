@@ -442,7 +442,7 @@ void ComputeLambda(struct Particles *restrict particles,
     const struct NeighborBucket *restrict n = &neighbor_buckets[i];
 
     double Constraint = density[p_index]/rest_density - 1.0;
-    const double Ci = (Constraint < 0.0 ? 0.0 : Constraint);
+    const double Ci = Constraint;//(Constraint < 0.0 ? 0.0 : Constraint);
 
     double sum_C = 0.0;
     double sum_grad_x = 0.0;
@@ -595,6 +595,8 @@ void PredictPositions(struct Particles *restrict particles,
     // Otherwise predicted position can blow up hash
     ApplyBoundaryConditions(&x_star[i], &y_star[i], &z_star[i], boundary_global,
                             params);
+//    ApplyBoundaryConditions(&x[i], &y[i], &z[i], boundary_global,
+//                            params);
   }
 
 }
@@ -604,7 +606,7 @@ void UpdateVelocities(struct Particles *restrict particles,
                       const struct Params *restrict params) {
 
   const double dt = params->time_step;
-  const double v_max = 3.0; // Change to ~sqrt(2*h_max/g)
+  const double v_max = 30.0; // Change to ~sqrt(2*h_max/g)
 
   // Update local and halo particles, update halo so that XSPH visc. is correct
   // NEED TO RETHINK THIS
@@ -668,17 +670,17 @@ void ApplyBoundaryConditions(double *restrict x, double *restrict y,
   // as the particle will in the 'next' after last bin
   if (*x < boundary->min_x)
     *x = boundary->min_x;
-  else if(*x  > boundary->max_x)
+  else if(*x  >= boundary->max_x)
     *x = boundary->max_x-epsion;
 
   if(*y < boundary->min_y)
     *y = boundary->min_y;
-  else if(*y  > boundary->max_y)
+  else if(*y  >= boundary->max_y)
     *y = boundary->max_y-epsion;
 
   if(*z < boundary->min_z)
     *z = boundary->min_z;
-  else if(*z > boundary->max_z)
+  else if(*z >= boundary->max_z)
     *z = boundary->max_z-epsion;
 }
 
