@@ -89,12 +89,11 @@ int main(int argc, char *argv[]) {
     }
 
     PrintAverageDensity(&particles);
+    PrintMaxDensity(&particles);
 
     UpdateVelocities(&particles, &params);
-    PrintAverageV(&particles);
 
     ComputeSurfaceTension(&particles, &params, &neighbors);
-    PrintColor(&particles, 94769);
 
 //    ApplyViscosity(&particles, &params, &neighbors);
 //    UpdateHaloTuple(&communication, &params, &particles,
@@ -173,5 +172,6 @@ void SetParameters(struct Params *const params,
     #define M_PI  3.14159265358979323846
   #endif
   params->W_norm = 315.0/(64.0*M_PI*pow(params->smoothing_radius, 9.0));
+  params->DelW_poly_norm = -3.0*2.0*params->W_norm;
   params->DelW_norm = -45.0/(M_PI*pow(params->smoothing_radius, 6.0));
 }

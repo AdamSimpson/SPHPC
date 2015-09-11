@@ -25,6 +25,15 @@ static inline double W(const double r, const double h, const double norm) {
   return W;
 }
 
+#pragma acc routine seq
+static inline double DelWPoly(const double r, const double h, const double norm) {
+  if(r > h)
+    return 0.0;
+
+  const double W = norm*(h*h - r*r)*(h*h - r*r)*r;
+  return W;
+}
+
 // Gradient (h-r)^3 normalized in 3D (Spikey) magnitude
 // Need to multiply by r/|r|
 #pragma acc routine seq
@@ -60,7 +69,7 @@ void ComputeSurfaceTension(struct Particles *restrict particles,
                            const struct Neighbors *restrict neighbors) {
   const double rest_density = particles->rest_density;
   const double h = params->smoothing_radius;
-  const double DelW_norm = params->DelW_norm;
+  const double DelW_poly_norm = params->DelW_poly_norm;
   const double dt = params->time_step;
   const int num_particles = particles->local_count;
 
@@ -115,7 +124,7 @@ void ComputeSurfaceTension(struct Particles *restrict particles,
         if(r_mag < h*0.0001)
           r_mag = h*0.0001;
 
-          const double grad = DelW(r_mag, h, DelW_norm);
+          const double grad = DelWPoly(r_mag, h, DelW_poly_norm);
 
           color_dx += grad / density[q_index] * x_diff/r_mag;
           color_dy += grad / density[q_index] * y_diff/r_mag;
@@ -184,9 +193,9 @@ void ComputeSurfaceTension(struct Particles *restrict particles,
           F_curvature_z -= gama * (color_z_p - color_z[q_index]);
 
           const double K = 2.0*rest_density / (density_p + density[q_index]);
-          F_surface_x += K * (F_cohesion_x + F_curvature_x);
-          F_surface_y += K * (F_cohesion_y + F_curvature_y);
-          F_surface_z += K * (F_cohesion_z + F_curvature_z);
+          F_surface_x += K * F_curvature_x;//(F_cohesion_x + F_curvature_x);
+          F_surface_y += K * F_curvature_y;//(F_cohesion_y + F_curvature_y);
+          F_surface_z += K * F_curvature_z;//(F_cohesion_z + F_curvature_z);
 
       }
 
@@ -764,7 +773,7 @@ void UpdateVelocities(struct Particles *restrict particles,
                       const struct Params *restrict params) {
 
   const double dt = params->time_step;
-  const double v_max = 30.0; // Change to ~sqrt(2*h_max/g) or smoothing_radis/timestep or something
+  const double v_max = 100.0; // Change to ~sqrt(2*h_max/g) or smoothing_radis/timestep or something
 
   // Update local and halo particles, update halo so that XSPH visc. is correct
   // NEED TO RETHINK THIS
@@ -855,6 +864,20 @@ void PrintAverageDensity(struct Particles *restrict particles) {
 
   average_density /= (double)local_count;
   printf("average_density: %.16f\n", average_density);
+}
+
+void PrintMaxDensity(struct Particles *restrict particles) {
+
+  const int local_count = particles->local_count;
+  const double *density = particles->density;
+
+  double max_density = 0.0;
+  #pragma acc parallel loop reduction(max:max_density) present(density)
+  for (int i=0; i<local_count; ++i) {
+    max_density = fmax(density[i], max_density);
+  }
+
+  printf("max density: %.16f\n", max_density);
 }
 
 void PrintDensity(struct Particles *restrict particles, const int id) {

@@ -11,6 +11,7 @@ struct Params {
   double smoothing_radius;
   double W_norm;
   double DelW_norm;
+  double DelW_poly_norm;
   double g;
   double time_step;
   double k;
