@@ -49,7 +49,7 @@ static inline double C(const double r, const double h, const double norm) {
     C = 0.0;
   else if(r <= h/2.0)
     C = 2.0*(h-r)*(h-r)*(h-r)*r*r*r - (h*h*h*h*h*h/64.0);
-  else // r/2 < h < h
+  else // h/2 < r < h
     C = (h-r)*(h-r)*(h-r)*r*r*r;
 
   return norm*C;
@@ -117,14 +117,14 @@ void ComputeSurfaceTension(struct Particles *restrict particles,
 
           const double grad = DelW(r_mag, h, DelW_norm);
 
-          color_dx += h / density[q_index] * grad * x_diff/r_mag;
-          color_dy += h / density[q_index] * grad * y_diff/r_mag;
-          color_dz += h / density[q_index] * grad * z_diff/r_mag;
+          color_dx += grad / density[q_index] * x_diff/r_mag;
+          color_dy += grad / density[q_index] * y_diff/r_mag;
+          color_dz += grad / density[q_index] * z_diff/r_mag;
       }
 
-      color_x[p_index] = color_dx;
-      color_y[p_index] = color_dy;
-      color_z[p_index] = color_dz;
+      color_x[p_index] = h * color_dx;
+      color_y[p_index] = h * color_dy;
+      color_z[p_index] = h * color_dz;
     }
 
     // Calculate surface tension at each particle
@@ -179,9 +179,9 @@ void ComputeSurfaceTension(struct Particles *restrict particles,
           F_cohesion_y -= gama * c * y_diff/r_mag;
           F_cohesion_z -= gama * c * z_diff/r_mag;
 
-          F_curvature_x -= gama/5000.0 * (color_x_p - color_x[q_index]);
-          F_curvature_y -= gama/5000.0 * (color_y_p - color_y[q_index]);
-          F_curvature_z -= gama/5000.0 * (color_z_p - color_z[q_index]);
+          F_curvature_x -= gama * (color_x_p - color_x[q_index]);
+          F_curvature_y -= gama * (color_y_p - color_y[q_index]);
+          F_curvature_z -= gama * (color_z_p - color_z[q_index]);
 
           const double K = 2.0*rest_density / (density_p + density[q_index]);
           F_surface_x += K * (F_cohesion_x + F_curvature_x);
@@ -895,6 +895,16 @@ void PrintDp(struct Particles *restrict particles, const int id) {
   #pragma acc update host(dp_x[id:1], dp_y[id:1], dp_z[id:1])
 
   printf("dp[%d]: (%.16f, %.16f, %.16f)\n", id, dp_x[id], dp_y[id], dp_z[id]);
+}
+
+void PrintColor(struct Particles *restrict particles, const int id) {
+  const double *color_x = particles->color_x;
+  const double *color_y = particles->color_y;
+  const double *color_z = particles->color_z;
+
+  #pragma acc update host(color_x[id:1], color_y[id:1], color_z[id:1])
+
+  printf("color[%d]: (%.16f, %.16f, %.16f)\n", id, color_x[id], color_y[id], color_z[id]);
 }
 
 void PrintAverageLambda(struct Particles *restrict particles) {

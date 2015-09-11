@@ -99,6 +99,7 @@ void PrintAverageLambda(struct Particles *restrict particles);
 void PrintAverageLambda(struct Particles *restrict particles);
 void PrintAverageV(struct Particles *restrict particles);
 void PrintVelocity(struct Particles *restrict particles, const int id);
+void PrintColor(struct Particles *restrict particles, const int id);
 
 void AllocInitParticles(struct Particles *restrict particles,
                         struct Params *restrict params,

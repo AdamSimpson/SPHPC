@@ -91,9 +91,10 @@ int main(int argc, char *argv[]) {
     PrintAverageDensity(&particles);
 
     UpdateVelocities(&particles, &params);
-//    PrintAverageV(&particles);
+    PrintAverageV(&particles);
 
     ComputeSurfaceTension(&particles, &params, &neighbors);
+    PrintColor(&particles, 94769);
 
 //    ApplyViscosity(&particles, &params, &neighbors);
 //    UpdateHaloTuple(&communication, &params, &particles,
