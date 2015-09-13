@@ -63,7 +63,14 @@ void ConstructFluidVolume(struct Particles *const particles,
   MPI_Allreduce(&particles->local_count, &particles->global_count, 1,
                 MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
-  // Should the density also be updated at this point as it's not quite right?
+  // Set actual fluid volume created, which may not be the same as requested
+  int total_x = 0;
+  MPI_Allreduce(&num_x, &total_x, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+  const double length = total_x * spacing;
+  const double width = num_y * spacing;
+  const double height = num_z * spacing;
+
+  params->fluid_volume = length * width * height;
 }
 
 // Sets upper bound on number of particles, used for memory allocation

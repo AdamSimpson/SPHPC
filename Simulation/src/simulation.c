@@ -60,36 +60,37 @@ int main(int argc, char *argv[]) {
 
     PredictPositions(&particles, &params, &boundary_global);
 
-    if (n % 10 == 0)
-      BalanceNodes(&particles, &params);
+//    if (n % 10 == 0)
+//      BalanceNodes(&particles, &params);
 
-    ExchangeOOB(&communication, &particles, &params);
+//    ExchangeOOB(&communication, &particles, &params);
 
-    ExchangeHalo(&communication, &params, &particles);
+//    ExchangeHalo(&communication, &params, &particles);
 
     FindAllNeighbors(&particles, &params, &neighbors);
 
     const int solve_iterations = 10;
     for (int sub_i=0; sub_i<solve_iterations; ++sub_i) {
       ComputeDensities(&particles, &params, &neighbors);
-      UpdateHaloScalar(&communication, &params, &particles, particles.density);
+      PrintMaxDensity(&particles);
+
+//      UpdateHaloScalar(&communication, &params, &particles, particles.density);
 
       ComputeLambda(&particles, &params, &neighbors);
-      UpdateHaloScalar(&communication, &params, &particles, particles.lambda);
+//      UpdateHaloScalar(&communication, &params, &particles, particles.lambda);
 
       UpdateDPs(&particles, &params, &neighbors, sub_i);
-      UpdateHaloTuple(&communication, &params, &particles,
-                       particles.dp_x, particles.dp_y, particles.dp_z);
+//      UpdateHaloTuple(&communication, &params, &particles,
+//                       particles.dp_x, particles.dp_y, particles.dp_z);
 
       UpdatePositionStars(&particles, &boundary_global, &obstacle, &params);
-      UpdateHaloTuple(&communication, &params, &particles,
-                       particles.x_star, particles.y_star, particles.z_star);
+//      UpdateHaloTuple(&communication, &params, &particles,
+//                       particles.x_star, particles.y_star, particles.z_star);
 
       // Put collision detection here explicity
     }
 
     PrintAverageDensity(&particles);
-    PrintMaxDensity(&particles);
 
     UpdateVelocities(&particles, &params);
 

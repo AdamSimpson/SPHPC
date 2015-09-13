@@ -57,7 +57,7 @@ static inline double C(const double r, const double h, const double norm) {
   if(r > h)
     C = 0.0;
   else if(r <= h/2.0)
-    C = 2.0*(h-r)*(h-r)*(h-r)*r*r*r - (h*h*h*h*h*h/64.0);
+    C = (2.0*(h-r)*(h-r)*(h-r)*r*r*r) - (h*h*h*h*h*h/64.0);
   else // h/2 < r < h
     C = (h-r)*(h-r)*(h-r)*r*r*r;
 
@@ -68,6 +68,7 @@ void ComputeSurfaceTension(struct Particles *restrict particles,
                            const struct Params *restrict params,
                            const struct Neighbors *restrict neighbors) {
   const double rest_density = particles->rest_density;
+  const double rest_mass = particles->rest_mass;
   const double h = params->smoothing_radius;
   const double DelW_poly_norm = params->DelW_poly_norm;
   const double dt = params->time_step;
@@ -126,9 +127,11 @@ void ComputeSurfaceTension(struct Particles *restrict particles,
 
           const double grad = DelWPoly(r_mag, h, DelW_poly_norm);
 
-          color_dx += grad / density[q_index] * x_diff/r_mag;
-          color_dy += grad / density[q_index] * y_diff/r_mag;
-          color_dz += grad / density[q_index] * z_diff/r_mag;
+          const double mass_q = rest_mass;
+
+          color_dx += grad * mass_q / density[q_index] * x_diff/r_mag;
+          color_dy += grad * mass_q / density[q_index] * y_diff/r_mag;
+          color_dz += grad * mass_q / density[q_index] * z_diff/r_mag;
       }
 
       color_x[p_index] = h * color_dx;
@@ -172,6 +175,8 @@ void ComputeSurfaceTension(struct Particles *restrict particles,
       const double color_y_p = color_y[p_index];
       const double color_z_p = color_z[p_index];
 
+      const double mass_p = rest_mass;
+
       #pragma acc loop seq
       for (int j=0; j<n->count; ++j) {
         const int q_index = n->neighbor_indices[j];
@@ -183,27 +188,27 @@ void ComputeSurfaceTension(struct Particles *restrict particles,
         if(r_mag < h*0.0001)
           r_mag = h*0.0001;
 
-          const double c = C(r_mag, h, C_norm);
-          F_cohesion_x -= gama * c * x_diff/r_mag;
-          F_cohesion_y -= gama * c * y_diff/r_mag;
-          F_cohesion_z -= gama * c * z_diff/r_mag;
+         const double mass_q = rest_mass;
 
-          F_curvature_x -= gama * (color_x_p - color_x[q_index]);
-          F_curvature_y -= gama * (color_y_p - color_y[q_index]);
-          F_curvature_z -= gama * (color_z_p - color_z[q_index]);
+          const double c = C(r_mag, h, C_norm);
+          F_cohesion_x -= gama * mass_p * mass_q * c * x_diff/r_mag;
+          F_cohesion_y -= gama * mass_p * mass_q * c * y_diff/r_mag;
+          F_cohesion_z -= gama * mass_p * mass_q * c * z_diff/r_mag;
+
+          F_curvature_x -= gama * mass_p * (color_x_p - color_x[q_index]);
+          F_curvature_y -= gama * mass_p * (color_y_p - color_y[q_index]);
+          F_curvature_z -= gama * mass_p * (color_z_p - color_z[q_index]);
 
           const double K = 2.0*rest_density / (density_p + density[q_index]);
-          F_surface_x += K * F_curvature_x;//(F_cohesion_x + F_curvature_x);
-          F_surface_y += K * F_curvature_y;//(F_cohesion_y + F_curvature_y);
-          F_surface_z += K * F_curvature_z;//(F_cohesion_z + F_curvature_z);
-
+          F_surface_x += K * (F_cohesion_x + F_curvature_x);
+          F_surface_y += K * (F_cohesion_y + F_curvature_y);
+          F_surface_z += K * (F_cohesion_z + F_curvature_z);
       }
 
       // Apply force to particle i velocity(?)
     v_x[p_index] += dt * F_surface_x / density_p;
     v_y[p_index] += dt * F_surface_y / density_p;
     v_z[p_index] += dt * F_surface_z / density_p;
-
     }
 }
 
@@ -387,6 +392,7 @@ void ApplyViscosity(struct Particles *restrict particles,
 
   const double c = params->c;
   const double h = params->smoothing_radius;
+  const double rest_mass = particles->rest_mass;
   const double W_norm = params->W_norm;
 
   const int num_particles = particles->local_count;
@@ -442,9 +448,10 @@ void ApplyViscosity(struct Particles *restrict particles,
 
       // http://mmacklin.com/pbf_sig_preprint.pdf is missing 1/sigma contribution
       // see: http://www.cs.ubc.ca/~rbridson/docs/schechter-siggraph2012-ghostsph.pdf
-      partial_sum_x += vx_diff * w  / density[q_index];
-      partial_sum_y += vy_diff * w  / density[q_index];
-      partial_sum_z += vz_diff * w  / density[q_index];
+      const double mass_q = rest_mass;
+      partial_sum_x += vx_diff * w * mass_q / density[q_index];
+      partial_sum_y += vy_diff * w * mass_q / density[q_index];
+      partial_sum_z += vz_diff * w * mass_q / density[q_index];
     }
 
     partial_sum_x *= c;
@@ -486,7 +493,8 @@ void ComputeDensities(struct Particles *restrict particles,
     const struct NeighborBucket *restrict n = &neighbor_buckets[i];
 
     // Own contribution to density
-    double tmp_density = W_0;
+    const double mass_p = rest_mass;
+    double tmp_density = mass_p * W_0;
 
     const double x_star_p = x_star[p_index];
     const double y_star_p = y_star[p_index];
@@ -500,12 +508,14 @@ void ComputeDensities(struct Particles *restrict particles,
       const double y_diff = y_star_p - y_star[q_index];
       const double z_diff = z_star_p - z_star[q_index];
 
+      const double mass_q = rest_mass;
+
       const double r_mag = sqrt(x_diff*x_diff + y_diff*y_diff + z_diff*z_diff);
-      tmp_density += W(r_mag, h, W_norm);
+      tmp_density += mass_q * W(r_mag, h, W_norm);
     }
 
     // Update particle density
-    density[p_index] = rest_mass*tmp_density;
+    density[p_index] = tmp_density;
   }
 }
 
@@ -587,6 +597,7 @@ void ComputeLambda(struct Particles *restrict particles,
 
   const int num_particles = particles->local_count;
   const double rest_density = particles->rest_density;
+  const double rest_mass = particles->rest_mass;
   const double h = params->smoothing_radius;
   const double DelW_norm = params->DelW_norm;
 
@@ -631,11 +642,13 @@ void ComputeLambda(struct Particles *restrict particles,
       if(r_mag < h*0.0001)
         r_mag = h*0.0001;
 
+      const double mass_q = rest_mass;
+
       const double grad = DelW(r_mag, h, DelW_norm);
 
-      const double grad_x = grad*x_diff/r_mag;
-      const double grad_y = grad*y_diff/r_mag;
-      const double grad_z = grad*z_diff/r_mag;
+      const double grad_x = mass_q * grad*x_diff/r_mag;
+      const double grad_y = mass_q * grad*y_diff/r_mag;
+      const double grad_z = mass_q * grad*z_diff/r_mag;
       sum_grad_x += grad_x;
       sum_grad_y += grad_y;
       sum_grad_z += grad_z;
@@ -662,7 +675,8 @@ void UpdateDPs(struct Particles *restrict particles,
 
   const double h = params->smoothing_radius;
   const double rest_density = particles->rest_density;
-  const double k = 0.0;//params->k;
+  const double rest_mass = particles->rest_mass;
+  const double k = params->k;
   const double W_norm = params->W_norm;
   const double DelW_norm = params->DelW_norm;
   const double Wdq = W(params->dq, h, W_norm);
@@ -714,10 +728,11 @@ void UpdateDPs(struct Particles *restrict particles,
       if(r_mag < h*0.0001)
         r_mag = h*0.0001;
 
+      const double mass_q = rest_mass;
       const double WdWdq = W(r_mag, h, W_norm)/Wdq;
-      const double s_corr = -k * WdWdq*WdWdq*WdWdq*WdWdq;
+      const double s_corr = 0.0;//-k * WdWdq*WdWdq*WdWdq*WdWdq;
       const double delW = DelW(r_mag, h, DelW_norm);
-      const double dp = (lambda[p_index] + lambda[q_index] + s_corr) * delW;
+      const double dp = mass_q * (lambda[p_index] + lambda[q_index] + s_corr) * delW;
 
       dpx += dp * x_diff/r_mag;
       dpy += dp * y_diff/r_mag;
@@ -1016,8 +1031,8 @@ void AllocInitParticles(struct Particles *restrict particles,
 
   ConstructFluidVolume(particles, params, fluid_volume_initial);
 
-  particles->rest_mass = 1.0;
-  particles->rest_density = particles->rest_mass / pow(2.0*particles->rest_radius,3.0);
+  particles->rest_density = 1000.0;
+  particles->rest_mass = params->fluid_volume * particles->rest_density / (double)particles->global_count;
 
   printf("Rest mass: %f\n", particles->rest_mass);
   printf("Rest Density: %f\n", particles->rest_density);

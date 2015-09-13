@@ -19,6 +19,7 @@ struct Params {
   double c;
   double node_start_x; // left x position of node partition
   double node_end_x;   // right x position of node partition
+  double fluid_volume;
   int number_steps;
   int rank;
   int proc_count;
