@@ -94,7 +94,18 @@ int main(int argc, char *argv[]) {
 
     UpdateVelocities(&particles, &params);
 
+    PrintVelocity(&particles, 95265);
+    PrintVelocity(&particles, 57459);
+    PrintVelocity(&particles, 57454);
+
     ComputeSurfaceTension(&particles, &params, &neighbors);
+    PrintColor(&particles, 95265);
+    PrintColor(&particles, 57459);
+    PrintColor(&particles, 57454);
+
+    PrintVelocity(&particles, 95265);
+    PrintVelocity(&particles, 57459);
+    PrintVelocity(&particles, 57454);
 
 //    ApplyViscosity(&particles, &params, &neighbors);
 //    UpdateHaloTuple(&communication, &params, &particles,

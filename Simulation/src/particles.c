@@ -191,9 +191,9 @@ void ComputeSurfaceTension(struct Particles *restrict particles,
          const double mass_q = rest_mass;
 
           const double c = C(r_mag, h, C_norm);
-          F_cohesion_x -= gama * mass_p * mass_q * c * x_diff/r_mag;
-          F_cohesion_y -= gama * mass_p * mass_q * c * y_diff/r_mag;
-          F_cohesion_z -= gama * mass_p * mass_q * c * z_diff/r_mag;
+          F_cohesion_x += gama * mass_p * mass_q * c * x_diff/r_mag;
+          F_cohesion_y += gama * mass_p * mass_q * c * y_diff/r_mag;
+          F_cohesion_z += gama * mass_p * mass_q * c * z_diff/r_mag;
 
           F_curvature_x -= gama * mass_p * (color_x_p - color_x[q_index]);
           F_curvature_y -= gama * mass_p * (color_y_p - color_y[q_index]);
@@ -205,7 +205,7 @@ void ComputeSurfaceTension(struct Particles *restrict particles,
           F_surface_z += K * (F_cohesion_z + F_curvature_z);
       }
 
-      // Apply force to particle i velocity(?)
+    // Apply force to particle i velocity(?)
     v_x[p_index] += dt * F_surface_x / density_p;
     v_y[p_index] += dt * F_surface_y / density_p;
     v_z[p_index] += dt * F_surface_z / density_p;
@@ -661,6 +661,9 @@ void ComputeLambda(struct Particles *restrict particles,
             + sum_grad_y*sum_grad_y
             + sum_grad_z*sum_grad_z);
 
+    // Having particles of different mass would require 1/m_i Term
+    // http://mmacklin.com/EG2015PBD.pdf
+
     sum_C /= (rest_density * rest_density);
 
     const double epsilon = 0.01; // Jiggle this around orders of magnitude depending on problem
@@ -694,7 +697,7 @@ void UpdateDPs(struct Particles *restrict particles,
   const struct NeighborBucket *restrict neighbor_buckets = neighbors->neighbor_buckets;
 
   const double k_stiff = 0.95;
-  const double stiffness = 1.0 - pow((1.0-k_stiff), 1.0/substep);
+  const double stiffness = 1.0 - pow((1.0-k_stiff), 1.0/(double)substep);
 
   // acc kernels seems to work just as well
   #pragma acc parallel loop gang vector vector_length(64)   \
@@ -738,6 +741,9 @@ void UpdateDPs(struct Particles *restrict particles,
       dpy += dp * y_diff/r_mag;
       dpz += dp * z_diff/r_mag;
     }
+
+    // Having particles of different mass would require 1/m_i Term
+    // http://mmacklin.com/EG2015PBD.pdf
 
     dp_x[p_index] = stiffness*dpx/rest_density;
     dp_y[p_index] = stiffness*dpy/rest_density;
@@ -1033,6 +1039,7 @@ void AllocInitParticles(struct Particles *restrict particles,
 
   particles->rest_density = 1000.0;
   particles->rest_mass = params->fluid_volume * particles->rest_density / (double)particles->global_count;
+//  particles->rest_mass *= .996;
 
   printf("Rest mass: %f\n", particles->rest_mass);
   printf("Rest Density: %f\n", particles->rest_density);
