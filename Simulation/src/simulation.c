@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) {
 
     ComputeSurfaceTension(&particles, &params, &neighbors);
 
-//    ApplyViscosity(&particles, &params, &neighbors);
+    ApplyViscosity(&particles, &params, &neighbors);
 //    UpdateHaloTuple(&communication, &params, &particles,
 //                    particles.v_x, particles.v_y, particles.v_z);
 
