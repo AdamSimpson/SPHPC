@@ -75,7 +75,7 @@ void ComputeSurfaceTension(struct Particles *restrict particles,
   const int num_particles = particles->local_count;
 
   // Cohesion Term
-  const double C_norm = 32.0/(M_PI*pow(h,9));
+  const double C_norm = 32.0/(M_PI*pow(h,9.0));
   const double gama = params->k;
 
     // OpenACC can't reliably handle SoA...
@@ -157,14 +157,6 @@ void ComputeSurfaceTension(struct Particles *restrict particles,
       double F_surface_y = 0.0;
       double F_surface_z = 0.0;
 
-      double F_cohesion_x = 0.0;
-      double F_cohesion_y = 0.0;
-      double F_cohesion_z = 0.0;
-
-      double F_curvature_x = 0.0;
-      double F_curvature_y = 0.0;
-      double F_curvature_z = 0.0;
-
       const double x_star_p = x_star[p_index];
       const double y_star_p = y_star[p_index];
       const double z_star_p = z_star[p_index];
@@ -191,13 +183,13 @@ void ComputeSurfaceTension(struct Particles *restrict particles,
          const double mass_q = rest_mass;
 
           const double c = C(r_mag, h, C_norm);
-          F_cohesion_x += gama * mass_p * mass_q * c * x_diff/r_mag;
-          F_cohesion_y += gama * mass_p * mass_q * c * y_diff/r_mag;
-          F_cohesion_z += gama * mass_p * mass_q * c * z_diff/r_mag;
+          const double F_cohesion_x = -gama * mass_p * mass_q * c * x_diff/r_mag;
+          const double F_cohesion_y = -gama * mass_p * mass_q * c * y_diff/r_mag;
+          const double F_cohesion_z = -gama * mass_p * mass_q * c * z_diff/r_mag;
 
-          F_curvature_x -= gama * mass_p * (color_x_p - color_x[q_index]);
-          F_curvature_y -= gama * mass_p * (color_y_p - color_y[q_index]);
-          F_curvature_z -= gama * mass_p * (color_z_p - color_z[q_index]);
+          const double F_curvature_x = -gama * mass_p * (color_x_p - color_x[q_index]);
+          const double F_curvature_y = -gama * mass_p * (color_y_p - color_y[q_index]);
+          const double F_curvature_z = -gama * mass_p * (color_z_p - color_z[q_index]);
 
           const double K = 2.0*rest_density / (density_p + density[q_index]);
           F_surface_x += K * (F_cohesion_x + F_curvature_x);
@@ -206,9 +198,9 @@ void ComputeSurfaceTension(struct Particles *restrict particles,
       }
 
     // Apply force to particle i velocity(?)
-    v_x[p_index] += dt * F_surface_x / density_p;
-    v_y[p_index] += dt * F_surface_y / density_p;
-    v_z[p_index] += dt * F_surface_z / density_p;
+    v_x[p_index] += dt * F_surface_x / mass_p;
+    v_y[p_index] += dt * F_surface_y / mass_p;
+    v_z[p_index] += dt * F_surface_z / mass_p;
     }
 }
 
@@ -1039,11 +1031,11 @@ void AllocInitParticles(struct Particles *restrict particles,
 
   particles->rest_density = 1000.0;
   particles->rest_mass = params->fluid_volume * particles->rest_density / (double)particles->global_count;
-//  particles->rest_mass *= .996;
+  // For some reason the initial density estimate is slightly too high
+  particles->rest_mass *= .991;
 
   printf("Rest mass: %f\n", particles->rest_mass);
   printf("Rest Density: %f\n", particles->rest_density);
-
 
   // Initialize particle values`
   for (int i=0; i<particles->local_count; ++i) {

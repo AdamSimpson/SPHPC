@@ -94,18 +94,7 @@ int main(int argc, char *argv[]) {
 
     UpdateVelocities(&particles, &params);
 
-    PrintVelocity(&particles, 95265);
-    PrintVelocity(&particles, 57459);
-    PrintVelocity(&particles, 57454);
-
     ComputeSurfaceTension(&particles, &params, &neighbors);
-    PrintColor(&particles, 95265);
-    PrintColor(&particles, 57459);
-    PrintColor(&particles, 57454);
-
-    PrintVelocity(&particles, 95265);
-    PrintVelocity(&particles, 57459);
-    PrintVelocity(&particles, 57454);
 
 //    ApplyViscosity(&particles, &params, &neighbors);
 //    UpdateHaloTuple(&communication, &params, &particles,
@@ -160,7 +149,7 @@ void SetParameters(struct Params *const params,
   printf("particle radius: %f\n", particles->rest_radius);
 
   // Smoothing radius, h
-  params->smoothing_radius = 1.3*spacing_particle;
+  params->smoothing_radius = 2.0*spacing_particle;
   printf("smoothing radius: %f\n", params->smoothing_radius);
 
   params->dq = 0.1*params->smoothing_radius;
