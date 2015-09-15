@@ -103,7 +103,7 @@ int main(int argc, char *argv[]) {
 //    ComputeVorticity(&particles, &params, &neighbors);
 //    UpdateHaloTuple(&communication, &params, &particles,
 //                    particles.w_x, particles.w_y, particles.w_z);
-//    ApplyVorticityConfinement(&particles, &params, &neighbors);
+    ApplyVorticityConfinement(&particles, &params, &neighbors);
 
     UpdatePositions(&particles);
 

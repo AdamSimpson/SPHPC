@@ -197,10 +197,10 @@ void ComputeSurfaceTension(struct Particles *restrict particles,
           F_surface_z += K * (F_cohesion_z + F_curvature_z);
       }
 
-    // Apply force to particle i velocity(?)
-    v_x[p_index] += dt * F_surface_x / mass_p;
-    v_y[p_index] += dt * F_surface_y / mass_p;
-    v_z[p_index] += dt * F_surface_z / mass_p;
+    // density right...right???
+    v_x[p_index] += dt * F_surface_x / density_p;
+    v_y[p_index] += dt * F_surface_y / density_p;
+    v_z[p_index] += dt * F_surface_z / density_p;
     }
 }
 
@@ -302,6 +302,7 @@ void ApplyVorticityConfinement(struct Particles *restrict particles,
   const double *restrict w_x = particles->w_x;
   const double *restrict w_y = particles->w_y;
   const double *restrict w_z = particles->w_z;
+  const double *restrict density = particles->density;
   const struct NeighborBucket *restrict neighbor_buckets = neighbors->neighbor_buckets;
 
   // Apply vorticity confinement
@@ -310,6 +311,7 @@ void ApplyVorticityConfinement(struct Particles *restrict particles,
                             x_star, y_star, z_star,       \
                             v_x, v_y, v_z,                \
                             w_x, w_y, w_z,                \
+                            density,                      \
                             params,                       \
                             neighbors,                    \
                             neighbor_buckets)
@@ -322,9 +324,9 @@ void ApplyVorticityConfinement(struct Particles *restrict particles,
     double eta_z  = 0.0;
 
     // Should this be p_index or q_index???
-    const double vort_mag = sqrt(w_x[p_index]*w_x[p_index]
-                               + w_y[p_index]*w_y[p_index]
-                               + w_z[p_index]*w_z[p_index]);
+//    const double vort_mag = sqrt(w_x[p_index]*w_x[p_index]
+//                               + w_y[p_index]*w_y[p_index]
+//                               + w_z[p_index]*w_z[p_index]);
 
     const double x_star_p = x_star[p_index];
     const double y_star_p = y_star[p_index];
@@ -348,12 +350,9 @@ void ApplyVorticityConfinement(struct Particles *restrict particles,
       const double dw_y = dw*y_diff/r_mag;
       const double dw_z = dw*z_diff/r_mag;
 
-      // Should this be p_index or q_index???
-      /*
       const double vort_mag = sqrt(w_x[q_index]*w_x[q_index]
                                  + w_y[q_index]*w_y[q_index]
                                  + w_z[q_index]*w_z[q_index]);
-      */
 
       eta_x += vort_mag*dw_x;
       eta_y += vort_mag*dw_y;
@@ -372,9 +371,11 @@ void ApplyVorticityConfinement(struct Particles *restrict particles,
     const double wy = w_y[p_index];
     const double wz = w_z[p_index];
 
-    v_x[p_index] += dt * eps * (N_y*wz - N_z*wy);
-    v_y[p_index] += dt * eps * (N_z*wx - N_x*wz);
-    v_z[p_index] += dt * eps * (N_x*wy - N_y*wx);
+    const double density_p = density[p_index];
+
+    v_x[p_index] += dt * eps * (N_y*wz - N_z*wy) / density_p;
+    v_y[p_index] += dt * eps * (N_z*wx - N_x*wz) / density_p;
+    v_z[p_index] += dt * eps * (N_x*wy - N_y*wx) / density_p;
   }
 }
 
