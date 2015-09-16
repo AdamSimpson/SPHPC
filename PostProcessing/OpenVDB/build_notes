@@ -1,0 +1,3 @@
+On Rhea we need to set boost to point to the module specified version:
+
+cmake -DBOOST_ROOT=$BOOST_ROOT -DBoost_NO_BOOST_CMAKE=TRUE ..
