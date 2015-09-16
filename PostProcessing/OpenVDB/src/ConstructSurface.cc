@@ -8,10 +8,11 @@
 
 class Particles {
   private:
-    std::vector<openvdb::Vec3R> particles;
     openvdb::Real radius;
+    std::vector<openvdb::Vec3R> particles;
   public:
     Particles(const openvdb::Real &radius) : radius(radius) {};
+    typedef openvdb::Vec3R  value_type;
     void add(const openvdb::Vec3R &coord) {this->particles.push_back(coord); }
     void getPos(size_t n, openvdb::Vec3R &pos) const { pos = particles[n]; }
     size_t size() const { return particles.size(); }
