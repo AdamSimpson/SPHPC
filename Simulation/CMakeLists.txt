@@ -14,7 +14,7 @@ endif()
 
 file(GLOB SRC_FILES src/*.c src/*.cc)
 include_directories(../Common)
- 
+
 # Remove adios files from glob if not set
 if (${USE_ADIOS})
   file(GLOB MPI_IO_REMOVE src/fileio_MPI_IO.c)
@@ -63,7 +63,7 @@ if (${myhostname} MATCHES "(.*)titan(.*)" OR ${myhostname} MATCHES "(.*)chester(
   target_link_libraries(sph_sim ${M_LIB})
 
   if (USE_OPENACC)
-    set(ACC_FLAGS "-acc -Minfo=acc -O3 -ta=tesla:cc35,cuda7.0 -Mcuda")
+    set(ACC_FLAGS "-acc -Minfo=acc -fast -ta=tesla:cc35,cuda7.0 -Mcuda")
   endif()
 
   set(CMAKE_C_FLAGS "${ACC_FLAGS}")
@@ -73,8 +73,8 @@ else() # Adam's workstation
   target_link_libraries(sph_sim ${CUDA_LIBRARIES})
 
   if (USE_OPENACC)
-    set(CMAKE_C_FLAGS "-acc -Minfo=acc -O3 -ta=tesla:cc50 -Mcuda")
-    set(CMAKE_CXX_FLAGS "-acc -Minfo=acc -O3 -ta=tesla:cc50 -Mcuda")
+    set(CMAKE_C_FLAGS "-acc -Minfo=acc -fast -ta=tesla:cc50 -Mcuda")
+    set(CMAKE_CXX_FLAGS "-acc -Minfo=acc -fast -ta=tesla:cc50 -Mcuda")
   endif()
 endif()
 
