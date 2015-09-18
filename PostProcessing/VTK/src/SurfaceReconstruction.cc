@@ -1,9 +1,19 @@
+#include <vtkSmartPointer.h>
 #include <vtkVersion.h>
 #include <vtkCellArray.h>
 #include <vtkPoints.h>
 #include <vtkXMLPolyDataWriter.h>
 #include <vtkPolyData.h>
-#include <vtkSmartPointer.h>
+#include <vtkActor.h>
+#include <vtkRenderWindow.h>
+#include <vtkRenderer.h>
+// Needed to use OpenGL2 sphere imposters
+#include <map>
+#include <vtkShader.h>
+#include <vtkOpenGLHelper.h>
+#include <vtkOpenGLSphereMapper.h>
+//
+
 #include <iostream>
 #include <fstream>
 
