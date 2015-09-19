@@ -1,12 +1,19 @@
 #include <vtkSmartPointer.h>
+#include <vtkNew.h>
 #include <vtkVersion.h>
 #include <vtkCellArray.h>
+#include <vtkFloatArray.h>
 #include <vtkPoints.h>
-#include <vtkXMLPolyDataWriter.h>
 #include <vtkPolyData.h>
+#include <vtkPointData.h>
+#include "vtkLookupTable.h"
 #include <vtkActor.h>
 #include <vtkRenderWindow.h>
 #include <vtkRenderer.h>
+#include <vtkInteractorStyleTrackballCamera.h>
+#include <vtkInteractorStyleTrackball.h>
+#include <vtkRenderWindowInteractor.h>
+
 // Needed to use OpenGL2 sphere imposters
 #include <map>
 #include <vtkShader.h>
@@ -17,10 +24,18 @@
 #include <iostream>
 #include <fstream>
 
-int main ( int, char *[] )
-{
+int main (int argc, char **argv) {
   //Create points array
   vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+
+  // Create scale(radius) array
+  vtkSmartPointer<vtkFloatArray> scales = vtkSmartPointer<vtkFloatArray>::New();
+  scales->SetName("scales");
+
+  // Create color array
+  vtkSmartPointer<vtkUnsignedCharArray> colors = vtkSmartPointer<vtkUnsignedCharArray>::New();
+  colors->SetName("colors");
+  colors->SetNumberOfComponents(3);
 
   // Setup file to process
   // Place cursor at end of file to easily get size
@@ -56,8 +71,19 @@ int main ( int, char *[] )
       num_particles_read = bytes_read/(num_components*sizeof(double));
       total_particles_read += num_particles_read;
 
-      for(int j=0; j<num_particles_read; j++)
-        points->InsertNextPoint(((double*)buffer)+(num_components*j));
+      for(int j=0; j<num_particles_read; j++) {
+        double* buffer_pos = (double*)(buffer+(num_components*j*sizeof(double)));
+
+        // Convert to float
+        float float_buffer[3];
+        float_buffer[0] = (float)buffer_pos[0];
+        float_buffer[1] = (float)buffer_pos[1];
+        float_buffer[2] = (float)buffer_pos[2];
+
+        points->InsertNextPoint((float_buffer));
+        scales->InsertNextValue(1.0);
+        colors->InsertNextTuple3(255, 0, 0);
+      }
     }
   }
   file.close();
@@ -67,34 +93,36 @@ int main ( int, char *[] )
   vtkSmartPointer<vtkPolyData> fluid_polydata = vtkSmartPointer<vtkPolyData>::New();
   fluid_polydata->SetPoints(points);
 
+  // Attach scales and colors to points and set scales as active
+  fluid_polydata->GetPointData()->AddArray(scales);
+  fluid_polydata->GetPointData()->AddArray(colors);
+//  fluid_polydata->GetPointData()->SetActiveScalars("scales");
+
   // Create OpenGL sphere imposter mapper
   vtkSmartPointer<vtkOpenGLSphereMapper> fluid_mapper = vtkSmartPointer<vtkOpenGLSphereMapper>::New();
   fluid_mapper->SetInputData(fluid_polydata);
+
+  // Set to use colors array for coloring and scales array for radius
+  fluid_mapper->SetScalarModeToUsePointFieldData();
+  fluid_mapper->SelectColorArray("colors");
+  fluid_mapper->SetScaleArray("scales");
 
   // Create fluid particles actor
   vtkSmartPointer<vtkActor> fluid_actor = vtkSmartPointer<vtkActor>::New();
   fluid_actor->SetMapper(fluid_mapper);
 
-  // Add renderer and render window
   vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New();
   vtkSmartPointer<vtkRenderWindow> renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
-//  renderWindow->SetOffScreenRendering( 1 );
   renderWindow->AddRenderer(renderer);
-
-  // Render fluid actor
+  vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor = 
+    vtkSmartPointer<vtkRenderWindowInteractor>::New();
+  renderWindowInteractor->SetRenderWindow(renderWindow);
+ 
   renderer->AddActor(fluid_actor);
-  renderer->SetBackground(1,1,1);
-
+  renderer->SetBackground(.3, .6, .3); // Background color green
+ 
   renderWindow->Render();
-
-/*
-  // Write the VTP file
-  vtkSmartPointer<vtkXMLPolyDataWriter> writer = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
-  writer->SetFileName("sim-1.vtp");
-  writer->SetInputData(polydata);
-  writer->SetDataModeToBinary();
-  writer->Write();
-*/
+  renderWindowInteractor->Start();
 
   return 0;
 }
