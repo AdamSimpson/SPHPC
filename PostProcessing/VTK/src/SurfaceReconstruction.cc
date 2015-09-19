@@ -28,9 +28,9 @@ int main (int argc, char **argv) {
   //Create points array
   vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
 
-  // Create scale(radius) array
-  vtkSmartPointer<vtkFloatArray> scales = vtkSmartPointer<vtkFloatArray>::New();
-  scales->SetName("scales");
+  // Create radii array
+  vtkSmartPointer<vtkFloatArray> radii = vtkSmartPointer<vtkFloatArray>::New();
+  radii->SetName("radii");
 
   // Create color array
   vtkSmartPointer<vtkUnsignedCharArray> colors = vtkSmartPointer<vtkUnsignedCharArray>::New();
@@ -81,7 +81,7 @@ int main (int argc, char **argv) {
         float_buffer[2] = (float)buffer_pos[2];
 
         points->InsertNextPoint((float_buffer));
-        scales->InsertNextValue(1.0);
+        radii->InsertNextValue(0.35);
         colors->InsertNextTuple3(255, 0, 0);
       }
     }
@@ -94,7 +94,7 @@ int main (int argc, char **argv) {
   fluid_polydata->SetPoints(points);
 
   // Attach scales and colors to points and set scales as active
-  fluid_polydata->GetPointData()->AddArray(scales);
+  fluid_polydata->GetPointData()->AddArray(radii);
   fluid_polydata->GetPointData()->AddArray(colors);
 //  fluid_polydata->GetPointData()->SetActiveScalars("scales");
 
@@ -105,7 +105,7 @@ int main (int argc, char **argv) {
   // Set to use colors array for coloring and scales array for radius
   fluid_mapper->SetScalarModeToUsePointFieldData();
   fluid_mapper->SelectColorArray("colors");
-  fluid_mapper->SetScaleArray("scales");
+  fluid_mapper->SetScaleArray("radii");
 
   // Create fluid particles actor
   vtkSmartPointer<vtkActor> fluid_actor = vtkSmartPointer<vtkActor>::New();
