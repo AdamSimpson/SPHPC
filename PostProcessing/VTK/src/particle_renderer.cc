@@ -1,3 +1,7 @@
+#include "processing_parameters.h"
+#include <iostream>
+#include <fstream>
+
 #include <vtkSmartPointer.h>
 #include <vtkNew.h>
 #include <vtkVersion.h>
@@ -21,17 +25,55 @@
 #include <vtkOpenGLSphereMapper.h>
 //
 
-#include <iostream>
-#include <fstream>
+class VtkParticleRenderer {
+  public:
+    VtkParticleRenderer() {};
+    ~VtkParticleRenderer() {};
+  private:
+    vtkSmartPointer<vtkPoints> points;
+    vtkSmartPointer<vtkFloatArray> radii;
+    vtkSmartPointer<vtkUnsignedCharArray> colors;
+
+}
+
+VtkParticleRenderer::VtkParticleRenderer() {
+  // Setup buffers required for OpenGL imposter spheres
+  points =  vtkSmartPointer<vtkPoints>::New();
+
+  radii  = vtkSmartPointer<vtkFloatArray>::New();
+  radii->SetName("radii");
+
+  colors = vtkSmartPointer<vtkUnsignedCharArray>::New();
+  colors->SetName("colors");
+  colors->SetNumberOfComponents(3);
+}
+
+void FillParticleBuffers() {
+  // Open Adios file
+
+}
+
+void BeginAnimation() {
+
+}
+
+void SetScene() {
+
+}
+
+void EndEnimation() {
+
+}
 
 int main (int argc, char **argv) {
+  ProcessingParameters params("./post-config.ini");
+  params->ReadParameters();
+
   //Create points array
   vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
-
   // Create radii array
   vtkSmartPointer<vtkFloatArray> radii = vtkSmartPointer<vtkFloatArray>::New();
   radii->SetName("radii");
-
   // Create color array
   vtkSmartPointer<vtkUnsignedCharArray> colors = vtkSmartPointer<vtkUnsignedCharArray>::New();
   colors->SetName("colors");
@@ -113,7 +155,7 @@ int main (int argc, char **argv) {
   vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New();
   vtkSmartPointer<vtkRenderWindow> renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
   renderWindow->AddRenderer(renderer);
- 
+
   renderer->AddActor(fluid_actor);
   renderer->SetBackground(.3, .6, .3); // Background color green
 
@@ -127,18 +169,18 @@ int main (int argc, char **argv) {
   renderWindow->Render();
 
   // Save image
-  vtkSmartPointer<vtkWindowToImageFilter> windowToImageFilter = 
+  vtkSmartPointer<vtkWindowToImageFilter> windowToImageFilter =
     vtkSmartPointer<vtkWindowToImageFilter>::New();
   windowToImageFilter->SetInput(renderWindow);
   windowToImageFilter->SetMagnification(3); //set the resolution of the output image (3 times the current resolution of vtk render window)
   windowToImageFilter->SetInputBufferTypeToRGBA(); //also record the alpha (transparency) channel
   windowToImageFilter->ReadFrontBufferOff(); // read from the back buffer
   windowToImageFilter->Update();
- 
+
   vtkSmartPointer<vtkPNGWriter> writer = vtkSmartPointer<vtkPNGWriter>::New();
   writer->SetFileName("screenshot2.png");
   writer->SetInputConnection(windowToImageFilter->GetOutputPort());
-  writer->Write(); 
+  writer->Write();
 
   return 0;
 }
