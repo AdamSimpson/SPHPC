@@ -10,9 +10,9 @@
 #include <vtkActor.h>
 #include <vtkRenderWindow.h>
 #include <vtkRenderer.h>
-#include <vtkInteractorStyleTrackballCamera.h>
-#include <vtkInteractorStyleTrackball.h>
-#include <vtkRenderWindowInteractor.h>
+#include <vtkWindowToImageFilter.h>
+#include <vtkPNGWriter.h>
+#include <vtkCamera.h>
 
 // Needed to use OpenGL2 sphere imposters
 #include <map>
@@ -89,20 +89,19 @@ int main (int argc, char **argv) {
   file.close();
   delete[] buffer;
 
-  // Create a polydata object and add the points to it.
+  // Create polydata object and add the points to it.
   vtkSmartPointer<vtkPolyData> fluid_polydata = vtkSmartPointer<vtkPolyData>::New();
   fluid_polydata->SetPoints(points);
 
-  // Attach scales and colors to points and set scales as active
+  // Attach radii and colors to points
   fluid_polydata->GetPointData()->AddArray(radii);
   fluid_polydata->GetPointData()->AddArray(colors);
-//  fluid_polydata->GetPointData()->SetActiveScalars("scales");
 
   // Create OpenGL sphere imposter mapper
   vtkSmartPointer<vtkOpenGLSphereMapper> fluid_mapper = vtkSmartPointer<vtkOpenGLSphereMapper>::New();
   fluid_mapper->SetInputData(fluid_polydata);
 
-  // Set to use colors array for coloring and scales array for radius
+  // Set to use colors array for coloring and radii array for radius
   fluid_mapper->SetScalarModeToUsePointFieldData();
   fluid_mapper->SelectColorArray("colors");
   fluid_mapper->SetScaleArray("radii");
@@ -114,15 +113,32 @@ int main (int argc, char **argv) {
   vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New();
   vtkSmartPointer<vtkRenderWindow> renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
   renderWindow->AddRenderer(renderer);
-  vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor = 
-    vtkSmartPointer<vtkRenderWindowInteractor>::New();
-  renderWindowInteractor->SetRenderWindow(renderWindow);
  
   renderer->AddActor(fluid_actor);
   renderer->SetBackground(.3, .6, .3); // Background color green
- 
+
+  // Setup Camera
+  vtkSmartPointer<vtkCamera> camera = vtkSmartPointer<vtkCamera>::New();
+  camera->SetViewUp(0,0,1); // Set z as up to match simulation
+  camera->SetPosition(30, -150, 15);
+  camera->SetFocalPoint(30, 15, 30);
+  renderer->SetActiveCamera(camera);
+
   renderWindow->Render();
-  renderWindowInteractor->Start();
+
+  // Save image
+  vtkSmartPointer<vtkWindowToImageFilter> windowToImageFilter = 
+    vtkSmartPointer<vtkWindowToImageFilter>::New();
+  windowToImageFilter->SetInput(renderWindow);
+  windowToImageFilter->SetMagnification(3); //set the resolution of the output image (3 times the current resolution of vtk render window)
+  windowToImageFilter->SetInputBufferTypeToRGBA(); //also record the alpha (transparency) channel
+  windowToImageFilter->ReadFrontBufferOff(); // read from the back buffer
+  windowToImageFilter->Update();
+ 
+  vtkSmartPointer<vtkPNGWriter> writer = vtkSmartPointer<vtkPNGWriter>::New();
+  writer->SetFileName("screenshot2.png");
+  writer->SetInputConnection(windowToImageFilter->GetOutputPort());
+  writer->Write(); 
 
   return 0;
 }
