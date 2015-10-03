@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.1)
 project(sph_sim)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/CMake/)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/../CMake/)
 
 option(USE_OPENACC "Enable OpenACC support" ON)
-option(USE_ADIOS "Enable Adios file writing" OFF)
+option(USE_ADIOS "Enable Adios file writing" ON)
 
 set(CMAKE_C_STANDARD 99)
 
@@ -74,7 +74,7 @@ else() # Adam's workstation
 
   if (USE_OPENACC)
     set(CMAKE_C_FLAGS "-acc -Minfo=acc -fast -ta=tesla:cc50 -Mcuda")
-    set(CMAKE_CXX_FLAGS "-acc -Minfo=acc -fast -ta=tesla:cc50 -Mcuda")
+    set(CMAKE_CXX_FLAGS "-DBOOST_NO_ALIGNMENT -acc -Minfo=acc -fast -ta=tesla:cc50 -Mcuda")
   endif()
 endif()
 
