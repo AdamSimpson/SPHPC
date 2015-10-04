@@ -7,8 +7,8 @@ struct double3 {
   double x;
   double y;
   double z;
-}
-double3 to_double3(const std::string input_string);
+};
+double3 ToDouble3(const std::string input_string);
 
 struct Camera {
   double3 view_up;
@@ -26,12 +26,12 @@ struct Obstacle {
   std::string MTL_file_name;
   double3 min_coord;
   double max_x;
-}
+};
 
 class Parameters {
   public:
     Parameters(const std::string ini_name) : ini_file_name{ini_name} {};
-    ReadParameters();
+    void ReadParameters();
     Camera camera;
     Boundary boundary;
     Obstacle obstacle;
@@ -39,6 +39,6 @@ class Parameters {
 
   private:
     std::string ini_file_name;
-}
+};
 
 #endif
