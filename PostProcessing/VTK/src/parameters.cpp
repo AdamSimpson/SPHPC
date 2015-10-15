@@ -22,11 +22,10 @@ void Parameters::ReadParameters() {
 
     // Obstacle Parameters
     this->obstacle.OBJ_file_name = property_tree.get<std::string>("Obstacle.OBJ_file_name");
-    this->obstacle.MTL_file_name = property_tree.get<std::string>("Obstacle.MTL_file_name");
     this->obstacle.min_coord     = ToDouble3(property_tree.get<std::string>("Obstacle.min_coord"));
     this->obstacle.max_x         = property_tree.get<double>("Obstacle.max_x");
 
-    this->input_file_path = property_tree.get<std::string>("Input.file_path");
+    this->input_dir = property_tree.get<std::string>("Input.file_dir");
 
   } catch(std::exception const& exception) {
       std::cout << "Aborting: " << exception.what() << std::endl;

@@ -1,0 +1,1 @@
+atrain-dev.com: ADIOS_DIR=/usr cmake ..

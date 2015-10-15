@@ -23,7 +23,6 @@ struct Boundary {
 
 struct Obstacle {
   std::string OBJ_file_name;
-  std::string MTL_file_name;
   double3 min_coord;
   double max_x;
 };
@@ -35,7 +34,7 @@ class Parameters {
     Camera camera;
     Boundary boundary;
     Obstacle obstacle;
-    std::string input_file_path;
+    std::string input_dir;
 
   private:
     std::string ini_file_name;

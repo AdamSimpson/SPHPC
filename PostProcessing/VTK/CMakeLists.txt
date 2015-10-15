@@ -17,13 +17,14 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../Common)
 find_package(MPI REQUIRED)
 include_directories(${MPI_INCLUDE_PATH})
 target_link_libraries(sph_post ${MPI_C_LIBRARIES})
+target_link_libraries(sph_post ${MPI_CXX_LIBRARIES})
 
 find_package(VTK REQUIRED)
 include(${VTK_USE_FILE})
 target_link_libraries(sph_post ${VTK_LIBRARIES})
 
 set(Boost_NO_BOOST_CMAKE TRUE) # Ignore system boost and use module system boost
-find_package(Boost COMPONENTS mpi REQUIRED)
+find_package(Boost COMPONENTS mpi system filesystem REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 target_link_libraries(sph_post ${Boost_LIBRARIES})
 

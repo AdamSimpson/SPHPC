@@ -183,9 +183,9 @@ void ComputeSurfaceTension(struct Particles *restrict particles,
          const double mass_q = rest_mass;
 
           const double c = C(r_mag, h, C_norm);
-          const double F_cohesion_x = -gama * mass_p * mass_q * c * x_diff/r_mag;
-          const double F_cohesion_y = -gama * mass_p * mass_q * c * y_diff/r_mag;
-          const double F_cohesion_z = -gama * mass_p * mass_q * c * z_diff/r_mag;
+          const double F_cohesion_x = -20.0*gama * mass_p * mass_q * c * x_diff/r_mag;
+          const double F_cohesion_y = -20.0*gama * mass_p * mass_q * c * y_diff/r_mag;
+          const double F_cohesion_z = -20.0*gama * mass_p * mass_q * c * z_diff/r_mag;
 
           const double F_curvature_x = -gama * mass_p * (color_x_p - color_x[q_index]);
           const double F_curvature_y = -gama * mass_p * (color_y_p - color_y[q_index]);
@@ -197,9 +197,10 @@ void ComputeSurfaceTension(struct Particles *restrict particles,
           F_surface_z += K * (F_cohesion_z + F_curvature_z);
       }
 
-    v_x[p_index] += dt * F_surface_x / mass_p;
-    v_y[p_index] += dt * F_surface_y / mass_p;
-    v_z[p_index] += dt * F_surface_z / mass_p;
+      // Mass or density ???
+      v_x[p_index] += dt * F_surface_x / density_p;
+      v_y[p_index] += dt * F_surface_y / density_p;
+      v_z[p_index] += dt * F_surface_z / density_p;
     }
 }
 
@@ -209,7 +210,6 @@ void ComputeVorticity(struct Particles *restrict particles,
 
   const double dt = params->time_step;
   const double h = params->smoothing_radius;
-  const double eps = 0.001 * params->smoothing_radius;
   const double DelW_norm = params->DelW_norm;
   const int num_particles = particles->local_count;
 
@@ -673,7 +673,7 @@ void UpdateDPs(struct Particles *restrict particles,
   const double h = params->smoothing_radius;
   const double rest_density = particles->rest_density;
   const double rest_mass = particles->rest_mass;
-  const double k = params->k;
+  //const double k = params->k;
   const double W_norm = params->W_norm;
   const double DelW_norm = params->DelW_norm;
   const double Wdq = W(params->dq, h, W_norm);
@@ -726,7 +726,7 @@ void UpdateDPs(struct Particles *restrict particles,
         r_mag = h*0.0001;
 
       const double mass_q = rest_mass;
-      const double WdWdq = W(r_mag, h, W_norm)/Wdq;
+//      const double WdWdq = W(r_mag, h, W_norm)/Wdq;
       const double s_corr = 0.0;//-k * WdWdq*WdWdq*WdWdq*WdWdq;
       const double delW = DelW(r_mag, h, DelW_norm);
       const double dp = mass_q * (lambda[p_index] + lambda[q_index] + s_corr) * delW;

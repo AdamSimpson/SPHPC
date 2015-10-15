@@ -5,15 +5,13 @@
 #include <boost/mpi.hpp>
 
 extern "C" {
-  #undef __cplusplus      // Don't use C++ mpi bindings
   #include "adios_read.h"
-  #define __cplusplus
 }
 
 AdiosReader::AdiosReader(const std::string& name, const boost::mpi::communicator& comm): file_name{name}, communicator{comm} {
 
   adios_read_init_method(ADIOS_READ_METHOD_BP, static_cast<MPI_Comm>(communicator), "verbose=2");
-  adios_read_open(file_name.c_str(), ADIOS_READ_METHOD_BP, comm, ADIOS_LOCKMODE_NONE, 0);
+  adios_file = adios_read_open_file(file_name.c_str(), ADIOS_READ_METHOD_BP, comm);
 
   if(adios_errno)
     throw std::runtime_error{adios_errmsg()};
@@ -23,7 +21,6 @@ AdiosReader::~AdiosReader() {
   adios_selection_delete(adios_selection);
   adios_read_finalize_method(ADIOS_READ_METHOD_BP);
   adios_read_close(adios_file);
-
 }
 
 template<typename T>
@@ -32,11 +29,12 @@ std::vector<T> AdiosReader::FetchValue(const std::string& value_name) {
 
   // Calculate element count of value variable
   int num_dims = var_info->ndim;
-  size_t value_count = var_info->dims[0];
-  for(int i=1; i<num_dims; i++)
-    value_count *= var_info->dims[i];
-
-  // var_info.type could be used to determine From type(?)
+  size_t value_count = 1; // If num_dims == 0 the value is a scalar...this seems silly
+  if(num_dims > 0) {
+    value_count = var_info->dims[0];
+    for(int i=1; i<num_dims; i++)
+      value_count *= var_info->dims[i];
+  }
 
   std::vector<T> value_data;
   value_data.resize(value_count);

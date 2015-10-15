@@ -72,17 +72,19 @@ void WriteParticles(const struct Particles *const particles,
   // Update x,y,z components on host
   #pragma acc update host(particles->x[:local_count],  \
                           particles->y[:local_count],  \
-                          particles->z[:local_count]) async
+                          particles->z[:local_count],  \
+                          particles->density[:local_count]) async
 
   // Write positions to file
   int adios_err;
   uint64_t adios_groupsize, adios_totalsize;
 
-  adios_open(&file_io->adios_handle, "position", file_name, "w", MPI_COMM_WORLD);
+  adios_open(&file_io->adios_handle, "particles", file_name, "w", MPI_COMM_WORLD);
 
   // Compute adios local size to write
   adios_groupsize = 3 * sizeof(int)
-                  + 3 * local_count * sizeof(double);  // (x,y,z) coords
+                  + 1 * sizeof(double)
+                  + 4 * local_count * sizeof(double);  // (x,y,z,density)
   adios_group_size(file_io->adios_handle, adios_groupsize, &adios_totalsize);
 
   // Compute offset in global output for current rank(sum of ranks to the "left")
@@ -95,9 +97,11 @@ void WriteParticles(const struct Particles *const particles,
   adios_write(file_io->adios_handle, "global_particle_count", &global_count);
   adios_write(file_io->adios_handle, "local_particle_count", &local_count);
   adios_write(file_io->adios_handle, "offset_particle_count", &offset_count);
+  adios_write(file_io->adios_handle, "particle_radius", &(particles->rest_radius));
   adios_write(file_io->adios_handle, "x", particles->x);
   adios_write(file_io->adios_handle, "y", particles->y);
   adios_write(file_io->adios_handle, "z", particles->z);
+  adios_write(file_io->adios_handle, "density", particles->density);
 
   adios_close(file_io->adios_handle);
 
@@ -108,7 +112,7 @@ void WriteParticles(const struct Particles *const particles,
 void WriteColorField(const struct Particles *const particles,
                      const struct Params *const params,
                      struct FileIO *const file_io) {
-
+/*
   char file_name[1024];
   sprintf(file_name, "%s/sim-%d.bp", file_io->output_path, file_io->file_num);
 
@@ -140,4 +144,5 @@ void WriteColorField(const struct Particles *const particles,
   adios_close(file_io->adios_handle);
 
   ++file_io->file_num;
+  */
 }

@@ -6,9 +6,7 @@
 #include <boost/mpi.hpp>
 
 extern "C" {
-  #undef __cplusplus
   #include "adios_read.h"
-  #define __cplusplus
 }
 
 class AdiosReader {
