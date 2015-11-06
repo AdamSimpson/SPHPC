@@ -11,27 +11,28 @@
 
 enum Dimension { two_dimensional = 2, three_dimensional = 3}
 
-template< typename T, Dimension D >
+template<typename Real, typename Integer, Dimension Dim>
 class Particles {
 private:
-  const Parameters<T>& parameters;
+  const Parameters<Real,Integer,Dimension>& parameters;
 
-  hemi::Array< Vec<T,D> > pos;
-  hemi::Array< Vec<T,D> > pos_star;
-  hemi::Array< Vec<T,D> > v;
-  hemi::Array< Vec<T,D> > delta_pos;
-  hemi::Array< Vec<T,D> > vorticity;
-  hemi::Array< Vec<T,D> > color;
-  hemi::Array< T > density;
-  hemi::Array< T > lambda;
-  hemi::Array< int > id;
+  typedef Vector_t Vec<Real,Integer,Dimension>
+  hemi::Array< Vector_t > pos;
+  hemi::Array< Vector_t > pos_star;
+  hemi::Array< Vector_t > v;
+  hemi::Array< Vector_t > delta_pos;
+  hemi::Array< Vector_t > vorticity;
+  hemi::Array< Vector_t > color;
+  hemi::Array< Real > density;
+  hemi::Array< Real > lambda;
+  hemi::Array< Integer > id;
 
-  int global_count;    // Global number of particles in simulation
-  int local_count;     // Particles within node bounds, excludes halo particles
-  int max_local_count; // Maximum number of local and halo particles
+  Integer global_count;    // Global number of particles in simulation
+  Integer local_count;     // Particles within node bounds, excludes halo particles
+  Integer max_local_count; // Maximum number of local and halo particles
 
 public:
-  Particles(const Parameters<T>& params, const int max_local);
+  Particles(const Parameters<Real>& params, const int max_local);
   ~Particles() {};
 
   Particles(const Particles&)            = delete;
