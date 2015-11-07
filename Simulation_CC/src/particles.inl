@@ -1,51 +1,56 @@
 #pragma once
 
 #include "vec.h"
-#include "hemi/array.h"
-#include "hemi.parallel_for.h"
 #include "parameters.h"
 
-template< typename T, Dimension D >
-Particles(const Parameters<T>& params, const int max_local);
+template<typename Real, typename Integer, Dimension Dim>
+Particles<Real,Integer,Dim>::Particles(const Parameters<Real,Integer,Dim>& params): parameters{params},
+                             pos{hemi::Array< Vec<Real,Dim> >(parameters.GetMaxParticlesLocal())},
+                             pos_star{hemi::Array< Vec<Real,Dim> >(parameters.GetMaxParticlesLocal())},
+                             v{hemi::Array< Vec<Real,Dim> >(parameters.GetMaxParticlesLocal())},
+                             delta_pos{hemi::Array< Vec<Real,Dim> >(parameters.GetMaxParticlesLocal())},
+                             vorticity{hemi::Array< Vec<Real,Dim> >(parameters.GetMaxParticlesLocal())},
+                             color{hemi::Array< Vec<Real,Dim> >(parameters.GetMaxParticlesLocal())},
+                             density{hemi::Array< Real >(parameters.GetMaxParticlesLocal())},
+                             lambda{hemi::Array< Real >(parameters.GetMaxParticlesLocal())},
+                             id{hemi::Array< Integer >(parameters.GetMaxParticlesLocal())}
+{};
 
-template< typename T, Dimension D >
-~Particles() {};
-
-template< typename T, Dimension D >
+template<typename Real, typename Integer, Dimension Dim>
 void ApplyGravity();
 
-template< typename T, Dimension D >
+template< typename Real, typename Integer, Dimension Dim>
 void ComputeDensities();
 
-template< typename T, Dimension D >
+template< typename Real, typename Integer, Dimension Dim>
 void PredictPositions();
 
-template< typename T, Dimension D >
+template< typename Real, typename Integer, Dimension Dim>
 void UpdatePositions();
 
-template< typename T, Dimension D >
+template< typename Real, typename Integer, Dimension Dim>
 void ComputeLambdas();
 
-template< typename T, Dimension D >
+template< typename Real, typename Integer, Dimension Dim>
 void UpdatePositionStars();
 
-template< typename T, Dimension D >
+template< typename Real, typename Integer, Dimension Dim>
 void UpdateDeltaPositions();
 
-template< typename T, Dimension D >
+template< typename Real, typename Integer, Dimension Dim>
 void UpdateVelocities();
 
-template< typename T, Dimension D >
+template< typename Real, typename Integer, Dimension Dim>
 void ApplyBoundaryConditions();
 
-template< typename T, Dimension D >
+template< typename Real, typename Integer, Dimension Dim>
 void ApplySurfaceTension();
 
-template< typename T, Dimension D >
+template< typename Real, typename Integer, Dimension Dim>
 void ApplyViscosity();
 
-template< typename T, Dimension D >
+template< typename Real, typename Integer, Dimension Dim>
 void ComputeVorticity();
 
-template< typename T, Dimension D >
+template< typename Real, typename Integer, Dimension Dim>
 void ApplyVorticityConfinement();

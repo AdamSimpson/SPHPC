@@ -1,25 +1,24 @@
 #pragma once
 
+#include "dimension.h"
 #include "vec.h"
 #include "hemi/array.h"
-#include "hemi.parallel_for.h"
+#include "hemi/parallel_for.h"
 #include "parameters.h"
 
 /**
   Class to handle 2D and 3D SPH particle physics
 **/
 
-enum Dimension { two_dimensional = 2, three_dimensional = 3}
-
 template<typename Real, typename Integer, Dimension Dim>
 class Particles {
 public:
-  Particles(const Parameters<Real>& params, const Integer max_local);
+  Particles(const Parameters<Real, Integer, Dim>& params);
   ~Particles()                           = default;
-  Particles(const Particles&)            = delete;
-  Particles& operator=(const Particles&) = delete;
-  Particles(particles&&) noexcept        = delete
-  Particles& operator=(Particcles&&)     = delete;
+  Particles(const Particles&)            = default;
+  Particles& operator=(const Particles&) = default;
+  Particles(Particles&&) noexcept        = default;
+  Particles& operator=(Particles&&)      = default;
 
   void ApplyGravity();
   void ComputeDensities();
@@ -36,7 +35,7 @@ public:
   void ApplyVorticityConfinement();
 
 private:
-  const Parameters<Real,Integer,Dimension>& parameters;
+  const Parameters<Real,Integer,Dim>& parameters;
 
   hemi::Array< Vec<Real,Dim> > pos;
   hemi::Array< Vec<Real,Dim> > pos_star;

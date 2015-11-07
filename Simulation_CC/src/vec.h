@@ -1,11 +1,14 @@
+#pragma once
+
 #include <iostream>
 
 /**
-A Vector class to handle arbitrary type and dimension
+A Vec class to handle arbitrary type and dimension
 **/
 
 // Determine the alignment of struct - requires C++14
 constexpr int vec_alignment(const size_t struct_bytes) {
+/*
  int alignments[5] = {1, 2, 3, 8, 16};
 
  // Get first available alignment >= to struct size
@@ -17,15 +20,18 @@ constexpr int vec_alignment(const size_t struct_bytes) {
  }
 
  return first_larger;
+*/
+  return 8;
 }
 
 template <typename T, int n>
-struct Vector {
+struct Vec {
  T data[n];
 
- constexpr Vector(std::initializer_list<T> l){ for(int i=0; i<l.size(); ++i){ data[i] = l[i];} }
- constexpr explicit Vector(T *data_){ for(int i=0; i<n; ++i){ data[i] = data_[i]; } }
- constexpr explicit Vector(const T value){ for(int i=0; i<n; ++i){ data[i] = value;} }
+ Vec() = default;
+ /*constexpr C++14*/ Vec(std::initializer_list<T> l){ for(int i=0; i<l.size(); ++i){ data[i] = l[i];} }
+ /*constexpr C++14*/ explicit Vec(T *data_){ for(int i=0; i<n; ++i){ data[i] = data_[i]; } }
+ /*constexpr C++14*/ explicit Vec(const T value){ for(int i=0; i<n; ++i){ data[i] = value;} }
 
  T& operator[] (const size_t index) { return data[index]; }
  const T& operator[] (const size_t index) const { return data[index]; }
@@ -38,31 +44,33 @@ Could use partial specialization on T but would loose alignment without some tri
 TO DO : impliment partial specialization
 **/
 template <typename T>
-struct Vector<T, 2> {
+struct Vec<T, 2> {
  union {
    T data[2];
    struct { T x, y; };
  };
 
- Vector(const float x_, const float y_) : x(x_), y(y_) {}
- constexpr explicit Vector(const T value) : x(value), y(value) {}
- constexpr explicit Vector(T *data_) : x(data_[0]), y(data_[1]) {}
+ Vec() = default;
+ Vec(const float x_, const float y_) : x(x_), y(y_) {}
+ constexpr explicit Vec(const T value) : x(value), y(value) {}
+ constexpr explicit Vec(T *data_) : x(data_[0]), y(data_[1]) {}
 
  T& operator[] (const size_t index) { return data[index]; }
  const T& operator[] (const size_t index) const { return data[index]; }
 };
 
 template <typename T>
-struct Vector<T, 3> {
+struct Vec<T, 3> {
  union {
    T data[3];
    struct { T x, y, z; };
    struct { T r, g, b; };
  };
 
- Vector(const float x_, const float y_, const float z_) : x(x_), y(y_), z(z_) {}
- constexpr explicit Vector(const T value) : x(value), y(value), z(value) {}
- constexpr explicit Vector(T *data_) : x(data_[0]), y(data_[1]), z(data_[2]) {}
+ Vec() = default;
+ Vec(const float x_, const float y_, const float z_) : x(x_), y(y_), z(z_) {}
+ constexpr explicit Vec(const T value) : x(value), y(value), z(value) {}
+ constexpr explicit Vec(T *data_) : x(data_[0]), y(data_[1]), z(data_[2]) {}
 
  T& operator[] (const size_t index) { return data[index]; }
  const T& operator[] (const size_t index) const { return data[index]; }
@@ -73,52 +81,52 @@ Free Operators
 **/
 
 template<typename T, int n>
-Vector<T,n> operator+(const Vector<T,n>& lhs, const Vector<T,n>& rhs) {
+Vec<T,n> operator+(const Vec<T,n>& lhs, const Vec<T,n>& rhs) {
  T data[n];
  for(int i=0; i<n; i++)
    data[i] = lhs[i] + rhs[i];
 
- return Vector<T,n>(data);
+ return Vec<T,n>(data);
 }
 
 template<typename T, int n>
-Vector<T,n> operator-(const Vector<T,n>& lhs, const Vector<T,n>& rhs) {
+Vec<T,n> operator-(const Vec<T,n>& lhs, const Vec<T,n>& rhs) {
  T data[n];
  for(int i=0; i<n; i++)
    data[i] = lhs[i] - rhs[i];
 
- return Vector<T,n>(data);
+ return Vec<T,n>(data);
 }
 
 template<typename T, int n>
-Vector<T,n> operator*(const Vector<T,n>& lhs, const Vector<T,n>& rhs) {
+Vec<T,n> operator*(const Vec<T,n>& lhs, const Vec<T,n>& rhs) {
  T data[n];
  for(int i=0; i<n; i++)
    data[i] = lhs[i] * rhs[i];
 
- return Vector<T,n>(data);
+ return Vec<T,n>(data);
 }
 
 template<typename T, int n>
-Vector<T,n> operator*(const Vector<T,n>& lhs, const T rhs) {
+Vec<T,n> operator*(const Vec<T,n>& lhs, const T rhs) {
  T data[n];
  for(int i=0; i<n; i++)
    data[i] = lhs[i] * rhs;
 
- return Vector<T,n>(data);
+ return Vec<T,n>(data);
 }
 
 template<typename T, int n>
-Vector<T,n> operator*(const T lhs, const Vector<T,n>& rhs) {
+Vec<T,n> operator*(const T lhs, const Vec<T,n>& rhs) {
  T data[n];
  for(int i=0; i<n; i++)
    data[i] = lhs * rhs[i];
 
- return Vector<T,n>(data);
+ return Vec<T,n>(data);
 }
 
 template<typename T, int n>
-Vector<T,n>& operator+=(Vector<T,n>& lhs, const Vector<T,n>& rhs) {
+Vec<T,n>& operator+=(Vec<T,n>& lhs, const Vec<T,n>& rhs) {
  for(int i=0; i<n; i++)
    lhs[i] += rhs[i];
 
@@ -126,7 +134,7 @@ Vector<T,n>& operator+=(Vector<T,n>& lhs, const Vector<T,n>& rhs) {
 }
 
 template<typename T, int n>
-Vector<T,n>& operator-=(Vector<T,n>& lhs, const Vector<T,n>& rhs) {
+Vec<T,n>& operator-=(Vec<T,n>& lhs, const Vec<T,n>& rhs) {
  for(int i=0; i<n; i++)
    lhs[i] -= rhs[i];
 
@@ -134,7 +142,7 @@ Vector<T,n>& operator-=(Vector<T,n>& lhs, const Vector<T,n>& rhs) {
 }
 
 template<typename T, int n>
-Vector<T,n>& operator*=(Vector<T,n>& lhs, const Vector<T,n>& rhs) {
+Vec<T,n>& operator*=(Vec<T,n>& lhs, const Vec<T,n>& rhs) {
  for(int i=0; i<n; i++)
    lhs[i] *= rhs[i];
 
@@ -142,7 +150,7 @@ Vector<T,n>& operator*=(Vector<T,n>& lhs, const Vector<T,n>& rhs) {
 }
 
 template<typename T, int n>
-Vector<T,n>& operator*=(Vector<T,n>& lhs, const T& rhs) {
+Vec<T,n>& operator*=(Vec<T,n>& lhs, const T& rhs) {
  for(int i=0; i<n; i++)
    lhs[i] *= rhs;
 
@@ -150,7 +158,7 @@ Vector<T,n>& operator*=(Vector<T,n>& lhs, const T& rhs) {
 }
 
 template<typename T, int n>
-Vector<T,n>& operator/=(Vector<T,n>& lhs, const Vector<T,n>& rhs) {
+Vec<T,n>& operator/=(Vec<T,n>& lhs, const Vec<T,n>& rhs) {
  for(int i=0; i<n; i++)
    lhs[i] /= rhs[i];
 
@@ -158,7 +166,7 @@ Vector<T,n>& operator/=(Vector<T,n>& lhs, const Vector<T,n>& rhs) {
 }
 
 template<typename T, int n>
-Vector<T,n>& operator/=(Vector<T,n>& lhs, const T& rhs) {
+Vec<T,n>& operator/=(Vec<T,n>& lhs, const T& rhs) {
  for(int i=0; i<n; i++)
    lhs[i] /= rhs;
 
@@ -166,7 +174,7 @@ Vector<T,n>& operator/=(Vector<T,n>& lhs, const T& rhs) {
 }
 
 template<typename T, int n>
-T Dot(const Vector<T,n>& lhs, const Vector<T,n>& rhs) {
+T Dot(const Vec<T,n>& lhs, const Vec<T,n>& rhs) {
  T dot;
  for(int i=0; i<n; ++i)
    dot += lhs[i] * rhs[i];
@@ -175,16 +183,16 @@ T Dot(const Vector<T,n>& lhs, const Vector<T,n>& rhs) {
 }
 
 template<typename T, int n>
-T MagnitudeSquared(const Vector<T,n>& lhs, const Vector<T,n>& rhs) {
+T MagnitudeSquared(const Vec<T,n>& lhs, const Vec<T,n>& rhs) {
  return Dot(lhs, rhs);
 }
 
 template<typename T, int n>
-T Magnitude(const Vector<T,n>& lhs, const Vector<T,n>& rhs) {
+T Magnitude(const Vec<T,n>& lhs, const Vec<T,n>& rhs) {
  return sqrt(MagnitudeSquared(lhs, rhs));
 }
 
 template<typename T, int n>
-T InverseMagnitude(const Vector<T,n>& lhs, const Vector<T,n>& rhs) {
+T InverseMagnitude(const Vec<T,n>& lhs, const Vec<T,n>& rhs) {
  return static_cast<T>(1.0) / sqrt(MagSquared(lhs, rhs));
 }
