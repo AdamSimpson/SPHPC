@@ -10,6 +10,7 @@ file(GLOB SRC_FILES src/*.cpp)
 
 add_executable(sph ${SRC_FILES})
 
+# For when compiling without NVCC
 add_definitions(-DHEMI_CUDA_DISABLE)
 MESSAGE("DISABLING CUDA")
 
@@ -25,6 +26,8 @@ find_package(Boost COMPONENTS mpi system filesystem REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 target_link_libraries(sph ${Boost_LIBRARIES})
 
+set(HEMI_INCLUDE_DIR "external_libraries/hemi")
+MESSAGE("Setting HEMI_INCLUDE_DIR manually")
 find_package(Hemi REQUIRED)
 include_directories(${HEMI_INCLUDE_DIRS})
 
