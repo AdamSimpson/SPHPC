@@ -11,21 +11,21 @@
   Class to handle 2D and 3D SPH particle physics
 **/
 
-template<typename Real, typename Integer, Dimension Dim>
+template<typename Real, Dimension Dim>
 class Particles {
 public:
-  Particles(const Parameters<Real, Integer, Dim>& params):
+  Particles(const Parameters<Real, Dim>& params):
                                parameters{params},
-                               neighbors{Neighbors<Real,Integer,Dim>(*this)},
-                               pos{hemi::Array< Vec<Real,Dim> >(parameters.GetMaxParticlesLocal())},
-                               pos_star{hemi::Array< Vec<Real,Dim> >(parameters.GetMaxParticlesLocal())},
-                               v{hemi::Array< Vec<Real,Dim> >(parameters.GetMaxParticlesLocal())},
-                               delta_pos{hemi::Array< Vec<Real,Dim> >(parameters.GetMaxParticlesLocal())},
-                               vorticity{hemi::Array< Vec<Real,Dim> >(parameters.GetMaxParticlesLocal())},
-                               color{hemi::Array< Vec<Real,Dim> >(parameters.GetMaxParticlesLocal())},
-                               density{hemi::Array< Real >(parameters.GetMaxParticlesLocal())},
-                               lambda{hemi::Array< Real >(parameters.GetMaxParticlesLocal())},
-                               id{hemi::Array< Integer >(parameters.GetMaxParticlesLocal())} {};
+                               neighbors{*this},
+                               pos{parameters.GetMaxParticlesLocal()},
+                               pos_star{parameters.GetMaxParticlesLocal()},
+                               v{parameters.GetMaxParticlesLocal()},
+                               delta_pos{parameters.GetMaxParticlesLocal()},
+                               vorticity{parameters.GetMaxParticlesLocal()},
+                               color{parameters.GetMaxParticlesLocal()},
+                               density{parameters.GetMaxParticlesLocal()},
+                               lambda{parameters.GetMaxParticlesLocal()},
+                               id{parameters.GetMaxParticlesLocal()} {};
 
   ~Particles()                           = default;
   Particles(const Particles&)            = default;
@@ -48,8 +48,8 @@ public:
   void ApplyVorticityConfinement();
 
 private:
-  const Parameters<Real,Integer,Dim>& parameters;
-  Neighbors<Real,Integer,Dim> neighbors;
+  const Parameters<Real,Dim>& parameters;
+  Neighbors<Real,Dim> neighbors;
 
   hemi::Array< Vec<Real,Dim> > pos;
   hemi::Array< Vec<Real,Dim> > pos_star;
@@ -59,9 +59,9 @@ private:
   hemi::Array< Vec<Real,Dim> > color;
   hemi::Array< Real > density;
   hemi::Array< Real > lambda;
-  hemi::Array< Integer > id;
+  hemi::Array< std::size_t > id;
 
-  Integer global_count;    // Global number of particles in simulation
-  Integer local_count;     // Particles within node bounds, excludes halo particles
-  Integer max_local_count; // Maximum number of local and halo particles
+  std::size_t global_count;    // Global number of particles in simulation
+  std::size_t local_count;     // Particles within node bounds, excludes halo particles
+  std::size_t max_local_count; // Maximum number of local and halo particles
 };

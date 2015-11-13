@@ -1,8 +1,15 @@
 #include "simulation.h"
 #include "dimension.h"
+#include "exception"
 
 int main(int argc, char *argv[]) {
-  Simulation<float, int, two_dimensional> simulation("params.ini");
+  try {
+    Simulation<float, two_dimensional> simulation("params.ini");
+
+  } catch(std::exception const& exception) {
+      std::cout << "Aborting: " << exception.what() << std::endl;
+      return 1;
+  }
 
   return 0;
 }

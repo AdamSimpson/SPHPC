@@ -6,22 +6,26 @@
 #include "parameters.h"
 #include "particles.h"
 
-template<typename Real, typename Integer, Dimension Dim>
+template<typename Real, Dimension Dim>
 class Simulation {
 public:
-  Simulation(const std::string& input_file_name):
-    distributor{Distributor<Real,Integer,Dim>()},
-    parameters{Parameters<Real,Integer,Dim>(input_file_name)},
-    particles{Particles<Real,Integer,Dim>(parameters)} {/* Set distributor parameters*/};
+  /**
+    Simulation constructor
+    If constructor fails distributor is likely to abort application
+    instead of throwing exception as MPI is finalized with exception
+  **/
+  Simulation(const std::string& input_file_name) :
+    parameters{input_file_name},
+    particles{parameters} {};
 
-    ~Simulation()                            =default;
+    ~Simulation()                            = default;
     Simulation(const Simulation&)            = delete;
     Simulation& operator=(const Simulation&) = delete;
     Simulation(Simulation&&) noexcept        = delete;
     Simulation& operator=(Simulation&&)      = delete;
 
 private:
-  Distributor <Real,Integer,Dim> distributor;
-  Parameters  <Real,Integer,Dim> parameters;
-  Particles   <Real,Integer,Dim> particles;
+  Distributor <Real,Dim> distributor;
+  Parameters  <Real,Dim> parameters;
+  Particles   <Real,Dim> particles;
 };

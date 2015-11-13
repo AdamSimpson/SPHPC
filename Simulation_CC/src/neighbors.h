@@ -1,12 +1,12 @@
 #pragma once
 
-template<typename Real, typename Integer, Dimension Dim>
+template<typename Real, Dimension Dim>
 class Particles;
 
-template<typename Real, typename Integer, Dimension Dim>
+template<typename Real, Dimension Dim>
 class Neighbors {
 public:
-  Neighbors(const Particles<Real, Integer, Dim>& particles_): particles{particles_} {};
+  Neighbors(const Particles<Real, Dim>& particles_): particles{particles_} {};
 
   ~Neighbors()                           = default;
   Neighbors(const Neighbors&)            = default;
@@ -15,5 +15,5 @@ public:
   Neighbors& operator=(Neighbors&&)      = default;
 
 private:
-  const Particles<Real, Integer, Dim>& particles;
+  const Particles<Real, Dim>& particles;
 };
