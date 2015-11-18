@@ -3,6 +3,7 @@
 #include "dimension.h"
 #include "vec.h"
 #include "aabb.h"
+#include <cmath>
 #include <string>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
@@ -15,12 +16,14 @@ Vec<Real,Dim> ToRealVec(const std::string& input_string);
 template<typename Real, Dimension Dim>
 class Parameters {
 public:
+
   /**
   Parameters constructor:
     Handle exceptions as they will fail to propogate to main()
   **/
   Parameters(const std::string& file_name) {
-    ReadParameters(file_name);
+    this->ReadINI(file_name);
+    this->DeriveFromInput();
   };
 
   ~Parameters()                            = default;
@@ -32,7 +35,7 @@ public:
   /**
     Read INI file containing parameter files
   **/
-  void ReadParameters(const std::string& file_name) {
+  void ReadINI(const std::string& file_name) {
     boost::property_tree::ptree property_tree;
     boost::property_tree::ini_parser::read_ini(file_name, property_tree);
 
@@ -51,14 +54,34 @@ public:
     initial_fluid.max = ToRealVec<Real,Dim>(property_tree.get<std::string>("InitialFluid.min"));
   }
 
+  /**
+    Derive additional parameters from input parameters required for simulation
+  **/
+  void DeriveFromInput() {
+    particle_spacing = pow(initial_fluid.Volume() / global_particle_count, 1.0/3.0);
+    particle_radius = particle_spacing/2.0;
+    smoothing_radius = 2.0*particle_spacing;
+  }
+
   std::size_t GetMaxParticlesLocal() const {
     return max_particles_local;
-  };
+  }
+
+  AABB<Real,Dim> GetInitialFluid() const {
+    return initial_fluid;
+  }
+
+  Real GetParticleSpacing() const {
+    return particle_spacing;
+  }
 
 private:
   std::size_t max_particles_local;
   std::size_t global_particle_count;
   std::size_t time_step_count;
+  Real particle_spacing;
+  Real particle_radius;
+  Real smoothing_radius;
   Real g;
   Real c;
   Real k;
