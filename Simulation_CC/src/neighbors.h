@@ -6,7 +6,7 @@ class Particles;
 template<typename Real, Dimension Dim>
 class Neighbors {
 public:
-  Neighbors(const Particles<Real, Dim>& particles_): particles{particles_} {};
+  Neighbors(const Particles<Real, Dim>& particles): m_particles{particles} {};
 
   ~Neighbors()                           = default;
   Neighbors(const Neighbors&)            = default;
@@ -15,5 +15,5 @@ public:
   Neighbors& operator=(Neighbors&&)      = default;
 
 private:
-  const Particles<Real, Dim>& particles;
+  const Particles<Real, Dim>& m_particles;
 };

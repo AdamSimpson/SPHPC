@@ -10,16 +10,19 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
+// Forward declaration
 template<typename Real, Dimension Dim>
 Vec<Real,Dim> ToRealVec(const std::string& input_string);
 
+/**
+  @brief Simulation wide tunable parameters
+**/
 template<typename Real, Dimension Dim>
 class Parameters {
 public:
 
   /**
-  Parameters constructor:
-    Handle exceptions as they will fail to propogate to main()
+    @brief  Construct initial parameters from file_name .INI file
   **/
   Parameters(const std::string& file_name) {
     this->ReadINI(file_name);
@@ -33,64 +36,117 @@ public:
   Parameters& operator=(Parameters&&)      = default;
 
   /**
-    Read INI file containing parameter files
+    @brief Read file_name .INI containing parameters
   **/
   void ReadINI(const std::string& file_name) {
     boost::property_tree::ptree property_tree;
     boost::property_tree::ini_parser::read_ini(file_name, property_tree);
 
-    time_step_count = property_tree.get<std::size_t>("SimParameters.number_steps");
-    time_step = property_tree.get<Real>("SimParameters.time_step");
-    global_particle_count = property_tree.get<std::size_t>("SimParameters.global_particles_local");
-    max_particles_local = property_tree.get<std::size_t>("SimParameters.max_particles_local");
-    g = property_tree.get<Real>("PhysicalParameters.g");
-    c = property_tree.get<Real>("PhysicalParameters.c");
-    k = property_tree.get<Real>("PhysicalParameters.k");
+    m_time_step_count = property_tree.get<std::size_t>("SimParameters.number_steps");
+    m_time_step = property_tree.get<Real>("SimParameters.time_step");
+    m_global_particle_count = property_tree.get<std::size_t>("SimParameters.global_particle_count");
+    m_max_particles_local = property_tree.get<std::size_t>("SimParameters.max_particles_local");
+    m_g = property_tree.get<Real>("PhysicalParameters.g");
+    m_c = property_tree.get<Real>("PhysicalParameters.c");
+    m_k = property_tree.get<Real>("PhysicalParameters.k");
 
-    boundary.min = ToRealVec<Real,Dim>(property_tree.get<std::string>("Boundary.min"));
-    boundary.max = ToRealVec<Real,Dim>(property_tree.get<std::string>("Boundary.max"));
+    m_boundary.min = ToRealVec<Real,Dim>(property_tree.get<std::string>("Boundary.min"));
+    m_boundary.max = ToRealVec<Real,Dim>(property_tree.get<std::string>("Boundary.max"));
 
-    initial_fluid.min = ToRealVec<Real,Dim>(property_tree.get<std::string>("InitialFluid.min"));
-    initial_fluid.max = ToRealVec<Real,Dim>(property_tree.get<std::string>("InitialFluid.min"));
+    m_initial_fluid.min = ToRealVec<Real,Dim>(property_tree.get<std::string>("InitialFluid.min"));
+    m_initial_fluid.max = ToRealVec<Real,Dim>(property_tree.get<std::string>("InitialFluid.max"));
   }
 
   /**
-    Derive additional parameters from input parameters required for simulation
+    @brief Derive additional parameters from .INI parameters required for simulation
   **/
   void DeriveFromInput() {
-    particle_spacing = pow(initial_fluid.Volume() / global_particle_count, 1.0/3.0);
-    particle_radius = particle_spacing/2.0;
-    smoothing_radius = 2.0*particle_spacing;
+    m_particle_rest_spacing = pow(m_initial_fluid.Volume() / m_global_particle_count, 1.0/Dim);
+    m_particle_radius = m_particle_rest_spacing/2.0;
+    m_smoothing_radius = 2.0*m_particle_rest_spacing;
   }
 
+  /**
+    @return maximum node level particle count
+  **/
   std::size_t GetMaxParticlesLocal() const {
-    return max_particles_local;
+    return m_max_particles_local;
   }
 
+  /**
+    @return maximum global level particle count
+  **/
+  std::size_t GetGlobalParticleCount() const {
+    return m_global_particle_count;
+  }
+
+  /**
+    Set maximum global level particle count
+  **/
+  void SetGlobalParticleCount(std::size_t global_count) {
+    m_global_particle_count = global_count;
+  }
+
+  /**
+    @return Initial fluid configuration as AABB
+  **/
   AABB<Real,Dim> GetInitialFluid() const {
-    return initial_fluid;
+    return m_initial_fluid;
   }
 
-  Real GetParticleSpacing() const {
-    return particle_spacing;
+  /**
+    @return Global boundary as AABB
+  **/
+  AABB<Real,Dim> GetBoundary() const {
+    return m_boundary;
+  }
+
+  /**
+    @return Rest spacing of particles
+  **/
+  Real GetParticleRestSpacing() const {
+    return m_particle_rest_spacing;
+  }
+
+  /**
+    @return Gravitational acceleration magnitude
+  **/
+  Real GetGravity() const {
+    return m_g;
+  }
+
+  /**
+    @return number of simulation steps to take
+  **/
+  std::size_t GetTimeStepCount() const {
+    return m_time_step_count;
+  }
+
+  /**
+    @return time step size
+  **/
+  Real GetTimeStep() const {
+    return m_time_step;
   }
 
 private:
-  std::size_t max_particles_local;
-  std::size_t global_particle_count;
-  std::size_t time_step_count;
-  Real particle_spacing;
-  Real particle_radius;
-  Real smoothing_radius;
-  Real g;
-  Real c;
-  Real k;
-  Real time_step;
-  AABB<Real,Dim> boundary;
-  AABB<Real,Dim> initial_fluid;
+  std::size_t m_max_particles_local;
+  std::size_t m_global_particle_count;
+  std::size_t m_time_step_count;
+  Real m_particle_rest_spacing;
+  Real m_particle_radius;
+  Real m_smoothing_radius;
+  Real m_g;
+  Real m_c;
+  Real m_k;
+  Real m_time_step;
+  AABB<Real,Dim> m_boundary;
+  AABB<Real,Dim> m_initial_fluid;
 };
 
-// Returns a Vec<> from comma seperated input string
+/**
+  @brief Returns a Vec<> from comma seperated input string
+**/
 template<typename Real, Dimension Dim>
 Vec<Real,Dim> ToRealVec(const std::string& input_string) {
   Vec<Real,Dim> result;

@@ -31,8 +31,8 @@ MESSAGE("Setting HEMI_INCLUDE_DIR manually")
 find_package(Hemi REQUIRED)
 include_directories(${HEMI_INCLUDE_DIRS})
 
-#find_package(ADIOS REQUIRED)
-#include_directories(${ADIOS_INCLUDE_DIRS})
-#target_link_libraries(sph ${ADIOS_LIBRARIES})
+find_package(ADIOS REQUIRED)
+include_directories(${ADIOS_INCLUDE_DIRS})
+target_link_libraries(sph ${ADIOS_LIBRARIES})
 
 install(TARGETS sph DESTINATION bin)
