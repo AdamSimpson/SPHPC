@@ -1,5 +1,6 @@
 #pragma once
 
+#include  <stdexcept>
 #include "dimension.h"
 #include "distributor.h"
 #include "particles.h"
@@ -31,8 +32,12 @@ public:
                                                         m_parameters{parameters_}
   {
     int err = adios_init(adios_writer_xml.data(), static_cast<MPI_Comm>(m_distributor.GetComputeComm()));
-    if(err)
-      throw std::runtime_error(adios_get_last_errmsg());
+    if(err) {
+      // Not all ranks return err on failure and so
+      // MPI_Finalize will deadlock when distributor is destructed
+      // So we let adios print the error message and then exit
+      exit(1);
+    }
   }
 
   /**

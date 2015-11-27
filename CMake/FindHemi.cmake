@@ -1,4 +1,4 @@
-# - Try to find IlmBase headers and library
+# - Try to find Hemi headers and
 # Once done this will define
 #  HEMI_FOUND - System has hemi
 #  HEMI_INCLUDE_DIRS - The hemi include directories
@@ -17,6 +17,6 @@ include(FindPackageHandleStandardArgs)
 # handle the QUIETLY and REQUIRED arguments and set HEMI to TRUE
 # if all listed variables are TRUE
 find_package_handle_standard_args(Hemi  DEFAULT_MSG
-                                  HEMI_INCLUDE_DIR)
+                                  HEMI_INCLUDE_DIRS)
 
-mark_as_advanced(HEMI_INCLUDE_DIR)
+mark_as_advanced(HEMI_INCLUDE_DIRS)

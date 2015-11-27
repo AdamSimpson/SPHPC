@@ -6,6 +6,13 @@
 #include "utility_math.h"
 #include "particles.h"
 #include "parameters.h"
+#include <thrust/iterator/zip_iterator.h>
+#include <thrust/remove.h>
+
+/////////////////////////////////////////////////
+// The distributor is responsible for all node-to-node
+// communication
+/////////////////////////////////////////////////
 
 template<typename Real, Dimension Dim>
 class Distributor {
@@ -20,9 +27,9 @@ public:
     compute_comm is split with color value 1 to differentiate from I/O and viz
   **/
   Distributor(const Parameters<Real,Dim>& parameters,
-              Particles<Real,Dim>& particles):
+              Particles<Real,Dim>& particles) :
     m_environment{false}, m_comm_compute{m_comm_world.split(1)},
-    m_parameters{parameters}, m_particles{particles} {};
+    m_parameters{parameters}, m_particles{particles} {}
 
   ~Distributor()                             = default;
   Distributor(const Distributor&)            = delete;
@@ -130,6 +137,25 @@ public:
   }
 
   void ExchangeOOB() {
+    // Copy and remove if OOB left
+    auto begin = thrust::make_zip_iterator(thrust::make_tuple(m_particles.GetPositionStarsPointer(),
+                                                      m_particles.GetPositionsPointer(),
+                                                      m_particles.GetVelocitiesPointer() ));
+    auto end = begin + m_particles.GetLocalCount();//thrust::make_zip_iterator(thrust::make_tuple(m_particles.GetPositionStarsPointer() + m_particles.GetLocalCount(),
+                                                  //  m_particles.GetPositionsPointer() + m_particles.GetLocalCount(),
+                                                  //  m_particles.GetVelocitiesPointer() + m_particles.GetLocalCount() ));
+
+    // This can be removed once NVCC device lambdas support auto argument(auto& tuple)
+    typedef thrust::tuple< Vec<Real,Dim>&, Vec<Real,Dim>&, Vec<Real,Dim>& > Tuple;
+
+    // Needs to be remove_copy_if
+    thrust::remove_if(begin, end, [=] (const Tuple& tuple) {
+      const auto position_star = thrust::get<0>(tuple);
+      const auto x_star = position_star.x;
+      return (x_star < m_node_start || x_star > m_node_end);
+    });
+
+    // Copy and remove if OOB right
 
   }
 
@@ -147,9 +173,20 @@ private:
   Real m_node_end;                                /** x coordinate of node domain end   **/
 };
 
+//
+//  Boost Vec<Real,Dim> serilization and optimization code
+//
+
 /**
-  Boost Vec<Real,Dim> optimizations
+  boost Vec<Real,Dim> serilizer
 **/
+namespace boost { namespace serialization {
+template<class Archive, typename Real, Dimension Dim>
+void serialize(Archive & ar, Vec<Real,Dim> & vec, const unsigned int version)
+{
+    for(int i=0; i<Dim; i++)
+      ar & vec[i];
+} }}
 
 /**
   BOOST_IS_MPI_DATATYPE(Vec<Real,Dim>)

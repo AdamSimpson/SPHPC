@@ -46,9 +46,18 @@ public:
   std::size_t GetLocalCount() const { return m_local_count; }
 
   /**
-    @return pointer to Vec<> position coordinates array
+    @return pointer to Vec<> arrays
+  **/
+  Vec<Real,Dim>* GetPositionsPointer() { return m_positions.ptr(); }
+  Vec<Real,Dim>* GetPositionStarsPointer() { return m_position_stars.ptr(); }
+  Vec<Real,Dim>* GetVelocitiesPointer() { return m_velocities.ptr(); }
+
+  /**
+    @return const pointer to Vec<> position coordinates array
   **/
   const Vec<Real,Dim>* GetPositionsPointer() const { return m_positions.readOnlyPtr(); }
+  const Vec<Real,Dim>* GetPositionStarsPointer() const { return m_position_stars.readOnlyPtr(); }
+  const Vec<Real,Dim>* GetVelocitiesPointer() const { return m_velocities.readOnlyPtr(); }
 
   /**
     @brief Set number of local particles currently in use

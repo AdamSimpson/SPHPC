@@ -53,13 +53,6 @@ struct Vec {
   Vec() = default;
 
   /**
-    @brief Initilizer list constructor
-    @param[in] l initilizer list
-  **/
-  HEMI_DEV_CALLABLE_INLINE_MEMBER
-  explicit Vec(std::initializer_list<T> l){ for(int i=0; i<l.size() && i<N; ++i){ m_data[i] = l[i];} }
-
-  /**
     @brief Pointer constructor: components initilized to pointed data
     @param[in] p_data pointer to data
   **/
@@ -519,4 +512,20 @@ template<typename T, int n>
 void ClampInPlace(Vec<T,n>& vec, const Vec<T,n>& lower, const Vec<T,n>& upper) {
    for(int i=0; i<n; i++)
      Utility::ClampInPlace(vec[i], lower[i], upper[i]);
+}
+
+/**
+  @brief left shift operator: allow Vec<> to be printed
+**/
+template<typename T, int n>
+std::ostream& operator<< (std::ostream& o, const Vec<T,n>& vec)
+{
+  o << "{";
+  for(int i=0; i < n; i++) {
+    if(i != 0)
+      o << ", ";
+    o << vec[i];
+  }
+  o << "}";
+  return o;
 }
