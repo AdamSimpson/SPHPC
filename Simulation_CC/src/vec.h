@@ -3,7 +3,6 @@
 #include <iostream>
 #include "utility_math.h"
 #include "dimension.h"
-#include "hemi/hemi.h"
 
 // Forward decleration of Axis Aligned Boundary Box
 template<typename Real, Dimension dim> class AABB;
@@ -44,37 +43,33 @@ struct Vec {
   /**
     @brief Component storage
   **/
-  T m_data[N];
+  T data_[N];
 
   /**
     @brief Default constructor: components uninitialized
   **/
-  HEMI_DEV_CALLABLE_INLINE_MEMBER
   Vec() = default;
 
   /**
     @brief Pointer constructor: components initilized to pointed data
     @param[in] p_data pointer to data
   **/
-  HEMI_DEV_CALLABLE_INLINE_MEMBER
-  explicit Vec(const T *const p_data){ for(int i=0; i<N; ++i){ m_data[i] = p_data[i]; } }
+  explicit Vec(const T *const p_data){ for(int i=0; i<N; ++i){ data_[i] = p_data[i]; } }
 
   /**
     @brief Scalar constructor: components initilized to scalar value
     @param[in] value scalar component value
   **/
-  HEMI_DEV_CALLABLE_INLINE_MEMBER
-  explicit Vec(const T value){ for(int i=0; i<N; ++i){ m_data[i] = value;} }
+  explicit Vec(const T value){ for(int i=0; i<N; ++i){ data_[i] = value;} }
 
   /**
     @brief Cast operator: static_cast() components of n-dim Vec
   **/
   template<typename T_out>
-  HEMI_DEV_CALLABLE_INLINE_MEMBER
   operator Vec<T_out,N>() {
     T_out data_out[N];
     for(int i=0; i<N; ++i) {
-      data_out[i] = static_cast<T_out>(m_data[i]);
+      data_out[i] = static_cast<T_out>(data_[i]);
     }
     return Vec<T_out,N>(data_out);
   }
@@ -84,16 +79,14 @@ struct Vec {
     @param[in] index of element
     @return index'th element of Vec
   **/
-  HEMI_DEV_CALLABLE_INLINE_MEMBER
-  T& operator[] (const size_t index) { return m_data[index]; }
+  T& operator[] (const size_t index) { return data_[index]; }
 
   /**
     @brief Const subscript operator: access vector components with bracket notation
     @param[in] index of element
     @return index'th element of Vec
   **/
-  HEMI_DEV_CALLABLE_INLINE_MEMBER
-  const T& operator[] (const size_t index) const { return m_data[index]; }
+  const T& operator[] (const size_t index) const { return data_[index]; }
 
 };
 
@@ -107,14 +100,14 @@ struct Vec<T, 2> {
     @brief union component storage
   **/
   union {
-    T m_data[2];          /**< component array */
+    T data_[2];          /**< component array */
     struct { T x, y; }; /**<  x, y access */
+    struct { T begin, end; }; /**< begin, end access */
   };
 
   /**
     @brief Default constructor: components uninitialized
   **/
-  HEMI_DEV_CALLABLE_INLINE_MEMBER
   Vec() = default;
 
   /**
@@ -122,35 +115,30 @@ struct Vec<T, 2> {
     @param[in] x_ x component
     @param[in] y_ y component
   **/
-  HEMI_DEV_CALLABLE_INLINE_MEMBER
   explicit Vec(const T x_, const T y_) : x(x_), y(y_) {}
 
   /**
     @brief Constructor: components initilized to value
     @param[in] value x, y component
   **/
-  HEMI_DEV_CALLABLE_INLINE_MEMBER
   constexpr explicit Vec(const T value) : x(value), y(value) {}
 
   /**
     @brief Pointer constructor: components initilized to pointed data
     @param[in] p_data pointer to data
   **/
-  HEMI_DEV_CALLABLE_INLINE_MEMBER
   constexpr explicit Vec(T *data_in) : x(data_in[0]), y(data_in[1]) {}
 
   /**
     @brief Construct Vec2 from Vec3 by truncating z
     @param[in] vec input Vec3
   **/
-  HEMI_DEV_CALLABLE_INLINE_MEMBER
   constexpr explicit Vec(const Vec<T,3>& vec): x{vec.x}, y{vec.y} {}
 
   /**
     @brief Cast operator: static_cast() data of Vec2
   **/
   template<typename T_out>
-  HEMI_DEV_CALLABLE_INLINE_MEMBER
   operator Vec<T_out,2>() const {
     return Vec<T_out,2>(static_cast<T_out>(x), static_cast<T_out>(y)); }
 
@@ -159,16 +147,14 @@ struct Vec<T, 2> {
     @param[in] index of element
     @return index'th element of Vec
   **/
-  HEMI_DEV_CALLABLE_INLINE_MEMBER
-  T& operator[] (const size_t index) { return m_data[index]; }
+  T& operator[] (const size_t index) { return data_[index]; }
 
   /**
     @brief Const subscript operator: access vector components with bracket notation
     @param[in] index of element
     @return index'th element of Vec
   **/
-  HEMI_DEV_CALLABLE_INLINE_MEMBER
-  const T& operator[] (const size_t index) const { return m_data[index]; }
+  const T& operator[] (const size_t index) const { return data_[index]; }
 };
 
 /**
@@ -179,7 +165,7 @@ template <typename T>
 struct Vec<T, 3> {
 
   union {
-    T m_data[3];              /**< component array */
+    T data_[3];              /**< component array */
     struct { T x, y, z; };  /**< x, y, z access  */
     struct { T r, g, b; };  /**< r, g, b access  */
   };
@@ -207,20 +193,20 @@ struct Vec<T, 3> {
     @brief Pointer constructor: components initilized to pointed data
     @param[in] p_data pointer to data
   **/
-  constexpr explicit Vec(T *data_) : x(data_[0]), y(data_[1]), z(data_[2]) {}
+  constexpr explicit Vec(T *data) : x(data[0]), y(data[1]), z(data[2]) {}
 
   /**
     @brief Construct Vec2 from Vec3 by setting z to 0
     @param[in] vec Vec2
   **/
-  explicit Vec(const Vec<T, 2>& vec_): x{vec_[0]}, y{vec_[1]}, z{0} {}
+  explicit Vec(const Vec<T, 2>& vec): x{vec[0]}, y{vec[1]}, z{0} {}
 
   /**
     @brief Construct Vec2 from Vec3 by specifying z
     @param[in] vec Vec2 x,y values
     @param[in] z z value
   **/
-  explicit Vec(const Vec<T, 2>& vec_, T z_): x{vec_[0]}, y{vec_[1]}, z{z_} {}
+  explicit Vec(const Vec<T, 2>& vec, T z): x{vec[0]}, y{vec[1]}, z{z} {}
 
   /**
     @brief Cast operator: static_cast() data of Vec3
@@ -233,14 +219,14 @@ struct Vec<T, 3> {
     @param[in] index of element
     @return index'th element of Vec
   **/
-  T& operator[] (const size_t index) { return m_data[index]; }
+  T& operator[] (const size_t index) { return data_[index]; }
 
   /**
     @brief Const subscript operator: access vector components with bracket notation
     @param[in] index of element
     @return index'th element of Vec
   **/
-  const T& operator[] (const size_t index) const { return m_data[index]; }
+  const T& operator[] (const size_t index) const { return data_[index]; }
 };
 
 /**
@@ -253,7 +239,7 @@ Free Operators
 template<typename T, int n>
 Vec<T,n> operator+(const Vec<T,n>& lhs, const Vec<T,n>& rhs) {
   T data[n];
-  for(int i=0; i<n; i++)
+  for(int i=0; i<n; ++i)
     data[i] = lhs[i] + rhs[i];
 
   return Vec<T,n>(data);
@@ -265,7 +251,7 @@ Vec<T,n> operator+(const Vec<T,n>& lhs, const Vec<T,n>& rhs) {
 template<typename T, int n>
 Vec<T,n> operator+(const Vec<T,n>& lhs, const T rhs) {
   T data[n];
-  for(int i=0; i<n; i++)
+  for(int i=0; i<n; ++i)
     data[i] = lhs[i] + rhs;
 
   return Vec<T,n>(data);
@@ -277,7 +263,7 @@ Vec<T,n> operator+(const Vec<T,n>& lhs, const T rhs) {
 template<typename T, int n>
 Vec<T,n> operator-(const Vec<T,n>& lhs, const Vec<T,n>& rhs) {
   T data[n];
-  for(int i=0; i<n; i++)
+  for(int i=0; i<n; ++i)
     data[i] = lhs[i] - rhs[i];
 
   return Vec<T,n>(data);
@@ -289,7 +275,7 @@ Vec<T,n> operator-(const Vec<T,n>& lhs, const Vec<T,n>& rhs) {
 template<typename T, int n>
 Vec<T,n> operator-(const Vec<T,n>& lhs, const T rhs) {
   T data[n];
-  for(int i=0; i<n; i++)
+  for(int i=0; i<n; ++i)
     data[i] = lhs[i] - rhs;
 
   return Vec<T,n>(data);
@@ -301,7 +287,7 @@ Vec<T,n> operator-(const Vec<T,n>& lhs, const T rhs) {
 template<typename T, int n>
 Vec<T,n> operator*(const Vec<T,n>& lhs, const Vec<T,n>& rhs) {
   T data[n];
-  for(int i=0; i<n; i++)
+  for(int i=0; i<n; ++i)
     data[i] = lhs[i] * rhs[i];
 
   return Vec<T,n>(data);
@@ -313,7 +299,7 @@ Vec<T,n> operator*(const Vec<T,n>& lhs, const Vec<T,n>& rhs) {
 template<typename T, int n>
 Vec<T,n> operator*(const Vec<T,n>& lhs, const T rhs) {
   T data[n];
-  for(int i=0; i<n; i++)
+  for(int i=0; i<n; ++i)
     data[i] = lhs[i] * rhs;
 
   return Vec<T,n>(data);
@@ -325,7 +311,7 @@ Vec<T,n> operator*(const Vec<T,n>& lhs, const T rhs) {
 template<typename T, int n>
 Vec<T,n> operator*(const T lhs, const Vec<T,n>& rhs) {
   T data[n];
-  for(int i=0; i<n; i++)
+  for(int i=0; i<n; ++i)
     data[i] = lhs * rhs[i];
 
   return Vec<T,n>(data);
@@ -337,7 +323,7 @@ Vec<T,n> operator*(const T lhs, const Vec<T,n>& rhs) {
 template<typename T, int n>
 Vec<T,n> operator/(const Vec<T,n>& lhs, const T rhs) {
   T data[n];
-  for(int i=0; i<n; i++)
+  for(int i=0; i<n; ++i)
     data[i] = lhs[i] / rhs;
 
   return Vec<T,n>(data);
@@ -348,7 +334,7 @@ Vec<T,n> operator/(const Vec<T,n>& lhs, const T rhs) {
 **/
 template<typename T, int n>
 Vec<T,n>& operator+=(Vec<T,n>& lhs, const Vec<T,n>& rhs) {
-  for(int i=0; i<n; i++)
+  for(int i=0; i<n; ++i)
     lhs[i] += rhs[i];
 
   return lhs;
@@ -359,7 +345,7 @@ Vec<T,n>& operator+=(Vec<T,n>& lhs, const Vec<T,n>& rhs) {
 **/
 template<typename T, int n>
 Vec<T,n>& operator+=(Vec<T,n>& lhs, const T rhs) {
-  for(int i=0; i<n; i++)
+  for(int i=0; i<n; ++i)
     lhs[i] += rhs;
 
   return lhs;
@@ -370,7 +356,7 @@ Vec<T,n>& operator+=(Vec<T,n>& lhs, const T rhs) {
 **/
 template<typename T, int n>
 Vec<T,n>& operator-=(Vec<T,n>& lhs, const Vec<T,n>& rhs) {
-  for(int i=0; i<n; i++)
+  for(int i=0; i<n; ++i)
     lhs[i] -= rhs[i];
 
   return lhs;
@@ -381,7 +367,7 @@ Vec<T,n>& operator-=(Vec<T,n>& lhs, const Vec<T,n>& rhs) {
 **/
 template<typename T, int n>
 Vec<T,n>& operator-=(Vec<T,n>& lhs, const T rhs) {
-  for(int i=0; i<n; i++)
+  for(int i=0; i<n; ++i)
     lhs[i] -= rhs;
 
   return lhs;
@@ -392,7 +378,7 @@ Vec<T,n>& operator-=(Vec<T,n>& lhs, const T rhs) {
 **/
 template<typename T, int n>
 Vec<T,n>& operator*=(Vec<T,n>& lhs, const Vec<T,n>& rhs) {
-  for(int i=0; i<n; i++)
+  for(int i=0; i<n; ++i)
     lhs[i] *= rhs[i];
 
   return lhs;
@@ -403,7 +389,7 @@ Vec<T,n>& operator*=(Vec<T,n>& lhs, const Vec<T,n>& rhs) {
 **/
 template<typename T, int n>
 Vec<T,n>& operator*=(Vec<T,n>& lhs, const T& rhs) {
-  for(int i=0; i<n; i++)
+  for(int i=0; i<n; ++i)
     lhs[i] *= rhs;
 
   return lhs;
@@ -414,7 +400,7 @@ Vec<T,n>& operator*=(Vec<T,n>& lhs, const T& rhs) {
 **/
 template<typename T, int n>
 Vec<T,n>& operator/=(Vec<T,n>& lhs, const Vec<T,n>& rhs) {
-  for(int i=0; i<n; i++)
+  for(int i=0; i<n; ++i)
     lhs[i] /= rhs[i];
 
   return lhs;
@@ -425,7 +411,7 @@ Vec<T,n>& operator/=(Vec<T,n>& lhs, const Vec<T,n>& rhs) {
 **/
 template<typename T, int n>
 Vec<T,n>& operator/=(Vec<T,n>& lhs, const T& rhs) {
-  for(int i=0; i<n; i++)
+  for(int i=0; i<n; ++i)
     lhs[i] /= rhs;
 
   return lhs;
@@ -435,8 +421,8 @@ Vec<T,n>& operator/=(Vec<T,n>& lhs, const T& rhs) {
   @brief vector dot product
 **/
 template<typename T, int n>
-T Dot(const Vec<T,n>& lhs, const Vec<T,n>& rhs) {
-  T dot;
+T dot(const Vec<T,n>& lhs, const Vec<T,n>& rhs) {
+  T dot = static_cast<T>(0);
   for(int i=0; i<n; ++i)
     dot += lhs[i] * rhs[i];
 
@@ -447,34 +433,46 @@ T Dot(const Vec<T,n>& lhs, const Vec<T,n>& rhs) {
   @brief vector magnitude squared
 **/
 template<typename T, int n>
-T MagnitudeSquared(const Vec<T,n>& lhs, const Vec<T,n>& rhs) {
-  return Dot(lhs, rhs);
+T magnitude_squared(const Vec<T,n>& vec) {
+  return dot(vec, vec);
 }
 
 /**
   @brief vector magnitude
 **/
 template<typename T, int n>
-T Magnitude(const Vec<T,n>& lhs, const Vec<T,n>& rhs) {
-  return sqrt(MagnitudeSquared(lhs, rhs));
+T magnitude(const Vec<T,n>& vec) {
+  return sqrt(magnitude_squared(vec));
 }
 
 /**
   @brief reciprical vector magnitude
 **/
 template<typename T, int n>
-T InverseMagnitude(const Vec<T,n>& lhs, const Vec<T,n>& rhs) {
-  return static_cast<T>(1.0) / sqrt(MagSquared(lhs, rhs));
+T inverse_magnitude(const Vec<T,n>& lhs, const Vec<T,n>& rhs) {
+  return static_cast<T>(1.0) / sqrt(magnitude_squared(lhs, rhs));
 }
 
 /**
   @brief component wise floor
 **/
 template<typename T, int n>
-Vec<T,n> Floor(const Vec<T,n>& vec) {
+Vec<T,n> floor(const Vec<T,n>& vec) {
    Vec<T,n> floor_vec;
-   for(int i=0; i<n; i++)
+   for(int i=0; i<n; ++i)
      floor_vec[i] = floor(vec[i]);
+
+  return floor_vec;
+}
+
+/**
+  @brief component wise ceil
+**/
+template<typename T, int n>
+Vec<T,n> ceil(const Vec<T,n>& vec) {
+   Vec<T,n> floor_vec;
+   for(int i=0; i<n; ++i)
+     floor_vec[i] = ceil(vec[i]);
 
   return floor_vec;
 }
@@ -483,10 +481,22 @@ Vec<T,n> Floor(const Vec<T,n>& vec) {
   @brief component wise vector sum
 **/
 template<typename T, int n>
-T Sum(const Vec<T,n>& vec) {
-  T sum = 0;
+T sum(const Vec<T,n>& vec) {
+  T sum = static_cast<T>(0);
   for(int i=0; i<n; ++i)
     sum += vec[i];
+
+  return sum;
+}
+
+/**
+  @brief component wise vector product
+**/
+template<typename T, int n>
+T product(const Vec<T,n>& vec) {
+  T sum = static_cast<T>(1);
+  for(int i=0; i<n; ++i)
+    sum *= vec[i];
 
   return sum;
 }
@@ -496,10 +506,23 @@ T Sum(const Vec<T,n>& vec) {
   @return newly constructed clamped vector
 **/
 template<typename T, int n>
-Vec<T,n> Clamp(const Vec<T,n>& vec, const Vec<T,n>& lower, const Vec<T,n>& upper) {
+Vec<T,n> clamp(const Vec<T,n>& vec, const Vec<T,n>& lower, const Vec<T,n>& upper) {
    Vec<T,n> clamp_vec;
-   for(int i=0; i<n; i++)
-     clamp_vec[i] = Utility::Clamp(vec[i], lower[i], upper[i]);
+   for(int i=0; i<n; ++i)
+     clamp_vec[i] = Utility::clamp(vec[i], lower[i], upper[i]);
+
+  return clamp_vec;
+}
+
+/**
+   @brief component wise clamp
+   @return newly constructed clamped vector
+**/
+template<typename T, int n>
+Vec<T,n> clamp(const Vec<T,n>& vec, const T& lower, const T& upper) {
+  Vec<T,n> clamp_vec;
+  for(int i=0; i<n; ++i)
+    clamp_vec[i] = Utility::clamp(vec[i], lower, upper);
 
   return clamp_vec;
 }
@@ -509,9 +532,19 @@ Vec<T,n> Clamp(const Vec<T,n>& vec, const Vec<T,n>& lower, const Vec<T,n>& upper
   @return original vector with values clamped
 **/
 template<typename T, int n>
-void ClampInPlace(Vec<T,n>& vec, const Vec<T,n>& lower, const Vec<T,n>& upper) {
-   for(int i=0; i<n; i++)
-     Utility::ClampInPlace(vec[i], lower[i], upper[i]);
+void clamp_in_place(Vec<T,n>& vec, const Vec<T,n>& lower, const Vec<T,n>& upper) {
+   for(int i=0; i<n; ++i)
+     Utility::clamp_in_place(vec[i], lower[i], upper[i]);
+}
+
+/**
+   @brief component wise in-place clamp
+   @return original vector with values clamped
+**/
+template<typename T, int n>
+void clamp_in_place(Vec<T,n>& vec, const T& lower, const T& upper) {
+  for(int i=0; i<n; ++i)
+    Utility::clamp_in_place(vec[i], lower, upper);
 }
 
 /**
@@ -521,7 +554,7 @@ template<typename T, int n>
 std::ostream& operator<< (std::ostream& o, const Vec<T,n>& vec)
 {
   o << "{";
-  for(int i=0; i < n; i++) {
+  for(int i=0; i < n; ++i) {
     if(i != 0)
       o << ", ";
     o << vec[i];
@@ -529,3 +562,10 @@ std::ostream& operator<< (std::ostream& o, const Vec<T,n>& vec)
   o << "}";
   return o;
 }
+
+typedef Vec<std::size_t, 2> IndexSpan; /**< type to hold begin, end index values **/
+/*
+std::size_t count(const IndexSpan& span) {
+  return span.end - span.begin;
+}
+*/

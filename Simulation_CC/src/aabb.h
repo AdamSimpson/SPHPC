@@ -30,29 +30,36 @@ public:
   /**
     @brief Return x extent of AABB
   **/
-  Real Length() const {
+  Real length() const {
     return max.x - min.x;
   }
 
   /**
     @brief Return y extent of AABB
   **/
-  Real Height() const {
+  Real height() const {
     return max.y - min.y;
   }
 
   /**
     @brief return area of 2D AABB
   **/
-  Real Area() const {
-    return this->Length() * this->Height();
+  Real area() const {
+    return this->length() * this->height();
   }
 
   /**
     @brief return area of 2D AABB
   **/
-  Real Volume() const {
-    return this->Area();
+  Real volume() const {
+    return this->area();
+  }
+
+  /**
+    @brief return length, width vector
+  **/
+  Vec<Real,two_dimensional> extent() const {
+    return max - min;
   }
 
 };
@@ -74,28 +81,48 @@ public:
   /**
     @brief Return x extent of AABB
   **/
-  Real Length() const {
+  Real length() const {
     return max.x - min.x;
   }
 
   /**
     @brief Return y extent of AABB
   **/
-  Real Height() const {
+  Real height() const {
     return max.y - min.y;
   }
 
   /**
     @brief Return z extent of AABB
   **/
-  Real Depth() const {
+  Real depth() const {
     return max.z - min.z;
   }
 
   /**
-    @brief return area of 2D AABB
+    @brief return volume of 3D AABB
   **/
-  Real Volume() const {
-    return this->Length() * this->Height() * this->Depth();
+  Real volume() const {
+    return this->length() * this->height() * this->depth();
   }
+
+  /**
+    @brief return length, width, depth vector
+  **/
+  Vec<Real,three_dimensional> extent() const {
+    return max - min;
+  }
+
 };
+
+/**
+   @brief return a vec containing the number of bins
+   that the aabb can be divided into given a given spacing
+**/
+template <typename Real, Dimension Dim>
+Vec<std::size_t, Dim> bin_count_in_volume(const AABB<Real, Dim>& aabb, Real spacing) {
+  const Vec<Real,Dim> space_counts{floor((aabb.max - aabb.min) / spacing)};
+  Vec<std::size_t,Dim> int_counts(static_cast< Vec<std::size_t,Dim> >(space_counts));
+    return int_counts;
+  }
+

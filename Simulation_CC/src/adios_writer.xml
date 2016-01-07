@@ -8,7 +8,7 @@
     <global-bounds dimensions="global_bytes" offsets="offset_bytes">
       <var name="xyz" type="byte" dimensions="local_bytes"/>
     </global-bounds>
-    <attribute name="description" type="string" value="particle x,y,z,density values"/>
+    <attribute name="description" type="string" value="particle x,y,{z} values"/>
   </adios-group>
 
   <method group="particles" method="MPI_LUSTRE"/> <buffer size-MB="100" allocate-time="now"/>

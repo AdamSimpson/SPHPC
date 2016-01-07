@@ -6,12 +6,12 @@ int main(int argc, char *argv[]) {
   try {
     Simulation<float, two_dimensional> simulation("params.ini");
 
-    simulation.WriteParticles();
+    simulation.write_particles();
 
-    for(std::size_t i=0; i<simulation.GetTimeStepCount(); ++i) {
-      simulation.AdvanceParticles();
+    for(std::size_t i=0; i<simulation.time_step_count(); ++i) {
+      simulation.advance_particles();
 
-      simulation.WriteParticles();
+      simulation.write_particles();
     }
 
   } catch(std::exception const& exception) {
