@@ -38,8 +38,8 @@ std::vector<T> AdiosReader::FetchValue(const std::string& value_name, std::size_
       value_count *= var_info->dims[i];
   }
 
-  // hacked to work only for bytes of vec<float,2>
-  value_count /= 8;
+  // hacked to work only for bytes of vec<float,3>
+  value_count /= sizeof(Vec<float,3>);
 
   std::vector<T> value_data;
   value_data.resize(value_count);
@@ -54,3 +54,5 @@ std::vector<T> AdiosReader::FetchValue(const std::string& value_name, std::size_
 
 // Explicitly instantiate byte reader
 template std::vector<Vec<float,2>> AdiosReader::FetchValue<Vec<float,2>>(const std::string&, std::size_t step);
+template std::vector<Vec<float,3>> AdiosReader::FetchValue<Vec<float,3>>(const std::string&, std::size_t step);
+

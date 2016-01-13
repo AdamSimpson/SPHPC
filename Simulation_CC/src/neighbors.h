@@ -56,7 +56,7 @@ const NeighborBin& operator[] (const std::size_t index) const {
 **/
 std::size_t calculate_bin_id(const Vec<Real,2>& point) const {
   const auto point_shifted = point + bin_spacing_;
-  const auto bin_location = static_cast< Vec<std::size_t, Dim> >(floor(point_shifted/bin_spacing_));
+  const auto bin_location = static_cast< Vec<std::size_t, two_dimensional> >(floor(point_shifted/bin_spacing_));
   return (bin_location.y * bin_dimensions_.x + bin_location.x);
 }
 
@@ -69,7 +69,7 @@ std::size_t calculate_bin_id(const Vec<Real,2>& point) const {
 **/
 std::size_t calculate_bin_id(const Vec<Real,3>& point) const {
   const auto point_shifted = point + bin_spacing_;
-  const auto bin_location = static_cast< Vec<std::size_t, Dim> >(floor(point_shifted/bin_spacing_));
+  const auto bin_location = static_cast< Vec<std::size_t, three_dimensional> >(floor(point_shifted/bin_spacing_));
   return (bin_dimensions_.x * bin_dimensions_.y * bin_location.z) +
     (bin_location.y * bin_dimensions_.x + bin_location.x);
 }
@@ -152,7 +152,10 @@ std::size_t calculate_bin_id(const Vec<Real,3>& point) const {
      Fill the neighbor bins in the specified particle span
    **/
   void fill_neighbors(IndexSpan span, const Vec<Real,Dim>* position_stars) {
-    const Real smoothing_radius_squared = parameters_.smoothing_radius();
+    //    auto index = calculate_bin_id(Vec<Real,3>{55.0,55.0,55.0});
+    //    std::cout<<"index "<<index<<"bins: "<<neighbor_bins_[index].count<<std::endl;
+    
+    const Real smoothing_radius_squared = parameters_.smoothing_radius() *  parameters_.smoothing_radius();
 
     thrust::counting_iterator<std::size_t> begin(span.begin);
     thrust::counting_iterator<std::size_t> end(span.end);
@@ -170,7 +173,6 @@ std::size_t calculate_bin_id(const Vec<Real,3>& point) const {
         for(auto neighbor_bin_index : neighbor_bin_indices) {
           const auto begin_index = begin_indices_[neighbor_bin_index];
           const auto end_index   = end_indices_[neighbor_bin_index];
-
           for(auto j = begin_index; j < end_index; ++j) {
             const std::size_t neighbor_particle_index = particle_ids_[j];
             if(particle_index == neighbor_particle_index)

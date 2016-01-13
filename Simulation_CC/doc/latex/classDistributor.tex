@@ -1,0 +1,95 @@
+\hypertarget{classDistributor}{}\section{Distributor$<$ Real, Dim $>$ Class Template Reference}
+\label{classDistributor}\index{Distributor$<$ Real, Dim $>$@{Distributor$<$ Real, Dim $>$}}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{classDistributor_a28b0eb640ee22135e0566d2fc29abfb4}{Distributor} (const \hyperlink{classParameters}{Parameters}$<$ Real, Dim $>$ \&params, \hyperlink{classParticles}{Particles}$<$ Real, Dim $>$ \&particles\+\_\+)
+\item 
+\hypertarget{classDistributor_a73ef5ca71d4cff8fffd87f3b42922fad}{}{\bfseries Distributor} (const \hyperlink{classDistributor}{Distributor} \&)=delete\label{classDistributor_a73ef5ca71d4cff8fffd87f3b42922fad}
+
+\item 
+\hypertarget{classDistributor_abcc51f27dfc345acf264642c338fa7e3}{}\hyperlink{classDistributor}{Distributor} \& {\bfseries operator=} (const \hyperlink{classDistributor}{Distributor} \&)=delete\label{classDistributor_abcc51f27dfc345acf264642c338fa7e3}
+
+\item 
+\hypertarget{classDistributor_a7c5ecf5f7f912c758317b8cfd85f7f76}{}{\bfseries Distributor} (\hyperlink{classDistributor}{Distributor} \&\&) noexcept=delete\label{classDistributor_a7c5ecf5f7f912c758317b8cfd85f7f76}
+
+\item 
+\hypertarget{classDistributor_a6b02405b5ed14d90a4baf3441521cab0}{}\hyperlink{classDistributor}{Distributor} \& {\bfseries operator=} (\hyperlink{classDistributor}{Distributor} \&\&)=delete\label{classDistributor_a6b02405b5ed14d90a4baf3441521cab0}
+
+\item 
+void \hyperlink{classDistributor_a1468124b3b60be412af5d0c1c4b9384f}{Initilize} ()
+\item 
+void \hyperlink{classDistributor_a0a57fa982d214c7f02f40875bde3d866}{Set\+Node\+Bounds} (const \hyperlink{classAABB}{A\+A\+B\+B}$<$ Real, Dim $>$ \&aabb)
+\item 
+\hypertarget{classDistributor_a0b4db4298e86c87f62f2301905666af8}{}bool {\bfseries Last\+Node} () const \label{classDistributor_a0b4db4298e86c87f62f2301905666af8}
+
+\item 
+int \hyperlink{classDistributor_a6d353a3fa6453bd0db5c5d188ae2b2cf}{Node\+To\+Left} () const 
+\item 
+int \hyperlink{classDistributor_ae1a47636aa4afc7f3b131fb5fb526a3b}{Node\+To\+Right} () const 
+\item 
+\hypertarget{classDistributor_a674dc3cd0d8cd86b7d1a16e91578af92}{}boost\+::mpi\+::communicator {\bfseries Get\+Active\+Comm} () const \label{classDistributor_a674dc3cd0d8cd86b7d1a16e91578af92}
+
+\item 
+\hypertarget{classDistributor_aa95007c8f91e2f3bd4bbb59f6d7b117f}{}int {\bfseries Get\+Active\+Rank} () const \label{classDistributor_aa95007c8f91e2f3bd4bbb59f6d7b117f}
+
+\item 
+void \hyperlink{classDistributor_a79ed97a84dac0188440b12c6dc73c938}{Distribute\+Fluid} (const \hyperlink{classAABB}{A\+A\+B\+B}$<$ Real, Dim $>$ \&global\+\_\+fluid)
+\item 
+\hypertarget{classDistributor_a3ca5328dd7a2bafd3d0b18db85bd7d4d}{}std\+::size\+\_\+t {\bfseries Get\+Global\+Particle\+Count} () const \label{classDistributor_a3ca5328dd7a2bafd3d0b18db85bd7d4d}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Constructor \& Destructor Documentation}
+\hypertarget{classDistributor_a28b0eb640ee22135e0566d2fc29abfb4}{}\index{Distributor@{Distributor}!Distributor@{Distributor}}
+\index{Distributor@{Distributor}!Distributor@{Distributor}}
+\subsubsection[{Distributor}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename Real, Dimension Dim$>$ {\bf Distributor}$<$ Real, Dim $>$\+::{\bf Distributor} (
+\begin{DoxyParamCaption}
+\item[{const {\bf Parameters}$<$ Real, Dim $>$ \&}]{params, }
+\item[{{\bf Particles}$<$ Real, Dim $>$ \&}]{particles\+\_\+}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{classDistributor_a28b0eb640ee22135e0566d2fc29abfb4}
+\hyperlink{classDistributor}{Distributor} Constructor\+: Don\textquotesingle{}t use member references! \hyperlink{classDistributor}{Distributor} must be constructed before any other members 
+
+\subsection{Member Function Documentation}
+\hypertarget{classDistributor_a79ed97a84dac0188440b12c6dc73c938}{}\index{Distributor@{Distributor}!Distribute\+Fluid@{Distribute\+Fluid}}
+\index{Distribute\+Fluid@{Distribute\+Fluid}!Distributor@{Distributor}}
+\subsubsection[{Distribute\+Fluid}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename Real, Dimension Dim$>$ void {\bf Distributor}$<$ Real, Dim $>$\+::Distribute\+Fluid (
+\begin{DoxyParamCaption}
+\item[{const {\bf A\+A\+B\+B}$<$ Real, Dim $>$ \&}]{global\+\_\+fluid}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{classDistributor_a79ed97a84dac0188440b12c6dc73c938}
+Construct water volume spread across multiple nodes \hypertarget{classDistributor_a1468124b3b60be412af5d0c1c4b9384f}{}\index{Distributor@{Distributor}!Initilize@{Initilize}}
+\index{Initilize@{Initilize}!Distributor@{Distributor}}
+\subsubsection[{Initilize}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename Real, Dimension Dim$>$ void {\bf Distributor}$<$ Real, Dim $>$\+::Initilize (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{classDistributor_a1468124b3b60be412af5d0c1c4b9384f}
+Handle setting initial node boundaries required as members not being initilized when constructor is called \hypertarget{classDistributor_a6d353a3fa6453bd0db5c5d188ae2b2cf}{}\index{Distributor@{Distributor}!Node\+To\+Left@{Node\+To\+Left}}
+\index{Node\+To\+Left@{Node\+To\+Left}!Distributor@{Distributor}}
+\subsubsection[{Node\+To\+Left}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename Real, Dimension Dim$>$ int {\bf Distributor}$<$ Real, Dim $>$\+::Node\+To\+Left (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{classDistributor_a6d353a3fa6453bd0db5c5d188ae2b2cf}
+Return rank of node to the left or M\+P\+I\+\_\+\+P\+R\+O\+C\+\_\+\+N\+U\+L\+L \hypertarget{classDistributor_ae1a47636aa4afc7f3b131fb5fb526a3b}{}\index{Distributor@{Distributor}!Node\+To\+Right@{Node\+To\+Right}}
+\index{Node\+To\+Right@{Node\+To\+Right}!Distributor@{Distributor}}
+\subsubsection[{Node\+To\+Right}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename Real, Dimension Dim$>$ int {\bf Distributor}$<$ Real, Dim $>$\+::Node\+To\+Right (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{classDistributor_ae1a47636aa4afc7f3b131fb5fb526a3b}
+Return rank of node to the right or M\+P\+I\+\_\+\+P\+R\+O\+C\+\_\+\+N\+U\+L\+L \hypertarget{classDistributor_a0a57fa982d214c7f02f40875bde3d866}{}\index{Distributor@{Distributor}!Set\+Node\+Bounds@{Set\+Node\+Bounds}}
+\index{Set\+Node\+Bounds@{Set\+Node\+Bounds}!Distributor@{Distributor}}
+\subsubsection[{Set\+Node\+Bounds}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename Real, Dimension Dim$>$ void {\bf Distributor}$<$ Real, Dim $>$\+::Set\+Node\+Bounds (
+\begin{DoxyParamCaption}
+\item[{const {\bf A\+A\+B\+B}$<$ Real, Dim $>$ \&}]{aabb}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{classDistributor_a0a57fa982d214c7f02f40875bde3d866}
+Set node bounds based upon equal spacing in \hyperlink{classAABB}{A\+A\+B\+B} 
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/atj/\+Dropbox/\+S\+P\+H\+P\+C/\+Simulation\+\_\+\+C\+C/src/distributor.\+h\end{DoxyCompactItemize}

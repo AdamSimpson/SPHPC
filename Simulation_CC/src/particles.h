@@ -188,11 +188,11 @@ public:
     thrust::counting_iterator<std::size_t> end(span.end);
 
     thrust::for_each(begin, end, [=] (std::size_t p) {
-      const auto position_star_p_old = positions_[p];
-      auto position_star_p_new = position_star_p_old + (velocities_[p] * dt);
-      apply_boundary_conditions(position_star_p_new,
+      const auto position_p = positions_[p];
+      auto position_star_p = position_p + (velocities_[p] * dt);
+      apply_boundary_conditions(position_star_p,
                                 parameters_.boundary());
-      position_stars_[p] = position_star_p_new;
+      position_stars_[p] = position_star_p;
     });
 
   }
@@ -209,17 +209,20 @@ public:
         // Own contribution to density
         Real density = mass_p * W_0;
 
-        // Compiler should hoist this out I ASSume?
-        // const auto position_star_p = position_stars_[p];
-
         for(const std::size_t q : neighbors_[p]) {
           const Real mass_q = parameters_.rest_mass();
           const Real r_mag = magnitude(position_stars_[p] - position_stars_[q]);
           density += mass_q * W(r_mag);
         }
-
         densities_[p] = density;
     });
+
+    Real avg_density = 0;
+    thrust::for_each(begin, end, [&] (std::size_t p) {
+        avg_density += densities_[p];
+    });
+    avg_density/=static_cast<Real>(end-begin);
+    std::cout<<"Average Density: "<<avg_density<<std::endl;
   }
 
   void compute_lambdas(IndexSpan span) {
@@ -318,6 +321,7 @@ public:
     thrust::counting_iterator<std::size_t> begin(span.begin);
     thrust::counting_iterator<std::size_t> end(span.end);
 
+    // Compute gradient of color field
     thrust::for_each(begin, end, [=] (std::size_t p) {
         Vec<Real,Dim> color{0.0};
         for(const std::size_t q : neighbors_[p]) {
@@ -330,12 +334,15 @@ public:
     thrust::for_each(begin, end, [=] (std::size_t p) {
         Vec<Real,Dim> surface_tension_force{0.0};
         const Real mass_p = parameters_.rest_mass();
+
         for(const std::size_t q : neighbors_[p]) {
           const Real mass_q = parameters_.rest_mass();
           const Vec<Real,Dim> r = position_stars_[p] - position_stars_[q];
-          const Real r_mag = magnitude(r);
-          const Vec<Real,Dim> cohesion_force{-parameters_.gamma() * mass_p * mass_q * C(r_mag) * r_mag};
-          const Vec<Real,Dim> curvature_force{-parameters_.gamma() * mass_p * scratch_[p] - scratch_[q]};
+          Real r_mag = magnitude(r);
+          if(r_mag < 0.0001)
+            r_mag = 0.0001;
+          const Vec<Real,Dim> cohesion_force{-parameters_.gamma() * mass_p * mass_q * C(r_mag) * r/r_mag};
+          const Vec<Real,Dim> curvature_force{-parameters_.gamma() * mass_p * (scratch_[p] - scratch_[q])};
           const Real K = 2.0*parameters_.rest_density() / (densities_[p] + densities_[q]);
           surface_tension_force += K * (cohesion_force + curvature_force);
         }
@@ -344,8 +351,6 @@ public:
       });
 
   }
-
-
 
   void apply_viscosity(IndexSpan span) {
     const Poly6<Real,Dim> W{parameters_.smoothing_radius()};
@@ -357,10 +362,10 @@ public:
         Vec<Real,Dim> dv{0.0};
         for(const std::size_t q : neighbors_[p]) {
           const Real mass_q = parameters_.rest_mass();
-          dv += (velocities_[q] - velocities_[p]) * W(positions_[p], positions_[q]) * mass_q / densities_[q];
-          dv *= parameters_.visc_c();
+          const Real r_mag = magnitude(position_stars_[p] - position_stars_[q]);
+          dv += (velocities_[q] - velocities_[p]) * W(r_mag) * mass_q / densities_[q];
         }
-        velocities_[p] += dv;
+        velocities_[p] += parameters_.visc_c() * dv;
       });
   }
 

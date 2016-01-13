@@ -40,17 +40,21 @@ namespace mpi = boost::mpi;
 void VtkParticleRenderer::PrepareBuffers(std::size_t step, const mpi::communicator& comm) {
   AdiosReader reader(params.bp_file_name, comm);
 
-  std::vector< Vec<float,2> > positions = reader.FetchValue< Vec<float,2> >("positions", step);
+  std::vector< Vec<float,3> > positions = reader.FetchValue< Vec<float,3> >("positions", step);
 
   points->Reset();
   colors->Reset();
   radii->Reset();
 
-  const int dim = 2;
   for(int i=0; i<positions.size(); ++i) {
+/*
     points->InsertNextPoint(static_cast<float>(positions[i].x),
                             static_cast<float>(0.0),
                             static_cast<float>(-1.0*positions[i].y + 100.0));
+*/
+    points->InsertNextPoint(static_cast<float>(positions[i].x),
+                            static_cast<float>(positions[i].y),
+                            static_cast<float>(positions[i].z));
   }
 
   colors->SetNumberOfComponents(3);
@@ -60,11 +64,10 @@ void VtkParticleRenderer::PrepareBuffers(std::size_t step, const mpi::communicat
                              static_cast<unsigned char>(255) );
   }
 
-  double radius = 0.5;
+  double radius = 0.06;
   for(int i=0; i<points->GetNumberOfPoints(); i++) {
     radii->InsertNextValue(static_cast<float>(radius));
   }
-
 }
 
 void VtkParticleRenderer::PreparePolyData() {
@@ -150,7 +153,7 @@ int main (int argc, char **argv) {
   renderer.PreparePolyData();
   renderer.PrepareScene();
 
-  const int num_steps = 100;
+  const int num_steps = 375;
   for(int step=0; step<num_steps; step++) {
     std::cout<<"Processing step "<<step<<std::endl;
     renderer.PrepareBuffers(step, my_comm);

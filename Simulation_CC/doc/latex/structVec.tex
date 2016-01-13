@@ -1,0 +1,160 @@
+\hypertarget{structVec}{}\section{Vec$<$ T, n $>$ Struct Template Reference}
+\label{structVec}\index{Vec$<$ T, n $>$@{Vec$<$ T, n $>$}}
+
+
+Generic n-\/dim \hyperlink{structVec}{Vec} implementation.  
+
+
+
+
+{\ttfamily \#include $<$vec.\+h$>$}
+
+
+
+Collaboration diagram for Vec$<$ T, n $>$\+:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=149pt]{structVec__coll__graph}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{structVec_ae64e5410222703c0e8d8a5a84880d9bc}{}H\+E\+M\+I\+\_\+\+D\+E\+V\+\_\+\+C\+A\+L\+L\+A\+B\+L\+E\+\_\+\+I\+N\+L\+I\+N\+E\+\_\+\+M\+E\+M\+B\+E\+R \hyperlink{structVec_ae64e5410222703c0e8d8a5a84880d9bc}{Vec} ()=default\label{structVec_ae64e5410222703c0e8d8a5a84880d9bc}
+
+\begin{DoxyCompactList}\small\item\em Default constructor\+: components uninitialized. \end{DoxyCompactList}\item 
+H\+E\+M\+I\+\_\+\+D\+E\+V\+\_\+\+C\+A\+L\+L\+A\+B\+L\+E\+\_\+\+I\+N\+L\+I\+N\+E\+\_\+\+M\+E\+M\+B\+E\+R \hyperlink{structVec_a1105b5b0fea459a6c0d990d717c73552}{Vec} (std\+::initializer\+\_\+list$<$ T $>$ l)
+\begin{DoxyCompactList}\small\item\em Initilizer list constructor. \end{DoxyCompactList}\item 
+H\+E\+M\+I\+\_\+\+D\+E\+V\+\_\+\+C\+A\+L\+L\+A\+B\+L\+E\+\_\+\+I\+N\+L\+I\+N\+E\+\_\+\+M\+E\+M\+B\+E\+R \hyperlink{structVec_a20483ba3740f996dc2ca12d2b43de450}{Vec} (const T $\ast$const p\+\_\+data)
+\begin{DoxyCompactList}\small\item\em Pointer constructor\+: components initilized to pointed data. \end{DoxyCompactList}\item 
+H\+E\+M\+I\+\_\+\+D\+E\+V\+\_\+\+C\+A\+L\+L\+A\+B\+L\+E\+\_\+\+I\+N\+L\+I\+N\+E\+\_\+\+M\+E\+M\+B\+E\+R \hyperlink{structVec_a2967598d684273ec428643c9846f733d}{Vec} (const T value)
+\begin{DoxyCompactList}\small\item\em Scalar constructor\+: components initilized to scalar value. \end{DoxyCompactList}\item 
+\hypertarget{structVec_a504a7837751bbf730dfff159708f1bc9}{}{\footnotesize template$<$typename T\+\_\+out $>$ }\\H\+E\+M\+I\+\_\+\+D\+E\+V\+\_\+\+C\+A\+L\+L\+A\+B\+L\+E\+\_\+\+I\+N\+L\+I\+N\+E\+\_\+\+M\+E\+M\+B\+E\+R \hyperlink{structVec_a504a7837751bbf730dfff159708f1bc9}{operator Vec$<$ T\+\_\+out, n $>$} ()\label{structVec_a504a7837751bbf730dfff159708f1bc9}
+
+\begin{DoxyCompactList}\small\item\em Cast operator\+: static\+\_\+cast() components of n-\/dim \hyperlink{structVec}{Vec}. \end{DoxyCompactList}\item 
+H\+E\+M\+I\+\_\+\+D\+E\+V\+\_\+\+C\+A\+L\+L\+A\+B\+L\+E\+\_\+\+I\+N\+L\+I\+N\+E\+\_\+\+M\+E\+M\+B\+E\+R T \& \hyperlink{structVec_af6ec4db0da7c2dbef9a6ce9d0deb6a17}{operator\mbox{[}$\,$\mbox{]}} (const size\+\_\+t index)
+\begin{DoxyCompactList}\small\item\em Subscript operator\+: access vector components with bracket notation. \end{DoxyCompactList}\item 
+H\+E\+M\+I\+\_\+\+D\+E\+V\+\_\+\+C\+A\+L\+L\+A\+B\+L\+E\+\_\+\+I\+N\+L\+I\+N\+E\+\_\+\+M\+E\+M\+B\+E\+R const T \& \hyperlink{structVec_ac55be8681c862fa0a6d8c75be29d0dc2}{operator\mbox{[}$\,$\mbox{]}} (const size\+\_\+t index) const 
+\begin{DoxyCompactList}\small\item\em Const subscript operator\+: access vector components with bracket notation. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{structVec_a76e66063a9a758a351bfd29d104df470}{}T \hyperlink{structVec_a76e66063a9a758a351bfd29d104df470}{data} \mbox{[}n\mbox{]}\label{structVec_a76e66063a9a758a351bfd29d104df470}
+
+\begin{DoxyCompactList}\small\item\em Component storage. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+\subsubsection*{template$<$typename T, int n$>$struct Vec$<$ T, n $>$}
+
+Generic n-\/dim \hyperlink{structVec}{Vec} implementation. 
+
+Specialization for 3-\/dim \hyperlink{structVec}{Vec}.
+
+Specialization for 2-\/dim \hyperlink{structVec}{Vec}.
+
+
+\begin{DoxyTemplParams}{Template Parameters}
+{\em T} & component type \\
+\hline
+{\em n} & dimension \\
+\hline
+\end{DoxyTemplParams}
+
+
+\subsection{Constructor \& Destructor Documentation}
+\hypertarget{structVec_a1105b5b0fea459a6c0d990d717c73552}{}\index{Vec@{Vec}!Vec@{Vec}}
+\index{Vec@{Vec}!Vec@{Vec}}
+\subsubsection[{Vec}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T, int n$>$ H\+E\+M\+I\+\_\+\+D\+E\+V\+\_\+\+C\+A\+L\+L\+A\+B\+L\+E\+\_\+\+I\+N\+L\+I\+N\+E\+\_\+\+M\+E\+M\+B\+E\+R {\bf Vec}$<$ T, n $>$\+::{\bf Vec} (
+\begin{DoxyParamCaption}
+\item[{std\+::initializer\+\_\+list$<$ T $>$}]{l}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [explicit]}}\label{structVec_a1105b5b0fea459a6c0d990d717c73552}
+
+
+Initilizer list constructor. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em l} & initilizer list \\
+\hline
+\end{DoxyParams}
+\hypertarget{structVec_a20483ba3740f996dc2ca12d2b43de450}{}\index{Vec@{Vec}!Vec@{Vec}}
+\index{Vec@{Vec}!Vec@{Vec}}
+\subsubsection[{Vec}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T, int n$>$ H\+E\+M\+I\+\_\+\+D\+E\+V\+\_\+\+C\+A\+L\+L\+A\+B\+L\+E\+\_\+\+I\+N\+L\+I\+N\+E\+\_\+\+M\+E\+M\+B\+E\+R {\bf Vec}$<$ T, n $>$\+::{\bf Vec} (
+\begin{DoxyParamCaption}
+\item[{const T $\ast$const}]{p\+\_\+data}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [explicit]}}\label{structVec_a20483ba3740f996dc2ca12d2b43de450}
+
+
+Pointer constructor\+: components initilized to pointed data. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em p\+\_\+data} & pointer to data \\
+\hline
+\end{DoxyParams}
+\hypertarget{structVec_a2967598d684273ec428643c9846f733d}{}\index{Vec@{Vec}!Vec@{Vec}}
+\index{Vec@{Vec}!Vec@{Vec}}
+\subsubsection[{Vec}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T, int n$>$ H\+E\+M\+I\+\_\+\+D\+E\+V\+\_\+\+C\+A\+L\+L\+A\+B\+L\+E\+\_\+\+I\+N\+L\+I\+N\+E\+\_\+\+M\+E\+M\+B\+E\+R {\bf Vec}$<$ T, n $>$\+::{\bf Vec} (
+\begin{DoxyParamCaption}
+\item[{const T}]{value}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [explicit]}}\label{structVec_a2967598d684273ec428643c9846f733d}
+
+
+Scalar constructor\+: components initilized to scalar value. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em value} & scalar component value \\
+\hline
+\end{DoxyParams}
+
+
+\subsection{Member Function Documentation}
+\hypertarget{structVec_af6ec4db0da7c2dbef9a6ce9d0deb6a17}{}\index{Vec@{Vec}!operator\mbox{[}$\,$\mbox{]}@{operator[]}}
+\index{operator\mbox{[}$\,$\mbox{]}@{operator[]}!Vec@{Vec}}
+\subsubsection[{operator[]}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T, int n$>$ H\+E\+M\+I\+\_\+\+D\+E\+V\+\_\+\+C\+A\+L\+L\+A\+B\+L\+E\+\_\+\+I\+N\+L\+I\+N\+E\+\_\+\+M\+E\+M\+B\+E\+R T\& {\bf Vec}$<$ T, n $>$\+::operator\mbox{[}$\,$\mbox{]} (
+\begin{DoxyParamCaption}
+\item[{const size\+\_\+t}]{index}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{structVec_af6ec4db0da7c2dbef9a6ce9d0deb6a17}
+
+
+Subscript operator\+: access vector components with bracket notation. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em index} & of element \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+index\textquotesingle{}th element of \hyperlink{structVec}{Vec} 
+\end{DoxyReturn}
+\hypertarget{structVec_ac55be8681c862fa0a6d8c75be29d0dc2}{}\index{Vec@{Vec}!operator\mbox{[}$\,$\mbox{]}@{operator[]}}
+\index{operator\mbox{[}$\,$\mbox{]}@{operator[]}!Vec@{Vec}}
+\subsubsection[{operator[]}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T, int n$>$ H\+E\+M\+I\+\_\+\+D\+E\+V\+\_\+\+C\+A\+L\+L\+A\+B\+L\+E\+\_\+\+I\+N\+L\+I\+N\+E\+\_\+\+M\+E\+M\+B\+E\+R const T\& {\bf Vec}$<$ T, n $>$\+::operator\mbox{[}$\,$\mbox{]} (
+\begin{DoxyParamCaption}
+\item[{const size\+\_\+t}]{index}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{structVec_ac55be8681c862fa0a6d8c75be29d0dc2}
+
+
+Const subscript operator\+: access vector components with bracket notation. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em index} & of element \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+index\textquotesingle{}th element of \hyperlink{structVec}{Vec} 
+\end{DoxyReturn}
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/atj/\+Dropbox/\+S\+P\+H\+P\+C/\+Simulation\+\_\+\+C\+C/src/vec.\+h\end{DoxyCompactItemize}

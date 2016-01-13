@@ -1,0 +1,101 @@
+\hypertarget{classParticles}{}\section{Particles$<$ Real, Dim $>$ Class Template Reference}
+\label{classParticles}\index{Particles$<$ Real, Dim $>$@{Particles$<$ Real, Dim $>$}}
+
+
+{\ttfamily \#include $<$particles.\+h$>$}
+
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classParticles_afbc7577a0e615e5a5db7b98fb5f839b6}{}{\bfseries Particles} (const \hyperlink{classParameters}{Parameters}$<$ Real, Dim $>$ \&params)\label{classParticles_afbc7577a0e615e5a5db7b98fb5f839b6}
+
+\item 
+\hypertarget{classParticles_a51e541617bdd2a204724bd0c3e997fc3}{}{\bfseries Particles} (const \hyperlink{classParticles}{Particles} \&)=default\label{classParticles_a51e541617bdd2a204724bd0c3e997fc3}
+
+\item 
+\hypertarget{classParticles_a43f02a77234a0d5b2a6c7c2ed9cc0a09}{}\hyperlink{classParticles}{Particles} \& {\bfseries operator=} (const \hyperlink{classParticles}{Particles} \&)=default\label{classParticles_a43f02a77234a0d5b2a6c7c2ed9cc0a09}
+
+\item 
+\hypertarget{classParticles_ac6968476f343fd1ccb04dd472fa37fdc}{}{\bfseries Particles} (\hyperlink{classParticles}{Particles} \&\&) noexcept=default\label{classParticles_ac6968476f343fd1ccb04dd472fa37fdc}
+
+\item 
+\hypertarget{classParticles_a5bf21900b3c6f0844cd00240b7ea8c24}{}\hyperlink{classParticles}{Particles} \& {\bfseries operator=} (\hyperlink{classParticles}{Particles} \&\&)=default\label{classParticles_a5bf21900b3c6f0844cd00240b7ea8c24}
+
+\item 
+\hypertarget{classParticles_ab1b026560eee1addc65dd542f9e113ab}{}std\+::size\+\_\+t {\bfseries Get\+Local\+Count} () const \label{classParticles_ab1b026560eee1addc65dd542f9e113ab}
+
+\item 
+\hypertarget{classParticles_abece4a4077ba246fae9e8fd9dd397bbf}{}const \hyperlink{structVec}{Vec}$<$ Real, Dim $>$ $\ast$ {\bfseries Get\+Pos\+Pointer} () const \label{classParticles_abece4a4077ba246fae9e8fd9dd397bbf}
+
+\item 
+void \hyperlink{classParticles_a4f97cccb8b8053908a98f021da02dff7}{Set\+Local\+Count} (size\+\_\+t new\+\_\+count)
+\item 
+void \hyperlink{classParticles_abd552dcb40fc97f97eac45cd0b4b32e5}{Add\+Fluid} (const \hyperlink{classAABB}{A\+A\+B\+B}$<$ Real, Dim $>$ \&aabb)
+\item 
+\hypertarget{classParticles_aa93c64b699001f08e876090b698e9a6e}{}void {\bfseries Apply\+External\+Forces} ()\label{classParticles_aa93c64b699001f08e876090b698e9a6e}
+
+\item 
+\hypertarget{classParticles_a8c1f87678adc3d4694989c4ad6bcfcac}{}void {\bfseries Compute\+Densities} ()\label{classParticles_a8c1f87678adc3d4694989c4ad6bcfcac}
+
+\item 
+\hypertarget{classParticles_a3d038a34c4ffc9c624e0b804f0857288}{}void {\bfseries Predict\+Positions} ()\label{classParticles_a3d038a34c4ffc9c624e0b804f0857288}
+
+\item 
+\hypertarget{classParticles_a685e6cb3322d28d75a89686bae94f56c}{}void {\bfseries Update\+Positions} ()\label{classParticles_a685e6cb3322d28d75a89686bae94f56c}
+
+\item 
+\hypertarget{classParticles_a7f2aa253f0f8ddaa8c196b4ed686b995}{}void {\bfseries Compute\+Lambdas} ()\label{classParticles_a7f2aa253f0f8ddaa8c196b4ed686b995}
+
+\item 
+\hypertarget{classParticles_a96b9ff0e28498df6175cc9f08ca7ac45}{}void {\bfseries Update\+Position\+Stars} ()\label{classParticles_a96b9ff0e28498df6175cc9f08ca7ac45}
+
+\item 
+\hypertarget{classParticles_ae186de8b5998f9649079ccbfd993ff7c}{}void {\bfseries Update\+Delta\+Positions} ()\label{classParticles_ae186de8b5998f9649079ccbfd993ff7c}
+
+\item 
+\hypertarget{classParticles_a5bbe5eeb65b2a607fa09c20c5c6ffb2b}{}void {\bfseries Update\+Velocities} ()\label{classParticles_a5bbe5eeb65b2a607fa09c20c5c6ffb2b}
+
+\item 
+\hypertarget{classParticles_a0286e53acd9d1bf2b305ab2e79a64106}{}void {\bfseries Apply\+Boundary\+Conditions} ()\label{classParticles_a0286e53acd9d1bf2b305ab2e79a64106}
+
+\item 
+\hypertarget{classParticles_a1f6ff2cbc6c7fc6d28b2849f94d72dab}{}void {\bfseries Apply\+Surface\+Tension} ()\label{classParticles_a1f6ff2cbc6c7fc6d28b2849f94d72dab}
+
+\item 
+\hypertarget{classParticles_ab5b4d3879fdb0d7b033001f59d5f50fe}{}void {\bfseries Apply\+Viscosity} ()\label{classParticles_ab5b4d3879fdb0d7b033001f59d5f50fe}
+
+\item 
+\hypertarget{classParticles_a8eab20910469d1e3c985ca87286eba19}{}void {\bfseries Compute\+Vorticity} ()\label{classParticles_a8eab20910469d1e3c985ca87286eba19}
+
+\item 
+\hypertarget{classParticles_ad82efb03d61e5cc51cd4a6a5c0b3699f}{}void {\bfseries Apply\+Vorticity\+Confinement} ()\label{classParticles_ad82efb03d61e5cc51cd4a6a5c0b3699f}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+\subsubsection*{template$<$typename Real, Dimension Dim$>$class Particles$<$ Real, Dim $>$}
+
+Class to handle 2\+D and 3\+D S\+P\+H particle physics 
+
+\subsection{Member Function Documentation}
+\hypertarget{classParticles_abd552dcb40fc97f97eac45cd0b4b32e5}{}\index{Particles@{Particles}!Add\+Fluid@{Add\+Fluid}}
+\index{Add\+Fluid@{Add\+Fluid}!Particles@{Particles}}
+\subsubsection[{Add\+Fluid}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename Real, Dimension Dim$>$ void {\bf Particles}$<$ Real, Dim $>$\+::Add\+Fluid (
+\begin{DoxyParamCaption}
+\item[{const {\bf A\+A\+B\+B}$<$ Real, Dim $>$ \&}]{aabb}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{classParticles_abd552dcb40fc97f97eac45cd0b4b32e5}
+Add fluid particles to current node \hypertarget{classParticles_a4f97cccb8b8053908a98f021da02dff7}{}\index{Particles@{Particles}!Set\+Local\+Count@{Set\+Local\+Count}}
+\index{Set\+Local\+Count@{Set\+Local\+Count}!Particles@{Particles}}
+\subsubsection[{Set\+Local\+Count}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename Real, Dimension Dim$>$ void {\bf Particles}$<$ Real, Dim $>$\+::Set\+Local\+Count (
+\begin{DoxyParamCaption}
+\item[{size\+\_\+t}]{new\+\_\+count}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{classParticles_a4f97cccb8b8053908a98f021da02dff7}
+Set number of local particles 
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+/home/atj/\+Dropbox/\+S\+P\+H\+P\+C/\+Simulation\+\_\+\+C\+C/src/neighbors.\+h\item 
+/home/atj/\+Dropbox/\+S\+P\+H\+P\+C/\+Simulation\+\_\+\+C\+C/src/particles.\+h\end{DoxyCompactItemize}

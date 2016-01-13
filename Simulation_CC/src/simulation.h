@@ -54,7 +54,7 @@ public:
 
       // @todo Balance nodes
 
-      distributor_.domain_sync();
+      //      distributor_.domain_sync();
 
       particles_.find_neighbors(distributor_.local_span(),
                                 distributor_.resident_span());
@@ -73,6 +73,9 @@ public:
       particles_.update_velocities(distributor_.local_span());
 
       particles_.apply_surface_tension(distributor_.local_span());
+
+      particles_.apply_viscosity(distributor_.local_span());
+
       // viscosity
       // vorticity
       // vorticity confinement

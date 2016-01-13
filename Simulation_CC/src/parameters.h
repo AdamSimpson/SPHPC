@@ -48,7 +48,6 @@ public:
     initial_global_particle_count_ = property_tree.get<std::size_t>("SimParameters.global_particle_count");
     max_particles_local_ = property_tree.get<std::size_t>("SimParameters.max_particles_local");
     g_ = property_tree.get<Real>("PhysicalParameters.g");
-    c_ = property_tree.get<Real>("PhysicalParameters.c");
     gamma_ = property_tree.get<Real>("PhysicalParameters.gamma");
     visc_c_ = property_tree.get<Real>("PhysicalParameters.visc_c");
     lambda_epsilon_ = property_tree.get<Real>("PhysicalParameters.lambda_epsilon");
@@ -72,9 +71,15 @@ public:
 
     Vec<std::size_t,Dim> particle_counts = bin_count_in_volume(initial_fluid_, particle_rest_spacing_);
     std::size_t particle_count = product(particle_counts);
-    rest_mass_ = initial_fluid_.volume() * rest_density_ / particle_count;
-
+    Real mass_fudge = 0.991;
+    rest_mass_ = mass_fudge * initial_fluid_.volume() * rest_density_ / particle_count;
     max_speed_ = smoothing_radius_ / time_step_;
+
+    // @todo params print function to print them all
+    std::cout<<"rest_spacing: "<<particle_rest_spacing_<<std::endl;
+    std::cout<<"smootihng length: "<<smoothing_radius_<<std::endl;
+    std::cout<<"particle count: "<<particle_count<<std::endl;
+    std::cout<<"rest mass: "<<rest_mass_<<std::endl;
   }
 
   /**
@@ -186,7 +191,6 @@ private:
   Real rest_density_;
   Real rest_mass_;
   Real g_;
-  Real c_;
   Real gamma_;
   Real lambda_epsilon_;
   Real k_stiff_;

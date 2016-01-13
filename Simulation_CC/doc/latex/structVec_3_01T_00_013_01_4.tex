@@ -1,0 +1,204 @@
+\hypertarget{structVec_3_01T_00_013_01_4}{}\section{Vec$<$ T, 3 $>$ Struct Template Reference}
+\label{structVec_3_01T_00_013_01_4}\index{Vec$<$ T, 3 $>$@{Vec$<$ T, 3 $>$}}
+
+
+Collaboration diagram for Vec$<$ T, 3 $>$\+:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=186pt]{structVec_3_01T_00_013_01_4__coll__graph}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{structVec_3_01T_00_013_01_4_a0067c7aff3900cdb7180a2a43081cde9}{}\hyperlink{structVec_3_01T_00_013_01_4_a0067c7aff3900cdb7180a2a43081cde9}{Vec} ()=default\label{structVec_3_01T_00_013_01_4_a0067c7aff3900cdb7180a2a43081cde9}
+
+\begin{DoxyCompactList}\small\item\em Default constructor\+: components uninitialized. \end{DoxyCompactList}\item 
+\hyperlink{structVec_3_01T_00_013_01_4_a5b7405b3d5de4da6f3ae64a34ded20f2}{Vec} (const T x\+\_\+, const T y\+\_\+, const T z\+\_\+)
+\begin{DoxyCompactList}\small\item\em Constructor\+: components initilized. \end{DoxyCompactList}\item 
+constexpr \hyperlink{structVec_3_01T_00_013_01_4_ac72d7e468df1e33d4ab3fead9220b604}{Vec} (const T value)
+\begin{DoxyCompactList}\small\item\em Constructor\+: components initilized to value. \end{DoxyCompactList}\item 
+constexpr \hyperlink{structVec_3_01T_00_013_01_4_aca9ea0df8cd8e4301ae0fa7fd7d2f27e}{Vec} (T $\ast$data\+\_\+)
+\begin{DoxyCompactList}\small\item\em Pointer constructor\+: components initilized to pointed data. \end{DoxyCompactList}\item 
+\hyperlink{structVec_3_01T_00_013_01_4_a0c974365e952d0cd79979c9483ad2ae8}{Vec} (const \hyperlink{structVec}{Vec}$<$ T, 2 $>$ \&vec\+\_\+)
+\begin{DoxyCompactList}\small\item\em Construct Vec2 from Vec3 by setting z to 0. \end{DoxyCompactList}\item 
+\hyperlink{structVec_3_01T_00_013_01_4_a443a51b3428cb74e590654c4bd174a85}{Vec} (const \hyperlink{structVec}{Vec}$<$ T, 2 $>$ \&vec\+\_\+, T z\+\_\+)
+\begin{DoxyCompactList}\small\item\em Construct Vec2 from Vec3 by specifying z. \end{DoxyCompactList}\item 
+\hypertarget{structVec_3_01T_00_013_01_4_aec0f2f9c0ba16854de1fb1547530daa2}{}{\footnotesize template$<$typename T\+\_\+out $>$ }\\\hyperlink{structVec_3_01T_00_013_01_4_aec0f2f9c0ba16854de1fb1547530daa2}{operator Vec$<$ T\+\_\+out, 3 $>$} () const \label{structVec_3_01T_00_013_01_4_aec0f2f9c0ba16854de1fb1547530daa2}
+
+\begin{DoxyCompactList}\small\item\em Cast operator\+: static\+\_\+cast() data of Vec3. \end{DoxyCompactList}\item 
+T \& \hyperlink{structVec_3_01T_00_013_01_4_a5f0a78557890a6d86d0ac2282426217b}{operator\mbox{[}$\,$\mbox{]}} (const size\+\_\+t index)
+\begin{DoxyCompactList}\small\item\em Subscript operator\+: access vector components with bracket notation. \end{DoxyCompactList}\item 
+const T \& \hyperlink{structVec_3_01T_00_013_01_4_af2d3eabac7af9dfa72a89b3370a24ed2}{operator\mbox{[}$\,$\mbox{]}} (const size\+\_\+t index) const 
+\begin{DoxyCompactList}\small\item\em Const subscript operator\+: access vector components with bracket notation. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{structVec_3_01T_00_013_01_4_a090a6e6d6471482a33d4f5b66548c9e5}{}union \hyperlink{structVec}{Vec}$<$ T, 3 $>$\+:: \{ ... \}  \label{structVec_3_01T_00_013_01_4_a090a6e6d6471482a33d4f5b66548c9e5}
+
+\item 
+T \hyperlink{structVec_3_01T_00_013_01_4_a07af69736eca9e1115b69d51fac21514}{data} \mbox{[}3\mbox{]}
+\item 
+\hypertarget{structVec_3_01T_00_013_01_4_ac73cf62d6ee2d6f72a40a6d30677e2c5}{}T {\bfseries x}\label{structVec_3_01T_00_013_01_4_ac73cf62d6ee2d6f72a40a6d30677e2c5}
+
+\item 
+\hypertarget{structVec_3_01T_00_013_01_4_a518370197670c87da6f100853dd1ebe7}{}T {\bfseries y}\label{structVec_3_01T_00_013_01_4_a518370197670c87da6f100853dd1ebe7}
+
+\item 
+\hypertarget{structVec_3_01T_00_013_01_4_a380f1acf13bb3e1d570bf3396aa32bb0}{}T {\bfseries z}\label{structVec_3_01T_00_013_01_4_a380f1acf13bb3e1d570bf3396aa32bb0}
+
+\item 
+\hypertarget{structVec_3_01T_00_013_01_4_acb3dc926a0256dda915039cdb213596e}{}T {\bfseries r}\label{structVec_3_01T_00_013_01_4_acb3dc926a0256dda915039cdb213596e}
+
+\item 
+\hypertarget{structVec_3_01T_00_013_01_4_ab6e2b4d396af0d9cc561b3d4f684dd2c}{}T {\bfseries g}\label{structVec_3_01T_00_013_01_4_ab6e2b4d396af0d9cc561b3d4f684dd2c}
+
+\item 
+\hypertarget{structVec_3_01T_00_013_01_4_a5828f123a95e1eeef713612137196a42}{}T {\bfseries b}\label{structVec_3_01T_00_013_01_4_a5828f123a95e1eeef713612137196a42}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Constructor \& Destructor Documentation}
+\hypertarget{structVec_3_01T_00_013_01_4_a5b7405b3d5de4da6f3ae64a34ded20f2}{}\index{Vec$<$ T, 3 $>$@{Vec$<$ T, 3 $>$}!Vec@{Vec}}
+\index{Vec@{Vec}!Vec$<$ T, 3 $>$@{Vec$<$ T, 3 $>$}}
+\subsubsection[{Vec}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T $>$ {\bf Vec}$<$ T, 3 $>$\+::{\bf Vec} (
+\begin{DoxyParamCaption}
+\item[{const T}]{x\+\_\+, }
+\item[{const T}]{y\+\_\+, }
+\item[{const T}]{z\+\_\+}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [explicit]}}\label{structVec_3_01T_00_013_01_4_a5b7405b3d5de4da6f3ae64a34ded20f2}
+
+
+Constructor\+: components initilized. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em x\+\_\+} & x component \\
+\hline
+\mbox{\tt in}  & {\em y\+\_\+} & y component \\
+\hline
+\mbox{\tt in}  & {\em z\+\_\+} & z component \\
+\hline
+\end{DoxyParams}
+\hypertarget{structVec_3_01T_00_013_01_4_ac72d7e468df1e33d4ab3fead9220b604}{}\index{Vec$<$ T, 3 $>$@{Vec$<$ T, 3 $>$}!Vec@{Vec}}
+\index{Vec@{Vec}!Vec$<$ T, 3 $>$@{Vec$<$ T, 3 $>$}}
+\subsubsection[{Vec}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T $>$ constexpr {\bf Vec}$<$ T, 3 $>$\+::{\bf Vec} (
+\begin{DoxyParamCaption}
+\item[{const T}]{value}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [explicit]}}\label{structVec_3_01T_00_013_01_4_ac72d7e468df1e33d4ab3fead9220b604}
+
+
+Constructor\+: components initilized to value. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em value} & x, y, z component \\
+\hline
+\end{DoxyParams}
+\hypertarget{structVec_3_01T_00_013_01_4_aca9ea0df8cd8e4301ae0fa7fd7d2f27e}{}\index{Vec$<$ T, 3 $>$@{Vec$<$ T, 3 $>$}!Vec@{Vec}}
+\index{Vec@{Vec}!Vec$<$ T, 3 $>$@{Vec$<$ T, 3 $>$}}
+\subsubsection[{Vec}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T $>$ constexpr {\bf Vec}$<$ T, 3 $>$\+::{\bf Vec} (
+\begin{DoxyParamCaption}
+\item[{T $\ast$}]{data\+\_\+}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [explicit]}}\label{structVec_3_01T_00_013_01_4_aca9ea0df8cd8e4301ae0fa7fd7d2f27e}
+
+
+Pointer constructor\+: components initilized to pointed data. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em p\+\_\+data} & pointer to data \\
+\hline
+\end{DoxyParams}
+\hypertarget{structVec_3_01T_00_013_01_4_a0c974365e952d0cd79979c9483ad2ae8}{}\index{Vec$<$ T, 3 $>$@{Vec$<$ T, 3 $>$}!Vec@{Vec}}
+\index{Vec@{Vec}!Vec$<$ T, 3 $>$@{Vec$<$ T, 3 $>$}}
+\subsubsection[{Vec}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T $>$ {\bf Vec}$<$ T, 3 $>$\+::{\bf Vec} (
+\begin{DoxyParamCaption}
+\item[{const {\bf Vec}$<$ T, 2 $>$ \&}]{vec\+\_\+}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [explicit]}}\label{structVec_3_01T_00_013_01_4_a0c974365e952d0cd79979c9483ad2ae8}
+
+
+Construct Vec2 from Vec3 by setting z to 0. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em vec} & Vec2 \\
+\hline
+\end{DoxyParams}
+\hypertarget{structVec_3_01T_00_013_01_4_a443a51b3428cb74e590654c4bd174a85}{}\index{Vec$<$ T, 3 $>$@{Vec$<$ T, 3 $>$}!Vec@{Vec}}
+\index{Vec@{Vec}!Vec$<$ T, 3 $>$@{Vec$<$ T, 3 $>$}}
+\subsubsection[{Vec}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T $>$ {\bf Vec}$<$ T, 3 $>$\+::{\bf Vec} (
+\begin{DoxyParamCaption}
+\item[{const {\bf Vec}$<$ T, 2 $>$ \&}]{vec\+\_\+, }
+\item[{T}]{z\+\_\+}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [explicit]}}\label{structVec_3_01T_00_013_01_4_a443a51b3428cb74e590654c4bd174a85}
+
+
+Construct Vec2 from Vec3 by specifying z. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em vec} & Vec2 x,y values \\
+\hline
+\mbox{\tt in}  & {\em z} & z value \\
+\hline
+\end{DoxyParams}
+
+
+\subsection{Member Function Documentation}
+\hypertarget{structVec_3_01T_00_013_01_4_a5f0a78557890a6d86d0ac2282426217b}{}\index{Vec$<$ T, 3 $>$@{Vec$<$ T, 3 $>$}!operator\mbox{[}$\,$\mbox{]}@{operator[]}}
+\index{operator\mbox{[}$\,$\mbox{]}@{operator[]}!Vec$<$ T, 3 $>$@{Vec$<$ T, 3 $>$}}
+\subsubsection[{operator[]}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T $>$ T\& {\bf Vec}$<$ T, 3 $>$\+::operator\mbox{[}$\,$\mbox{]} (
+\begin{DoxyParamCaption}
+\item[{const size\+\_\+t}]{index}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}\label{structVec_3_01T_00_013_01_4_a5f0a78557890a6d86d0ac2282426217b}
+
+
+Subscript operator\+: access vector components with bracket notation. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em index} & of element \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+index\textquotesingle{}th element of \hyperlink{structVec}{Vec} 
+\end{DoxyReturn}
+\hypertarget{structVec_3_01T_00_013_01_4_af2d3eabac7af9dfa72a89b3370a24ed2}{}\index{Vec$<$ T, 3 $>$@{Vec$<$ T, 3 $>$}!operator\mbox{[}$\,$\mbox{]}@{operator[]}}
+\index{operator\mbox{[}$\,$\mbox{]}@{operator[]}!Vec$<$ T, 3 $>$@{Vec$<$ T, 3 $>$}}
+\subsubsection[{operator[]}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T $>$ const T\& {\bf Vec}$<$ T, 3 $>$\+::operator\mbox{[}$\,$\mbox{]} (
+\begin{DoxyParamCaption}
+\item[{const size\+\_\+t}]{index}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}}\label{structVec_3_01T_00_013_01_4_af2d3eabac7af9dfa72a89b3370a24ed2}
+
+
+Const subscript operator\+: access vector components with bracket notation. 
+
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em index} & of element \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+index\textquotesingle{}th element of \hyperlink{structVec}{Vec} 
+\end{DoxyReturn}
+
+
+\subsection{Member Data Documentation}
+\hypertarget{structVec_3_01T_00_013_01_4_a07af69736eca9e1115b69d51fac21514}{}\index{Vec$<$ T, 3 $>$@{Vec$<$ T, 3 $>$}!data@{data}}
+\index{data@{data}!Vec$<$ T, 3 $>$@{Vec$<$ T, 3 $>$}}
+\subsubsection[{data}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T $>$ T {\bf Vec}$<$ T, 3 $>$\+::data\mbox{[}3\mbox{]}}\label{structVec_3_01T_00_013_01_4_a07af69736eca9e1115b69d51fac21514}
+component array 
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/atj/\+Dropbox/\+S\+P\+H\+P\+C/\+Simulation\+\_\+\+C\+C/src/vec.\+h\end{DoxyCompactItemize}
